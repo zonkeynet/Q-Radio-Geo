@@ -40,6 +40,10 @@
                 <div class="brand-title">Q-P1NG <span>RADIO GLOBE</span></div>
                 <div class="brand-stats" id="statsDisplay">Loading catalog…</div>
             </div>
+            <div class="mode-switch" role="tablist" aria-label="What to explore">
+                <button role="tab" class="mode-tab" data-mode="radio" aria-selected="true" title="Radio stations">📻 RADIO</button>
+                <button role="tab" class="mode-tab" data-mode="sdr" aria-selected="false" title="Public web SDR receivers">📡 SDR</button>
+            </div>
         </div>
 
         <!-- Search Bar with Category Filters -->
@@ -71,18 +75,25 @@
     <!-- Sidebar: Shortcuts + legend -->
     <aside class="hud-overlay sidebar-panel" id="sidebarShortcuts">
         <div class="sidebar-title">
-            <span>Shortcuts</span>
+            <span id="sidebarTitle">Shortcuts</span>
             <button class="panel-toggle" id="btnToggleShortcuts" aria-expanded="true" aria-controls="sidebarBody" aria-label="Minimize shortcuts" title="Minimize">
                 <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
             </button>
         </div>
         <div class="sidebar-body" id="sidebarBody">
-            <div class="sidebar-inner">
+            <div class="sidebar-inner" id="sidebarRadio">
                 <div class="capitals-grid" id="capitalsGrid"></div>
                 <div class="legend">
                     <span><i class="legend-dot"></i>City</span>
                     <span><i class="legend-dot approx"></i>Approximate (region / country)</span>
                     <small class="legend-sources">Data: <a href="https://www.radio-browser.info" target="_blank" rel="noopener noreferrer">Radio Browser</a>, <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> (CC BY 4.0), <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></small>
+                </div>
+            </div>
+            <div class="sidebar-inner" id="sidebarSdr" hidden>
+                <div class="capitals-grid" id="sdrTypeGrid"></div>
+                <div class="legend">
+                    <span>Click a dot or a receiver to open it on its own site.</span>
+                    <small class="legend-sources">Data: <a href="https://www.receiverbook.de" target="_blank" rel="noopener noreferrer">receiverbook.de</a>, <a href="http://rx.linkfanel.net/" target="_blank" rel="noopener noreferrer">KiwiSDR list</a></small>
                 </div>
             </div>
         </div>

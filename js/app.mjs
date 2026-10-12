@@ -3,13 +3,33 @@ import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
 import { THEMES, themeById, savedThemeId, applyThemeCss } from './themes.mjs';
+import { SDR_TYPES, SDR_COLORS, loadSdr, ofType, searchSdr, createSdrExplorer } from './sdr.mjs';
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };
 const CHIP_PAGE = 120;
+const RADIO_TABS = [{ id: 'all', label: 'ALL' }, { id: 'country', label: 'COUNTRIES' }, { id: 'city', label: 'CITIES' }, { id: 'station', label: 'STATIONS' }];
+// Radio dot diameter (CSS px) by the number of stations in the place.
+const DOT_SIZES = [5, 6, 7.5, 9];
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
-let theme = themeById(savedThemeId()), themeColors = applyThemeCss(theme);
+let mode = 'radio', sdr = null, sdrType = 'all', sdrExplorer = null;
+let theme = themeById(savedThemeId());
+applyThemeCss(theme);
+const radioLayer = () => ({
+    items: catalog.places,
+    groupOf: p => p.loc ? 'approx' : 'city',
+    sizeOf: p => DOT_SIZES[p.count >= 50 ? 3 : p.count >= 10 ? 2 : p.count >= 2 ? 1 : 0],
+    describe: p => `${p.city}, ${p.country}\n${p.count} station${p.count === 1 ? '' : 's'}${p.loc ? ' · approximate location' : ''}`,
+    colors: { city: '--accent', approx: '--approx' }
+});
+const sdrLayer = () => ({
+    items: ofType(sdr.receivers, sdrType),
+    groupOf: r => r.type,
+    sizeOf: r => r.featured ? 8 : 5.5,
+    describe: r => `${r.name}\n${[r.type, r.bands, r.place].filter(Boolean).join(' · ')}`,
+    colors: SDR_COLORS
+});
 const buttons = ['btnRandom','btnPrevStation','btnNextStation','btnPlayPause'];
 function markState({ state, detail, station }) {
     const labels = { idle: 'READY', ready: 'PRESS PLAY', buffering: 'TUNING', playing: 'ON AIR', paused: 'PAUSED', ended: 'ENDED', error: 'ERROR' };
@@ -156,10 +176,28 @@ function renderSearch(result) {
     if (!total) target.appendChild(node('p','player-detail search-empty','No results found.'));
     target.style.display = 'block';
 }
+const sdrBadge = type => ({ KiwiSDR: 'KIWI', OpenWebRX: 'OWRX', WebSDR: 'WEB' })[type];
+function renderSdrSearch(results) {
+    const target = $('searchResults'); target.replaceChildren();
+    if (results.length) target.appendChild(node('div', 'search-cat-header', `RECEIVERS · ${results.length}`));
+    for (const r of results) {
+        const item = node('button', 'search-item');
+        const info = node('span', 'search-item-info');
+        info.append(node('span', 'search-item-city', `${r.featured ? '★ ' : ''}${r.name}`), node('span', 'search-item-country', [r.type, r.bands, r.place].filter(Boolean).join(' · ')));
+        const badge = node('span', 'search-item-badge sdr-badge', sdrBadge(r.type));
+        badge.style.setProperty('--type-color', `var(${SDR_COLORS[r.type]})`);
+        item.append(info, badge);
+        item.onclick = () => { hideSearch(); $('searchInput').value = ''; selectSdr(r); };
+        target.appendChild(item);
+    }
+    if (!results.length) target.appendChild(node('p', 'player-detail search-empty', 'No receiver found.'));
+    target.style.display = 'block';
+}
 function triggerSearch() {
     const sequence = ++searchSequence; clearTimeout(searchTimer);
     const query = $('searchInput').value.trim().slice(0,120);
     if (!ready || query.length < 2) { $('searchResults').style.display = 'none'; return; }
+    if (mode === 'sdr') { renderSdrSearch(searchSdr(sdr.receivers, query, sdrType)); return; }
     searchTimer = setTimeout(async () => {
         try { const result = await catalog.search(query, searchType); if (sequence === searchSequence) renderSearch(result); }
         catch (e) { if (e.name !== 'AbortError' && sequence === searchSequence) { $('searchResults').replaceChildren(node('p','player-detail search-empty','Search unavailable. Please try again.')); $('searchResults').style.display = 'block'; } }
@@ -180,9 +218,75 @@ function initShortcuts() {
 }
 function setTheme(id) {
     theme = themeById(id);
-    themeColors = applyThemeCss(theme);
+    applyThemeCss(theme);
     for (const item of $('themeMenu').children) item.setAttribute('aria-checked', String(item.dataset.id === theme.id));
-    globe?.setTheme(theme.id, theme.globe, themeColors);
+    globe?.setTheme(theme.id, theme.globe);
+}
+
+// ---------- Radio / SDR modes ----------
+function renderTabs() {
+    const tabs = mode === 'sdr' ? SDR_TYPES : RADIO_TABS, active = mode === 'sdr' ? sdrType : searchType;
+    const box = document.querySelector('.search-tabs'); box.replaceChildren();
+    for (const t of tabs) {
+        const tab = node('button', `search-tab${t.id === active ? ' active' : ''}`, t.label);
+        tab.dataset.type = t.id;
+        tab.setAttribute('aria-pressed', String(t.id === active));
+        if (mode === 'sdr' && t.id !== 'all') tab.style.setProperty('--type-color', `var(${SDR_COLORS[t.id]})`);
+        tab.onclick = () => {
+            if (mode === 'sdr') setSdrType(t.id);
+            else { searchType = t.id; renderTabs(); triggerSearch(); }
+        };
+        box.appendChild(tab);
+    }
+}
+function updateStats() {
+    $('statsDisplay').textContent = mode === 'sdr'
+        ? `${sdr.receivers.length.toLocaleString('en')} SDR RECEIVERS · 3 NETWORKS`
+        : `${catalog.places.length.toLocaleString('en')} PLACES · ${catalog.stations.length.toLocaleString('en')} STATIONS`;
+}
+function renderSdrSidebar() {
+    const box = $('sdrTypeGrid'); box.replaceChildren();
+    for (const t of SDR_TYPES) {
+        const count = ofType(sdr.receivers, t.id).length;
+        const button = node('button', `capital-pill${t.id === sdrType ? ' active' : ''}`);
+        const name = node('span', 'capital-name', t.id === 'all' ? 'All receivers' : t.id);
+        if (t.id !== 'all') { const dot = node('i', 'legend-dot'); dot.style.background = `var(${SDR_COLORS[t.id]})`; name.prepend(dot); }
+        button.append(name, node('span', 'capital-count', count.toLocaleString('en')));
+        button.setAttribute('aria-pressed', String(t.id === sdrType));
+        button.onclick = () => setSdrType(t.id);
+        box.appendChild(button);
+    }
+}
+function setSdrType(type) {
+    sdrType = type;
+    renderTabs(); renderSdrSidebar();
+    sdrExplorer.setType(type); sdrExplorer.open();
+    globe?.setLayer(sdrLayer());
+    triggerSearch();
+}
+function selectSdr(r) {
+    sdrExplorer.select(r);
+    globe?.navigation.flyTo({ lat: r.lat, lng: r.lng, altitude: .5 }, 600);
+    globe?.world.ringMaxRadius(.8).ringsData([{ lat: r.lat, lng: r.lng }]);
+}
+async function setMode(next) {
+    if (next === 'sdr' && !sdr) {
+        try { sdr = await loadSdr(); sdrExplorer.setData(sdr.receivers); }
+        catch { $('globeNotice').textContent = 'SDR list unavailable. Check data/sdr.json and reload.'; $('globeNotice').hidden = false; return; }
+    }
+    mode = next;
+    document.documentElement.dataset.mode = mode;
+    try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
+    for (const t of document.querySelectorAll('.mode-tab')) t.setAttribute('aria-selected', String(t.dataset.mode === mode));
+    hideSearch(); $('searchInput').value = '';
+    $('searchInput').placeholder = mode === 'sdr' ? 'Search receiver, place or antenna…' : 'Search country, city or station…';
+    $('btnRandom').title = mode === 'sdr' ? 'Show a random SDR receiver' : 'Listen to a random station somewhere in the world';
+    $('sidebarTitle').textContent = mode === 'sdr' ? 'SDR networks' : 'Shortcuts';
+    $('sidebarRadio').hidden = mode !== 'radio'; $('sidebarSdr').hidden = mode !== 'sdr';
+    renderTabs(); updateStats();
+    if (mode === 'sdr') { renderSdrSidebar(); sdrExplorer.setType(sdrType); sdrExplorer.open(); }
+    else $('countryDrawer').hidden = true;
+    globe?.setLayer(mode === 'sdr' ? sdrLayer() : radioLayer());
 }
 function initShortcutsPanel() {
     const panel = $('sidebarShortcuts'), toggle = $('btnToggleShortcuts');
@@ -254,28 +358,36 @@ async function start() {
     $('btnNextStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex+1)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnPrevStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex-1+cityStations.length)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnRandom').onclick = () => {
+        if (mode === 'sdr') {
+            const pool = ofType(sdr.receivers, sdrType);
+            if (pool.length) selectSdr(pool[Math.floor(Math.random() * pool.length)]);
+            return;
+        }
         if (!catalog?.stations.length) return;
         const station = catalog.stations[Math.floor(Math.random()*catalog.stations.length)];
         selectPlace(catalog.byId.get(station.place_id), station.id);
     };
+    sdrExplorer = createSdrExplorer({
+        drawer: $('countryDrawer'), title: $('countryDrawerTitle'), meta: $('countryDrawerMeta'), list: $('countryCitiesList'),
+        getCenter: () => globe ? globe.world.pointOfView() : { lat: 41.9, lng: 12.5 },
+        onPick: selectSdr
+    });
     $('countryDrawerClose').onclick = () => { $('countryDrawer').hidden = true; };
     $('searchInput').oninput = triggerSearch;
     $('searchInput').addEventListener('keydown', e => { if (e.key === 'Escape') hideSearch(); if (e.key === 'ArrowDown') $('searchResults').querySelector('button')?.focus(); });
-    for (const tab of document.querySelectorAll('.search-tab')) tab.onclick = () => {
-        for (const t of document.querySelectorAll('.search-tab')) { t.classList.toggle('active', t === tab); t.setAttribute('aria-pressed', String(t === tab)); }
-        searchType = tab.dataset.type; triggerSearch();
-    };
+    renderTabs();
     document.addEventListener('click', e => { if (!e.target.closest?.('.search-wrapper')) hideSearch(); });
     try {
         const [places, stations, countries, summary, runtimeConfig] = await Promise.all(['data/places.json','data/stations.json','data/countries.json','data/summary.json','app-config.json'].map(p => loadJSON(p)));
         if (![places,stations,countries].every(Array.isArray) || !['direct','proxy'].includes(runtimeConfig.streamMode)) throw new Error('Invalid catalog or configuration');
         config = runtimeConfig;
         catalog = new Catalog(places,stations,countries,summary);
-        $('statsDisplay').textContent = `${places.length.toLocaleString('en')} PLACES · ${stations.length.toLocaleString('en')} STATIONS`;
+        updateStats();
         ready = true; $('btnRandom').disabled = false; initShortcuts();
         await catalog.initializeSearch();
         try {
-            globe = createGlobe($('globeViz'), places, selectPlace, () => updateRotate(false));
+            globe = createGlobe($('globeViz'), item => mode === 'sdr' ? selectSdr(item) : selectPlace(item), () => updateRotate(false));
+            globe.setLayer(radioLayer());
             setTheme(theme.id);
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
             $('btnResetView').onclick = () => globe.navigation.flyTo({lat:41.9,lng:12.5,altitude:2.2});
@@ -291,6 +403,10 @@ async function start() {
             for (const id of ['btnZoomIn','btnZoomOut','btnResetView']) $(id).disabled = true;
         }
         $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
+        for (const t of document.querySelectorAll('.mode-tab')) t.onclick = () => setMode(t.dataset.mode);
+        let savedMode = 'radio';
+        try { savedMode = localStorage.getItem('qradio.mode') === 'sdr' ? 'sdr' : 'radio'; } catch { /* not remembered */ }
+        if (savedMode === 'sdr') await setMode('sdr');
     } catch (e) {
         $('playerTitle').textContent = 'Loading failed';
         $('playerDetail').textContent = 'Serve the folder over HTTP/HTTPS, not via file://. Check the data/ files and app-config.json, then reload.';

@@ -1,7 +1,8 @@
-/** Station dots are screen-space particles (constant pixel size, like a map marker), so nearby
- * places separate as you zoom instead of growing into overlapping discs. Picking is our own
- * screen-space search. Dot colours: city-level vs approximate location, set by the theme.
- * The canvas is transparent: the page background (per theme) shows around the globe.
+/** Dots are screen-space particles (constant pixel size, like a map marker), so nearby places
+ * separate as you zoom instead of growing into overlapping discs. Picking is our own screen-space
+ * search. What the dots show is a "layer" (radio places or SDR receivers) set by the app; their
+ * colours are theme variables. The canvas is transparent: the page background (per theme) shows
+ * around the globe.
  */
 let landFeatures = null;
 const loadLand = () => landFeatures ??= fetch(new URL('assets/land.geojson', document.baseURI))
@@ -17,21 +18,17 @@ const tilesReachable = tiles => {
     return tileProbes.get(tiles.url);
 };
 const DOT_ALTITUDE = .004;
-// Dot diameter in CSS pixels by number of stations in the place.
-const DOT_SIZES = [5, 6, 7.5, 9];
-const dotBucket = count => count >= 50 ? 3 : count >= 10 ? 2 : count >= 2 ? 1 : 0;
+const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#ffffff';
 
-export function createGlobe(container, places, onSelect, onManualInput) {
+/** onSelect(item) receives an item of the current layer. */
+export function createGlobe(container, onSelect, onManualInput) {
     if (typeof globalThis.Globe !== 'function') throw new Error('3D library not loaded');
-    // One particle set per (precision, size): colour and size are per set in Globe.gl.
-    const dotSets = [];
-    for (const approx of [true, false]) for (let b = 0; b < DOT_SIZES.length; b++) {
-        const list = places.filter(p => Boolean(p.loc) === approx && dotBucket(p.count) === b);
-        if (list.length) dotSets.push({ approx, size: DOT_SIZES[b], list });
-    }
+    // layer: { items, groupOf(item), sizeOf(item) in CSS px, describe(item) for the tooltip, colors: { group: '--css-var' } }
+    let layer = { items: [], groupOf: () => '', sizeOf: () => 5, describe: () => '', colors: {} };
+    let dotSets = [], positions = [];
     const world = Globe()(container)
         .backgroundColor('rgba(0,0,0,0)').showAtmosphere(true)
-        .particlesData(dotSets).particlesList(s => s.list).particleLat('lat').particleLng('lng')
+        .particlesList(s => s.list).particleLat('lat').particleLng('lng')
         .particleAltitude(DOT_ALTITUDE).particlesSize(s => s.size).particlesSizeAttenuation(false)
         .enablePointerInteraction(false)
         .ringsData([]).ringLat('lat').ringLng('lng')
@@ -66,26 +63,48 @@ export function createGlobe(container, places, onSelect, onManualInput) {
             };
             m.needsUpdate = true;
         });
-        // The particle layer builds its objects on the next update: retry until they exist.
-        if (!found && retries) setTimeout(() => roundDots(retries - 1), 100);
+        // The particle layer builds its objects on the next update: retry until all of them exist.
+        if (found < dotSets.length && retries) setTimeout(() => roundDots(retries - 1), 100);
+    }
+    function applyDotColors() {
+        const colors = Object.fromEntries(Object.entries(layer.colors).map(([group, name]) => [group, cssColor(name)]));
+        world.particlesColor(s => colors[s.group] || '#ffffff');
+        const ring = rgb(cssColor('--accent'));
+        world.ringColor(() => t => `rgba(${ring},${Math.sqrt(Math.max(0, 1 - t))})`);
+    }
+    function setLayer(next) {
+        layer = next;
+        positions = layer.items.map(p => world.getCoords(p.lat, p.lng, 0));
+        // One particle set per (group, size): colour and size are per set in Globe.gl.
+        const sets = new Map();
+        for (const item of layer.items) {
+            const group = layer.groupOf(item), size = layer.sizeOf(item), key = `${group}|${size}`;
+            if (!sets.has(key)) sets.set(key, { group, size, list: [] });
+            sets.get(key).list.push(item);
+        }
+        dotSets = [...sets.values()];
+        world.particlesData(dotSets).ringsData([]);
+        tooltip.hidden = true;
+        applyDotColors();
+        roundDots();
     }
 
     const tooltip = document.getElementById('pointTooltip');
     const radius = world.getGlobeRadius();
-    const positions = places.map(p => world.getCoords(p.lat, p.lng, 0));
     let down = null, hoverTimer = null, hoveredEvent = null;
     const pointers = new Set();
     // One O(n) pick on click / throttled hover, not one raycast per place every frame.
     function nearest(clientX, clientY, threshold = 14) {
         const rect = renderer.domElement.getBoundingClientRect();
         const x = clientX - rect.left, y = clientY - rect.top, camera = world.camera().position;
+        const items = layer.items;
         let best = null, bestD = threshold * threshold;
-        for (let i = 0; i < places.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             const v = positions[i];
             if (v.x * camera.x + v.y * camera.y + v.z * camera.z <= radius * radius) continue;
-            const screen = world.getScreenCoords(places[i].lat, places[i].lng, DOT_ALTITUDE);
+            const screen = world.getScreenCoords(items[i].lat, items[i].lng, DOT_ALTITUDE);
             const d = (screen.x - x) ** 2 + (screen.y - y) ** 2;
-            if (d < bestD) { bestD = d; best = places[i]; }
+            if (d < bestD) { bestD = d; best = items[i]; }
         }
         return best;
     }
@@ -106,7 +125,7 @@ export function createGlobe(container, places, onSelect, onManualInput) {
             const { x, y } = hoveredEvent, place = nearest(x, y, 12);
             tooltip.hidden = !place;
             if (place) {
-                tooltip.textContent = `${place.city}, ${place.country}\n${place.count} station${place.count === 1 ? '' : 's'}${place.loc ? ' · approximate location' : ''}`;
+                tooltip.textContent = layer.describe(place);
                 tooltip.style.left = `${Math.min(x + 14, innerWidth - 240)}px`;
                 tooltip.style.top = `${Math.max(5, y - 60)}px`;
             }
@@ -191,11 +210,11 @@ export function createGlobe(container, places, onSelect, onManualInput) {
         if (theme.image) loadTexture(theme.image);
         paint();
     }
-    function setTheme(id, theme, colors) {
+    /** Call after the page colours have switched (applyThemeCss): dot colours are read from them. */
+    function setTheme(id, theme) {
         const token = ++themeToken; themeId = id; current = theme;
         world.atmosphereColor(theme.atmosphere).atmosphereAltitude(theme.atmosphereAltitude).bumpImageUrl(theme.bump || null);
-        world.particlesColor(s => s.approx ? colors.approx : colors.city);
-        world.ringColor(() => t => `rgba(${rgb(colors.city)},${Math.sqrt(Math.max(0, 1 - t))})`);
+        applyDotColors();
         roundDots();
         if (!theme.tiles) useGlobeTexture(theme);
         else {
@@ -213,11 +232,11 @@ export function createGlobe(container, places, onSelect, onManualInput) {
         });
     }
     return {
-        world, navigation, setTheme,
+        world, navigation, setTheme, setLayer,
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });
-            return { ...navigation.getSnapshot(), points: places.length, dotSets: dotSets.length, pixelRatio, theme: themeId, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
+            return { ...navigation.getSnapshot(), points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
         },
         destroy() { abort.abort(); clearTimeout(hoverTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); }
     };
