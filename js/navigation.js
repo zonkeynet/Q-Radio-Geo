@@ -1,6 +1,6 @@
 /**
  * Q-P1NG Radio Globe navigation controller, 2026-10-12.
- * Compatible with the public Globe.gl 2.32.0 API.
+ * Compatible with the public Globe.gl 2.46 API.
  * Loaded by index.html as a local script; no additional package dependency.
  */
 (function (root, factory) {
@@ -86,7 +86,7 @@
         const minLog = Math.log(cfg.minAltitude);
         const maxLog = Math.log(cfg.maxAltitude);
 
-        // Globe.gl 2.32.0 resets these properties in its own 'change' listener.
+        // Globe.gl resets these properties in its own 'change' listener.
         // Register AFTER Globe() initialization, so this listener applies last.
         // Do not call controls.update() here: it would risk recursive change events.
         function calibrateNativeControls() {

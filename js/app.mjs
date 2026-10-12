@@ -86,7 +86,8 @@ function selectPlace(place, stationId = null) {
     if (!currentPlace) return;
     const altitude = currentPlace.loc === 'n' ? 1.4 : currentPlace.loc === 'r' ? .9 : .48;
     globe?.navigation.flyTo({ lat: currentPlace.lat, lng: currentPlace.lng, altitude }, 600);
-    globe?.world.ringsData([{ lat: currentPlace.lat, lng: currentPlace.lng }]);
+    // Ring size in degrees, proportional to the view so it stays a marker, not a huge circle.
+    globe?.world.ringMaxRadius(Math.max(.15, altitude * 1.6)).ringsData([{ lat: currentPlace.lat, lng: currentPlace.lng }]);
     $('playerCity').textContent = currentPlace.city;
     $('playerCity').classList.toggle('approx', Boolean(currentPlace.loc));
     $('playerCity').title = currentPlace.loc ? `Approximate location (${LOC_LABEL[currentPlace.loc]})` : '';
