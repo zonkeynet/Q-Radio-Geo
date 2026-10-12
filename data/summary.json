@@ -1,1 +1,29 @@
-{"schema_version":1,"places":12845,"stations":38233,"countries":228,"source_sha256":"70e539dd3f34e22d180a356ebad83927aa12d75be84c8c34cdba2e0f42d47699","direct_urls_in_source":0,"direct_urls_exported":0,"source_count_mismatches":0,"live_streams_checked":0,"provider_fallback":"radio.garden (external dependency, no availability guarantee)","source_license":"Not supplied with the input; verify rights before public redistribution"}
+{
+ "schema_version": 2,
+ "generated_at": "2026-10-12T20:22:26.476Z",
+ "places": 4465,
+ "stations": 34448,
+ "countries": 211,
+ "hls_stations": 2830,
+ "location_precision": {
+  "city": 13400,
+  "point": 168,
+  "region": 3604,
+  "national": 17276
+ },
+ "filtered_out": {
+  "source": 61439,
+  "not_working": 0,
+  "not_https": 22241,
+  "ssl_error": 694,
+  "via_radio_garden": 12,
+  "no_name": 2,
+  "duplicates": 3812,
+  "no_location": 230
+ },
+ "sources": {
+  "stations": "Radio Browser, https://www.radio-browser.info (working HTTPS streams only)",
+  "cities": "GeoNames cities1000, https://www.geonames.org, CC BY 4.0",
+  "regions": "Natural Earth admin-1 states/provinces, https://www.naturalearthdata.com, public domain"
+ }
+}

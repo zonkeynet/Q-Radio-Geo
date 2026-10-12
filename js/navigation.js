@@ -1,8 +1,7 @@
 /**
  * Q-P1NG Radio Globe navigation controller, 2026-10-12.
- * Independent implementation; contains no Radio Garden source code.
  * Compatible with the public Globe.gl 2.32.0 API.
- * Loaded by web/index.html as a local script; no additional package dependency.
+ * Loaded by index.html as a local script; no additional package dependency.
  */
 (function (root, factory) {
     'use strict';

@@ -57,6 +57,7 @@ export class Catalog {
             this.worker.postMessage({ kind: 'search', id, query, type });
         });
     }
-    countryPlaces(name) { return this.places.filter(p => p.country === name).sort((a, b) => b.count - a.count); }
+    // Cities first, then the approximate (region / country-wide) groups.
+    countryPlaces(name) { return this.places.filter(p => p.country === name).sort((a, b) => Boolean(a.loc) - Boolean(b.loc) || b.count - a.count); }
     destroy() { this.failWorker(); }
 }

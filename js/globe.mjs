@@ -1,15 +1,16 @@
 /** Merged point geometry; independent screen-space picking preserves selection.
- * No Radio Garden source or private APIs are used for globe interaction.
+ * Green dots: city-level location. Amber dots: approximate (region or country only).
  */
+const COLOR_CITY = '#00ff88', COLOR_APPROX = '#ffb703';
 export function createGlobe(container, places, onSelect, onManualInput) {
     if (typeof globalThis.Globe !== 'function') throw new Error('3D library not loaded');
     const world = Globe()(container)
-        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
-        .backgroundColor('#07090e').showAtmosphere(true).atmosphereColor('#00ff88').atmosphereAltitude(.15)
+        .globeImageUrl('https://unpkg.com/three-globe@2.45.4/example/img/earth-night.jpg')
+        .backgroundColor('#05070b').showAtmosphere(true).atmosphereColor('#00ff88').atmosphereAltitude(.13)
         .pointsData(places).pointLat('lat').pointLng('lng')
-        .pointColor(() => '#00ff88')
+        .pointColor(p => p.loc ? COLOR_APPROX : COLOR_CITY)
         .pointAltitude(.003).pointRadius(p => Math.min(.13 + Math.sqrt(p.count) * .018, .36))
-        .pointResolution(6).pointsTransitionDuration(0).pointsMerge(true)
+        .pointResolution(12).pointsTransitionDuration(0).pointsMerge(true)
         .enablePointerInteraction(false)
         .ringsData([]).ringLat('lat').ringLng('lng')
         .ringColor(() => t => `rgba(0,255,136,${Math.sqrt(Math.max(0,1-t))})`)
@@ -58,7 +59,7 @@ export function createGlobe(container, places, onSelect, onManualInput) {
             const { x, y } = hoveredEvent, place = nearest(x, y, 12);
             tooltip.hidden = !place;
             if (place) {
-                tooltip.textContent = `${place.city}, ${place.country}\n${place.count} stations in the catalog`;
+                tooltip.textContent = `${place.city}, ${place.country}\n${place.count} station${place.count === 1 ? '' : 's'}${place.loc ? ' · approximate location' : ''}`;
                 tooltip.style.left = `${Math.min(x + 14, innerWidth - 240)}px`;
                 tooltip.style.top = `${Math.max(5, y - 60)}px`;
             }
