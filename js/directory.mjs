@@ -25,11 +25,12 @@ export const initialValues = def => Object.fromEntries(def.filters.map(f => [f.k
 export const applyFilters = (def, items, values) => items.filter(it => def.filters.every(f => values[f.key] === 'all' || f.test(it, values[f.key])));
 /** How many items each option of a filter would show, given the other filters. */
 export const optionCount = (def, items, values, key, option) => applyFilters(def, items, { ...values, [key]: option }).length;
+/** Every word must appear, in any order ("racon genova"); a phrase typed without spaces also matches. */
 export function searchDirectory(def, items, values, input) {
-    const q = normalize(input), qc = compactOf(q);
+    const q = normalize(input), qc = compactOf(q), words = q.split(/\s+/).filter(Boolean);
     if (q.length < 2) return [];
-    const rank = it => (it.search.startsWith(q) ? 0 : 1) - (def.featured?.(it) ? .5 : 0);
-    return applyFilters(def, items, values).filter(it => it.search.includes(q) || (qc.length >= 3 && it.compact.includes(qc)))
+    const rank = it => (it.search.startsWith(q) ? 0 : it.search.startsWith(words[0]) ? 1 : 2) - (def.featured?.(it) ? .5 : 0);
+    return applyFilters(def, items, values).filter(it => words.every(w => it.search.includes(w)) || (qc.length >= 3 && it.compact.includes(qc)))
         .sort((a, b) => rank(a) - rank(b) || def.nameOf(a).localeCompare(def.nameOf(b))).slice(0, 40);
 }
 export function typeBadge(text, colorVar, className = 'dir-type') {

@@ -6,8 +6,10 @@ import { THEMES, themeById, savedThemeId, applyThemeCss } from './themes.mjs';
 import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory } from './directory.mjs';
 import { SDR } from './sdr.mjs';
 import { REPEATERS } from './repeaters.mjs';
+import { AVIATION } from './aviation.mjs';
+import { MARITIME } from './maritime.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card).
-const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS };
+const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };

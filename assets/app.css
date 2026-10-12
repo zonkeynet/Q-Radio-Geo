@@ -292,8 +292,11 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .mode-tab { border: 0; background: transparent; color: var(--text-dim); font: 700 9.5px var(--mono); letter-spacing: .06em; padding: 5px 9px; border-radius: 999px; white-space: nowrap; transition: background .15s, color .15s; }
 .mode-tab:hover { color: var(--text); }
 .mode-tab[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
-/* Icons only where the header gets tight; the title attribute still names each mode. */
-@media (max-width: 1360px) { .mode-label { display: none; } .mode-tab { font-size: 13px; padding: 3px 8px; } }
+/* Icons for every mode, the name only on the active one (and none on phones); title attributes name them all. */
+.mode-tab { font-size: 13px; padding: 3px 8px; }
+.mode-label { display: none; font: 700 9.5px var(--mono); letter-spacing: .06em; }
+.mode-tab[aria-selected="true"] .mode-label { display: inline; }
+@media (max-width: 640px) { .mode-tab[aria-selected="true"] .mode-label { display: none; } }
 /* Search tabs in SDR mode carry the colour of their receiver type. */
 .search-tab[style*="--type-color"]::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--type-color); vertical-align: 1px; }
 .dir-badge { color: var(--type-color); background: color-mix(in srgb, var(--type-color) 14%, transparent); }
@@ -342,7 +345,9 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 }
 @media (max-width: 640px) {
     .top-header { top: max(10px, env(safe-area-inset-top)); left: 8px; right: 8px; gap: 8px; }
-    .brand-pill { width: 100%; justify-content: center; padding: 7px 12px; }
+    .brand-pill { width: 100%; justify-content: center; gap: 9px; padding: 7px 10px; }
+    /* Five mode icons and the title share one row on phones. */
+    .brand-title { letter-spacing: .5px; white-space: nowrap; } .mode-switch { margin-left: 0; } .mode-tab { font-size: 12px; padding: 3px 5px; }
     .brand-title { font-size: 12.5px; } .brand-stats { font-size: 9.5px; }
     .search-wrapper { width: 100%; margin-top: 34px; }
     /* Up to six tabs (repeater modes): they scroll sideways instead of squeezing. */
