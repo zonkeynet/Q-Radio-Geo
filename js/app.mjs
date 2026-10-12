@@ -3,7 +3,11 @@ import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
 import { THEMES, themeById, savedThemeId, applyThemeCss } from './themes.mjs';
-import { SDR_TYPES, SDR_COLORS, loadSdr, ofType, searchSdr, createSdrExplorer } from './sdr.mjs';
+import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory } from './directory.mjs';
+import { SDR } from './sdr.mjs';
+import { REPEATERS } from './repeaters.mjs';
+// Modes besides radio: each is a directory definition (data, filters, card).
+const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };
@@ -13,7 +17,10 @@ const RADIO_TABS = [{ id: 'all', label: 'ALL' }, { id: 'country', label: 'COUNTR
 const DOT_SIZES = [5, 6, 7.5, 9];
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
-let mode = 'radio', sdr = null, sdrType = 'all', sdrExplorer = null;
+let mode = 'radio', explorer = null;
+const dirState = {}; // mode -> { items, values } once loaded
+const dir = () => DIRECTORIES[mode], state = () => dirState[mode];
+const dirShown = () => applyFilters(dir(), state().items, state().values);
 let theme = themeById(savedThemeId());
 applyThemeCss(theme);
 const radioLayer = () => ({
@@ -23,12 +30,12 @@ const radioLayer = () => ({
     describe: p => `${p.city}, ${p.country}\n${p.count} station${p.count === 1 ? '' : 's'}${p.loc ? ' · approximate location' : ''}`,
     colors: { city: '--accent', approx: '--approx' }
 });
-const sdrLayer = () => ({
-    items: ofType(sdr.receivers, sdrType),
-    groupOf: r => r.type,
-    sizeOf: r => r.featured ? 8 : 5.5,
-    describe: r => `${r.name}\n${[r.type, r.bands, r.place].filter(Boolean).join(' · ')}`,
-    colors: SDR_COLORS
+const dirLayer = () => ({
+    items: dirShown(),
+    groupOf: dir().colorOf, // the theme variable is the group
+    sizeOf: dir().sizeOf,
+    describe: dir().describe,
+    colors: Object.fromEntries(dir().palette.map(v => [v, v]))
 });
 const buttons = ['btnRandom','btnPrevStation','btnNextStation','btnPlayPause'];
 function markState({ state, detail, station }) {
@@ -176,28 +183,27 @@ function renderSearch(result) {
     if (!total) target.appendChild(node('p','player-detail search-empty','No results found.'));
     target.style.display = 'block';
 }
-const sdrBadge = type => ({ KiwiSDR: 'KIWI', OpenWebRX: 'OWRX', WebSDR: 'WEB' })[type];
-function renderSdrSearch(results) {
-    const target = $('searchResults'); target.replaceChildren();
-    if (results.length) target.appendChild(node('div', 'search-cat-header', `RECEIVERS · ${results.length}`));
-    for (const r of results) {
+function renderDirSearch(results) {
+    const d = dir(), target = $('searchResults'); target.replaceChildren();
+    if (results.length) target.appendChild(node('div', 'search-cat-header', `${d.noun.toUpperCase()} · ${results.length}`));
+    for (const it of results) {
         const item = node('button', 'search-item');
         const info = node('span', 'search-item-info');
-        info.append(node('span', 'search-item-city', `${r.featured ? '★ ' : ''}${r.name}`), node('span', 'search-item-country', [r.type, r.bands, r.place].filter(Boolean).join(' · ')));
-        const badge = node('span', 'search-item-badge sdr-badge', sdrBadge(r.type));
-        badge.style.setProperty('--type-color', `var(${SDR_COLORS[r.type]})`);
+        info.append(node('span', 'search-item-city', `${d.featured?.(it) ? '★ ' : ''}${d.nameOf(it)}`), node('span', 'search-item-country', d.subOf(it)));
+        const badge = node('span', 'search-item-badge dir-badge', d.shortBadge(it));
+        badge.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
         item.append(info, badge);
-        item.onclick = () => { hideSearch(); $('searchInput').value = ''; selectSdr(r); };
+        item.onclick = () => { hideSearch(); $('searchInput').value = ''; selectDir(it); };
         target.appendChild(item);
     }
-    if (!results.length) target.appendChild(node('p', 'player-detail search-empty', 'No receiver found.'));
+    if (!results.length) target.appendChild(node('p', 'player-detail search-empty', `No ${d.noun} found.`));
     target.style.display = 'block';
 }
 function triggerSearch() {
     const sequence = ++searchSequence; clearTimeout(searchTimer);
     const query = $('searchInput').value.trim().slice(0,120);
     if (!ready || query.length < 2) { $('searchResults').style.display = 'none'; return; }
-    if (mode === 'sdr') { renderSdrSearch(searchSdr(sdr.receivers, query, sdrType)); return; }
+    if (mode !== 'radio') { renderDirSearch(searchDirectory(dir(), state().items, state().values, query)); return; }
     searchTimer = setTimeout(async () => {
         try { const result = await catalog.search(query, searchType); if (sequence === searchSequence) renderSearch(result); }
         catch (e) { if (e.name !== 'AbortError' && sequence === searchSequence) { $('searchResults').replaceChildren(node('p','player-detail search-empty','Search unavailable. Please try again.')); $('searchResults').style.display = 'block'; } }
@@ -223,70 +229,76 @@ function setTheme(id) {
     globe?.setTheme(theme.id, theme.globe);
 }
 
-// ---------- Radio / SDR modes ----------
+// ---------- Modes: radio, or a directory (SDR receivers, repeaters) ----------
 function renderTabs() {
-    const tabs = mode === 'sdr' ? SDR_TYPES : RADIO_TABS, active = mode === 'sdr' ? sdrType : searchType;
     const box = document.querySelector('.search-tabs'); box.replaceChildren();
+    // In a directory mode the tabs are its first filter (SDR network, repeater mode).
+    const filter = mode === 'radio' ? null : dir().filters[0];
+    const tabs = filter ? filter.options : RADIO_TABS, active = filter ? state().values[filter.key] : searchType;
     for (const t of tabs) {
         const tab = node('button', `search-tab${t.id === active ? ' active' : ''}`, t.label);
         tab.dataset.type = t.id;
         tab.setAttribute('aria-pressed', String(t.id === active));
-        if (mode === 'sdr' && t.id !== 'all') tab.style.setProperty('--type-color', `var(${SDR_COLORS[t.id]})`);
+        if (t.color) tab.style.setProperty('--type-color', `var(${t.color})`);
         tab.onclick = () => {
-            if (mode === 'sdr') setSdrType(t.id);
+            if (filter) setFilter(filter.key, t.id);
             else { searchType = t.id; renderTabs(); triggerSearch(); }
         };
         box.appendChild(tab);
     }
 }
 function updateStats() {
-    $('statsDisplay').textContent = mode === 'sdr'
-        ? `${sdr.receivers.length.toLocaleString('en')} SDR RECEIVERS · 3 NETWORKS`
+    $('statsDisplay').textContent = mode !== 'radio' ? dir().stats(state().items)
         : `${catalog.places.length.toLocaleString('en')} PLACES · ${catalog.stations.length.toLocaleString('en')} STATIONS`;
 }
-function renderSdrSidebar() {
-    const box = $('sdrTypeGrid'); box.replaceChildren();
-    for (const t of SDR_TYPES) {
-        const count = ofType(sdr.receivers, t.id).length;
-        const button = node('button', `capital-pill${t.id === sdrType ? ' active' : ''}`);
-        const name = node('span', 'capital-name', t.id === 'all' ? 'All receivers' : t.id);
-        if (t.id !== 'all') { const dot = node('i', 'legend-dot'); dot.style.background = `var(${SDR_COLORS[t.id]})`; name.prepend(dot); }
-        button.append(name, node('span', 'capital-count', count.toLocaleString('en')));
-        button.setAttribute('aria-pressed', String(t.id === sdrType));
-        button.onclick = () => setSdrType(t.id);
-        box.appendChild(button);
+/** Sidebar: every filter of the mode as a list of options with how many items each would show. */
+function renderDirSidebar() {
+    const d = dir(), { items, values } = state(), box = $('dirFilters'); box.replaceChildren();
+    for (const f of d.filters) {
+        if (d.filters.length > 1) box.appendChild(node('p', 'dir-sub', f.label));
+        for (const o of f.options) {
+            const button = node('button', `capital-pill${o.id === values[f.key] ? ' active' : ''}`);
+            const name = node('span', 'capital-name', o.name);
+            if (o.color) { const dot = node('i', 'legend-dot'); dot.style.background = `var(${o.color})`; name.prepend(dot); }
+            button.append(name, node('span', 'capital-count', optionCount(d, items, values, f.key, o.id).toLocaleString('en')));
+            button.setAttribute('aria-pressed', String(o.id === values[f.key]));
+            button.onclick = () => setFilter(f.key, o.id);
+            box.appendChild(button);
+        }
     }
+    $('dirCredit').textContent = d.credit;
 }
-function setSdrType(type) {
-    sdrType = type;
-    renderTabs(); renderSdrSidebar();
-    sdrExplorer.setType(type); sdrExplorer.open();
-    globe?.setLayer(sdrLayer());
+function setFilter(key, value) {
+    state().values[key] = value;
+    renderTabs(); renderDirSidebar();
+    explorer.use(dir(), state().items, state().values); explorer.open();
+    globe?.setLayer(dirLayer());
     triggerSearch();
 }
-function selectSdr(r) {
-    sdrExplorer.select(r);
-    globe?.navigation.flyTo({ lat: r.lat, lng: r.lng, altitude: .5 }, 600);
-    globe?.world.ringMaxRadius(.8).ringsData([{ lat: r.lat, lng: r.lng }]);
+function selectDir(it) {
+    explorer.select(it);
+    globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: .5 }, 600);
+    globe?.world.ringMaxRadius(.8).ringsData([{ lat: it.lat, lng: it.lng }]);
 }
 async function setMode(next) {
-    if (next === 'sdr' && !sdr) {
-        try { sdr = await loadSdr(); sdrExplorer.setData(sdr.receivers); }
-        catch { $('globeNotice').textContent = 'SDR list unavailable. Check data/sdr.json and reload.'; $('globeNotice').hidden = false; return; }
+    const def = DIRECTORIES[next];
+    if (def && !dirState[next]) {
+        try { dirState[next] = { items: await loadDirectory(def), values: initialValues(def) }; }
+        catch { $('globeNotice').textContent = `${def.sidebarTitle} list unavailable. Check ${def.dataUrl} and reload.`; $('globeNotice').hidden = false; return; }
     }
-    mode = next;
+    mode = def ? next : 'radio';
     document.documentElement.dataset.mode = mode;
     try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
     for (const t of document.querySelectorAll('.mode-tab')) t.setAttribute('aria-selected', String(t.dataset.mode === mode));
     hideSearch(); $('searchInput').value = '';
-    $('searchInput').placeholder = mode === 'sdr' ? 'Search receiver, place or antenna…' : 'Search country, city or station…';
-    $('btnRandom').title = mode === 'sdr' ? 'Show a random SDR receiver' : 'Listen to a random station somewhere in the world';
-    $('sidebarTitle').textContent = mode === 'sdr' ? 'SDR networks' : 'Shortcuts';
-    $('sidebarRadio').hidden = mode !== 'radio'; $('sidebarSdr').hidden = mode !== 'sdr';
+    $('searchInput').placeholder = def ? def.placeholder : 'Search country, city or station…';
+    $('btnRandom').title = def ? def.randomTitle : 'Listen to a random station somewhere in the world';
+    $('sidebarTitle').textContent = def ? def.sidebarTitle : 'Shortcuts';
+    $('sidebarRadio').hidden = Boolean(def); $('sidebarDir').hidden = !def;
     renderTabs(); updateStats();
-    if (mode === 'sdr') { renderSdrSidebar(); sdrExplorer.setType(sdrType); sdrExplorer.open(); }
+    if (def) { renderDirSidebar(); explorer.use(def, state().items, state().values); explorer.open(); }
     else $('countryDrawer').hidden = true;
-    globe?.setLayer(mode === 'sdr' ? sdrLayer() : radioLayer());
+    globe?.setLayer(def ? dirLayer() : radioLayer());
 }
 function initShortcutsPanel() {
     const panel = $('sidebarShortcuts'), toggle = $('btnToggleShortcuts');
@@ -358,19 +370,19 @@ async function start() {
     $('btnNextStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex+1)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnPrevStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex-1+cityStations.length)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnRandom').onclick = () => {
-        if (mode === 'sdr') {
-            const pool = ofType(sdr.receivers, sdrType);
-            if (pool.length) selectSdr(pool[Math.floor(Math.random() * pool.length)]);
+        if (mode !== 'radio') {
+            const pool = dirShown();
+            if (pool.length) selectDir(pool[Math.floor(Math.random() * pool.length)]);
             return;
         }
         if (!catalog?.stations.length) return;
         const station = catalog.stations[Math.floor(Math.random()*catalog.stations.length)];
         selectPlace(catalog.byId.get(station.place_id), station.id);
     };
-    sdrExplorer = createSdrExplorer({
+    explorer = createExplorer({
         drawer: $('countryDrawer'), title: $('countryDrawerTitle'), meta: $('countryDrawerMeta'), list: $('countryCitiesList'),
         getCenter: () => globe ? globe.world.pointOfView() : { lat: 41.9, lng: 12.5 },
-        onPick: selectSdr
+        onPick: selectDir
     });
     $('countryDrawerClose').onclick = () => { $('countryDrawer').hidden = true; };
     $('searchInput').oninput = triggerSearch;
@@ -386,7 +398,7 @@ async function start() {
         ready = true; $('btnRandom').disabled = false; initShortcuts();
         await catalog.initializeSearch();
         try {
-            globe = createGlobe($('globeViz'), item => mode === 'sdr' ? selectSdr(item) : selectPlace(item), () => updateRotate(false));
+            globe = createGlobe($('globeViz'), item => mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false));
             globe.setLayer(radioLayer());
             setTheme(theme.id);
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
@@ -404,9 +416,9 @@ async function start() {
         }
         $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
         for (const t of document.querySelectorAll('.mode-tab')) t.onclick = () => setMode(t.dataset.mode);
-        let savedMode = 'radio';
-        try { savedMode = localStorage.getItem('qradio.mode') === 'sdr' ? 'sdr' : 'radio'; } catch { /* not remembered */ }
-        if (savedMode === 'sdr') await setMode('sdr');
+        let savedMode = null;
+        try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
+        if (DIRECTORIES[savedMode]) await setMode(savedMode);
     } catch (e) {
         $('playerTitle').textContent = 'Loading failed';
         $('playerDetail').textContent = 'Serve the folder over HTTP/HTTPS, not via file://. Check the data/ files and app-config.json, then reload.';

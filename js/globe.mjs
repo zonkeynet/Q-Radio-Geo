@@ -46,13 +46,14 @@ export function createGlobe(container, onSelect, onManualInput) {
     // Square GL points become round dots with a dark rim, readable on bright city lights and on
     // dark oceans alike (no extra texture or library needed).
     function roundDots(retries = 30) {
-        let found = 0;
-        world.scene().traverse(o => {
-            if (o.__globeObjType !== 'particles') return;
-            found++;
+        let missing = 0;
+        for (const set of dotSets) {
+            // The particle layer binds each set to its THREE.Points object once it has built it.
+            const o = set.__threeObjParticles;
+            if (!o) { missing++; continue; }
             // Drawn after the globe and its map tiles, so the imagery never covers them.
             o.renderOrder = 10;
-            if (o.material.userData.round) return;
+            if (o.material.userData.round) continue;
             const m = o.material;
             m.userData.round = true; m.depthWrite = false;
             // The particle layer resets `transparent` on every colour update; keep the soft edge.
@@ -62,9 +63,9 @@ export function createGlobe(container, onSelect, onManualInput) {
                     'vec4 diffuseColor = vec4( diffuse, opacity );\n\tfloat dotDist = length( gl_PointCoord - vec2( 0.5 ) );\n\tif ( dotDist > 0.5 ) discard;\n\tdiffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * 0.12, smoothstep( 0.3, 0.4, dotDist ) );\n\tdiffuseColor.a *= 1.0 - smoothstep( 0.44, 0.5, dotDist );');
             };
             m.needsUpdate = true;
-        });
-        // The particle layer builds its objects on the next update: retry until all of them exist.
-        if (found < dotSets.length && retries) setTimeout(() => roundDots(retries - 1), 100);
+        }
+        // Objects are built on the layer's next update: retry until every set has one.
+        if (missing && retries) setTimeout(() => roundDots(retries - 1), 100);
     }
     function applyDotColors() {
         const colors = Object.fromEntries(Object.entries(layer.colors).map(([group, name]) => [group, cssColor(name)]));

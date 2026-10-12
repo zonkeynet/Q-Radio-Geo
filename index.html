@@ -41,8 +41,9 @@
                 <div class="brand-stats" id="statsDisplay">Loading catalog…</div>
             </div>
             <div class="mode-switch" role="tablist" aria-label="What to explore">
-                <button role="tab" class="mode-tab" data-mode="radio" aria-selected="true" title="Radio stations">📻 RADIO</button>
-                <button role="tab" class="mode-tab" data-mode="sdr" aria-selected="false" title="Public web SDR receivers">📡 SDR</button>
+                <button role="tab" class="mode-tab" data-mode="radio" aria-selected="true" title="Radio stations">📻<span class="mode-label"> RADIO</span></button>
+                <button role="tab" class="mode-tab" data-mode="sdr" aria-selected="false" title="Public web SDR receivers">📡<span class="mode-label"> SDR</span></button>
+                <button role="tab" class="mode-tab" data-mode="repeaters" aria-selected="false" title="Amateur radio repeaters">📶<span class="mode-label"> REPEATERS</span></button>
             </div>
         </div>
 
@@ -89,11 +90,11 @@
                     <small class="legend-sources">Data: <a href="https://www.radio-browser.info" target="_blank" rel="noopener noreferrer">Radio Browser</a>, <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> (CC BY 4.0), <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></small>
                 </div>
             </div>
-            <div class="sidebar-inner" id="sidebarSdr" hidden>
-                <div class="capitals-grid" id="sdrTypeGrid"></div>
+            <div class="sidebar-inner" id="sidebarDir" hidden>
+                <div class="capitals-grid" id="dirFilters"></div>
                 <div class="legend">
-                    <span>Click a dot or a receiver to open it on its own site.</span>
-                    <small class="legend-sources">Data: <a href="https://www.receiverbook.de" target="_blank" rel="noopener noreferrer">receiverbook.de</a>, <a href="http://rx.linkfanel.net/" target="_blank" rel="noopener noreferrer">KiwiSDR list</a></small>
+                    <span>Click a dot or a list item for its details.</span>
+                    <small class="legend-sources" id="dirCredit"></small>
                 </div>
             </div>
         </div>
