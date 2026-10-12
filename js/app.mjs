@@ -2,12 +2,14 @@ import { Catalog, loadJSON } from './catalog.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
+import { THEMES, themeById, savedThemeId, applyThemeCss } from './themes.mjs';
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };
 const CHIP_PAGE = 120;
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
+let theme = themeById(savedThemeId()), themeColors = applyThemeCss(theme);
 const buttons = ['btnRandom','btnPrevStation','btnNextStation','btnPlayPause'];
 function markState({ state, detail, station }) {
     const labels = { idle: 'READY', ready: 'PRESS PLAY', buffering: 'TUNING', playing: 'ON AIR', paused: 'PAUSED', ended: 'ENDED', error: 'ERROR' };
@@ -175,7 +177,67 @@ function initShortcuts() {
         button.onclick = () => selectPlace(place); container.appendChild(button);
     }
 }
+function setTheme(id) {
+    theme = themeById(id);
+    themeColors = applyThemeCss(theme);
+    for (const item of $('themeMenu').children) item.setAttribute('aria-checked', String(item.dataset.id === theme.id));
+    globe?.setTheme(theme.id, theme.globe, themeColors);
+}
+function initShortcutsPanel() {
+    const panel = $('sidebarShortcuts'), toggle = $('btnToggleShortcuts');
+    const apply = collapsed => {
+        panel.classList.toggle('collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.setAttribute('aria-label', collapsed ? 'Expand shortcuts' : 'Minimize shortcuts');
+        toggle.title = collapsed ? 'Expand' : 'Minimize';
+        $('sidebarBody').inert = collapsed; // nothing focusable inside while folded away
+    };
+    let collapsed = false;
+    try { collapsed = localStorage.getItem('qradio.shortcuts') === 'collapsed'; } catch { /* not remembered */ }
+    apply(collapsed);
+    toggle.onclick = () => {
+        collapsed = !collapsed; apply(collapsed);
+        try { localStorage.setItem('qradio.shortcuts', collapsed ? 'collapsed' : 'open'); } catch { /* not remembered */ }
+    };
+}
+function initThemeMenu() {
+    const menu = $('themeMenu'), button = $('btnTheme'), panel = $('sidebarShortcuts');
+    let pushed = 0;
+    const setOpen = open => {
+        menu.hidden = !open;
+        button.setAttribute('aria-expanded', String(open));
+        // The shortcuts panel slides down under the open menu instead of being covered by it
+        // (nothing to move when the panel is hidden on small screens).
+        pushed = open && panel.offsetParent ? Math.max(0, Math.round(menu.getBoundingClientRect().bottom + 10 - (panel.getBoundingClientRect().top - pushed))) : 0;
+        document.documentElement.style.setProperty('--menu-push', `${pushed}px`);
+        if (open) menu.querySelector('[aria-checked="true"]')?.focus();
+    };
+    const close = () => { if (!menu.hidden) setOpen(false); };
+    for (const t of THEMES) {
+        // data-preview scopes the theme's colours to the item, so the swatch shows them.
+        const item = node('button', 'theme-option');
+        Object.assign(item.dataset, { id: t.id, preview: t.id });
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(t.id === theme.id));
+        const swatch = node('span', 'theme-swatch');
+        swatch.append(node('i'), node('i'), node('i'));
+        const text = node('span', 'theme-text');
+        text.append(node('b', '', t.label), node('small', '', t.note));
+        item.append(swatch, text);
+        item.onclick = () => { setTheme(t.id); close(); button.focus(); };
+        menu.appendChild(item);
+    }
+    button.onclick = () => setOpen(menu.hidden);
+    document.addEventListener('click', e => { if (!e.target.closest?.('.theme-picker')) close(); });
+    menu.addEventListener('keydown', e => {
+        const items = [...menu.children], i = items.indexOf(document.activeElement);
+        if (e.key === 'Escape') { close(); button.focus(); }
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
+    });
+}
 async function start() {
+    initThemeMenu();
+    initShortcutsPanel();
     for (const id of buttons) $(id).disabled = true;
     $('btnAutoRotate').disabled = true;
     // Overlays above the player follow its real height (it grows with the consent bar and station chips).
@@ -202,7 +264,7 @@ async function start() {
         for (const t of document.querySelectorAll('.search-tab')) { t.classList.toggle('active', t === tab); t.setAttribute('aria-pressed', String(t === tab)); }
         searchType = tab.dataset.type; triggerSearch();
     };
-    document.addEventListener('click', e => { if (!e.target.closest('.search-wrapper')) hideSearch(); });
+    document.addEventListener('click', e => { if (!e.target.closest?.('.search-wrapper')) hideSearch(); });
     try {
         const [places, stations, countries, summary, runtimeConfig] = await Promise.all(['data/places.json','data/stations.json','data/countries.json','data/summary.json','app-config.json'].map(p => loadJSON(p)));
         if (![places,stations,countries].every(Array.isArray) || !['direct','proxy'].includes(runtimeConfig.streamMode)) throw new Error('Invalid catalog or configuration');
@@ -213,6 +275,7 @@ async function start() {
         await catalog.initializeSearch();
         try {
             globe = createGlobe($('globeViz'), places, selectPlace, () => updateRotate(false));
+            setTheme(theme.id);
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
             $('btnResetView').onclick = () => globe.navigation.flyTo({lat:41.9,lng:12.5,altitude:2.2});
             $('btnAutoRotate').disabled = false;

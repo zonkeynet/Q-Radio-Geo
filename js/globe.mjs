@@ -1,20 +1,24 @@
 /** Merged point geometry; independent screen-space picking preserves selection.
- * Green dots: city-level location. Amber dots: approximate (region or country only).
+ * Dot colours: city-level location vs approximate (region or country only), set by the theme.
+ * The canvas is transparent: the page background (per theme) shows around the globe.
  */
-const COLOR_CITY = '#00ff88', COLOR_APPROX = '#ffb703';
+let landFeatures = null;
+const loadLand = () => landFeatures ??= fetch(new URL('assets/land.geojson', document.baseURI))
+    .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+    .then(g => g.features)
+    .catch(() => { landFeatures = null; return []; });
+const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) || 0).join(',');
 export function createGlobe(container, places, onSelect, onManualInput) {
     if (typeof globalThis.Globe !== 'function') throw new Error('3D library not loaded');
     const world = Globe()(container)
-        .globeImageUrl('https://unpkg.com/three-globe@2.45.4/example/img/earth-night.jpg')
-        .backgroundColor('#05070b').showAtmosphere(true).atmosphereColor('#00ff88').atmosphereAltitude(.13)
+        .backgroundColor('rgba(0,0,0,0)').showAtmosphere(true)
         .pointsData(places).pointLat('lat').pointLng('lng')
-        .pointColor(p => p.loc ? COLOR_APPROX : COLOR_CITY)
         .pointAltitude(.003).pointRadius(p => Math.min(.13 + Math.sqrt(p.count) * .018, .36))
         .pointResolution(8).pointsTransitionDuration(0).pointsMerge(true)
         .enablePointerInteraction(false)
         .ringsData([]).ringLat('lat').ringLng('lng')
-        .ringColor(() => t => `rgba(0,255,136,${Math.sqrt(Math.max(0,1-t))})`)
-        .ringMaxRadius(2.5).ringPropagationSpeed(2).ringRepeatPeriod(850);
+        .ringMaxRadius(2.5).ringPropagationSpeed(2).ringRepeatPeriod(850)
+        .hexPolygonResolution(3).hexPolygonAltitude(.001).hexPolygonsTransitionDuration(0);
     world.pointOfView({ lat: 41.9, lng: 12.5, altitude: 2.2 }, 0);
     world.controls().autoRotate = false; world.controls().autoRotateSpeed = .5;
     const navigation = QRadioNavigation.create(world, container, { onUserInput: onManualInput });
@@ -85,9 +89,46 @@ export function createGlobe(container, places, onSelect, onManualInput) {
         e.preventDefault(); navigation.cancel(); world.pauseAnimation();
         const notice = document.getElementById('globeNotice'); notice.textContent = 'Graphics context lost. The catalog is still available; reload to restore the globe.'; notice.hidden = false;
     }, { signal });
+    // Theme switching. Globe.gl loads a texture asynchronously and then clears the material
+    // colour, and an empty image URL does not remove the old texture: both are handled here.
+    const material = world.globeMaterial(), Color = material.emissive.constructor;
+    const textures = new Map(), loading = new Set();
+    let themeToken = 0, themeId = null, current = null;
+    function paint() {
+        const texture = current.image ? textures.get(current.image) : null;
+        material.map = texture || null;
+        // Until its texture arrives a textured theme shows a dark sphere, not a white one.
+        material.color = new Color(texture ? current.tint || '#ffffff' : current.base || '#0a0f18');
+        material.needsUpdate = true;
+    }
+    function loadTexture(path) {
+        if (textures.has(path) || loading.has(path)) return;
+        loading.add(path);
+        const href = new URL(path, document.baseURI).href, started = performance.now();
+        world.globeImageUrl(path);
+        (function waitForTexture() {
+            if (material.map?.image?.src === href) { textures.set(path, material.map); loading.delete(path); paint(); }
+            else if (performance.now() - started < 30000) setTimeout(waitForTexture, 100);
+            else { loading.delete(path); paint(); }
+        })();
+    }
+    function setTheme(id, theme, colors) {
+        const token = ++themeToken; themeId = id; current = theme;
+        world.atmosphereColor(theme.atmosphere).atmosphereAltitude(theme.atmosphereAltitude).bumpImageUrl(theme.bump || null);
+        world.pointColor(p => p.loc ? colors.approx : colors.city);
+        world.ringColor(() => t => `rgba(${rgb(colors.city)},${Math.sqrt(Math.max(0, 1 - t))})`);
+        if (theme.image) loadTexture(theme.image);
+        paint();
+        if (!theme.land) world.hexPolygonsData([]);
+        else loadLand().then(features => {
+            if (token !== themeToken) return;
+            world.hexPolygonsData(features).hexPolygonColor(() => theme.land)
+                .hexPolygonUseDots(Boolean(theme.landDots)).hexPolygonMargin(theme.landDots ? .45 : .22);
+        });
+    }
     return {
-        world, navigation,
-        diagnostics: () => ({ ...navigation.getSnapshot(), points: places.length, pointsMerged: true, pixelRatio, renderer: renderer.info?.render }),
+        world, navigation, setTheme,
+        diagnostics: () => ({ ...navigation.getSnapshot(), points: places.length, pointsMerged: true, pixelRatio, theme: themeId, textured: Boolean(material.map), renderer: renderer.info?.render }),
         destroy() { abort.abort(); clearTimeout(hoverTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); }
     };
 }

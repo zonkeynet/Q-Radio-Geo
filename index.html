@@ -61,17 +61,30 @@
         <div class="action-btns">
             <button class="hud-btn" id="btnRandom" title="Listen to a random station somewhere in the world">🎲 RANDOM</button>
             <button class="hud-btn" id="btnAutoRotate" title="Toggle automatic globe rotation" aria-pressed="false">🌐 ROTATE</button>
+            <div class="theme-picker">
+                <button class="hud-btn" id="btnTheme" title="Change the look of the globe" aria-haspopup="menu" aria-expanded="false" aria-controls="themeMenu">🎨 THEME</button>
+                <div class="theme-menu" id="themeMenu" role="menu" aria-label="Themes" hidden></div>
+            </div>
         </div>
     </header>
 
     <!-- Sidebar: Shortcuts + legend -->
     <aside class="hud-overlay sidebar-panel" id="sidebarShortcuts">
-        <div class="sidebar-title"><span>Shortcuts</span><span aria-hidden="true">📡</span></div>
-        <div class="capitals-grid" id="capitalsGrid"></div>
-        <div class="legend">
-            <span><i class="legend-dot"></i>City</span>
-            <span><i class="legend-dot approx"></i>Approximate (region / country)</span>
-            <small class="legend-sources">Data: <a href="https://www.radio-browser.info" target="_blank" rel="noopener noreferrer">Radio Browser</a>, <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> (CC BY 4.0), <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></small>
+        <div class="sidebar-title">
+            <span>Shortcuts</span>
+            <button class="panel-toggle" id="btnToggleShortcuts" aria-expanded="true" aria-controls="sidebarBody" aria-label="Minimize shortcuts" title="Minimize">
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+            </button>
+        </div>
+        <div class="sidebar-body" id="sidebarBody">
+            <div class="sidebar-inner">
+                <div class="capitals-grid" id="capitalsGrid"></div>
+                <div class="legend">
+                    <span><i class="legend-dot"></i>City</span>
+                    <span><i class="legend-dot approx"></i>Approximate (region / country)</span>
+                    <small class="legend-sources">Data: <a href="https://www.radio-browser.info" target="_blank" rel="noopener noreferrer">Radio Browser</a>, <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> (CC BY 4.0), <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></small>
+                </div>
+            </div>
         </div>
     </aside>
 
