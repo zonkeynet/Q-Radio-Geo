@@ -10,7 +10,7 @@ export function createGlobe(container, places, onSelect, onManualInput) {
         .pointsData(places).pointLat('lat').pointLng('lng')
         .pointColor(p => p.loc ? COLOR_APPROX : COLOR_CITY)
         .pointAltitude(.003).pointRadius(p => Math.min(.13 + Math.sqrt(p.count) * .018, .36))
-        .pointResolution(12).pointsTransitionDuration(0).pointsMerge(true)
+        .pointResolution(8).pointsTransitionDuration(0).pointsMerge(true)
         .enablePointerInteraction(false)
         .ringsData([]).ringLat('lat').ringLng('lng')
         .ringColor(() => t => `rgba(0,255,136,${Math.sqrt(Math.max(0,1-t))})`)

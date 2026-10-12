@@ -1,29 +1,33 @@
 {
  "schema_version": 2,
- "generated_at": "2026-10-12T20:22:26.476Z",
- "places": 4465,
- "stations": 34448,
- "countries": 211,
- "hls_stations": 2830,
+ "generated_at": "2026-10-12T21:27:17.903Z",
+ "places": 6258,
+ "stations": 38830,
+ "countries": 216,
+ "hls_stations": 3192,
  "location_precision": {
-  "city": 13400,
-  "point": 168,
-  "region": 3604,
-  "national": 17276
+  "city": 13109,
+  "linked": 2360,
+  "matched": 5926,
+  "named": 2567,
+  "region": 2293,
+  "national": 12575
  },
  "filtered_out": {
   "source": 61439,
   "not_working": 0,
-  "not_https": 22241,
+  "not_https": 15120,
+  "https_upgraded": 7121,
   "ssl_error": 694,
   "via_radio_garden": 12,
   "no_name": 2,
-  "duplicates": 3812,
-  "no_location": 230
+  "duplicates": 6230,
+  "no_location": 551
  },
  "sources": {
-  "stations": "Radio Browser, https://www.radio-browser.info (working HTTPS streams only)",
+  "stations": "Radio Browser, https://www.radio-browser.info (working streams playable over HTTPS; http-only ones kept when their server also answers on https)",
   "cities": "GeoNames cities1000, https://www.geonames.org, CC BY 4.0",
-  "regions": "Natural Earth admin-1 states/provinces, https://www.naturalearthdata.com, public domain"
+  "regions": "Natural Earth admin-1 states/provinces, https://www.naturalearthdata.com, public domain",
+  "positions": "Station positions without coordinates matched by name and country against radio_globe_dataset.csv (Radio Garden catalog export)"
  }
 }

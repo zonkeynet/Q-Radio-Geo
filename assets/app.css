@@ -100,6 +100,9 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .legend span { display: flex; align-items: center; gap: 7px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 6px var(--emerald-glow); }
 .legend-dot.approx { background: var(--amber); box-shadow: 0 0 6px rgba(255, 183, 3, 0.4); }
+.legend-sources { margin-top: 3px; font-size: 9.5px; line-height: 1.45; color: var(--text-faint); }
+.legend-sources a { color: var(--text-dim); text-decoration: none; }
+.legend-sources a:hover { color: var(--cyan); text-decoration: underline; }
 
 /* ---------- Zoom ---------- */
 .zoom-widget { bottom: calc(var(--player-h) + 30px); right: 20px; display: flex; flex-direction: column; gap: 6px; pointer-events: auto; z-index: 20; }
@@ -187,11 +190,6 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .station-tag.more { color: var(--cyan); }
 .station-empty { font-size: 11px; color: var(--text-faint); padding: 5px 0; }
 
-/* ---------- Credits ---------- */
-.credits { left: 20px; bottom: calc(var(--player-h) + 24px); font-size: 10px; color: var(--text-faint); pointer-events: auto; max-width: calc(100vw - 100px); }
-.credits a { color: var(--text-dim); text-decoration: none; }
-.credits a:hover { color: var(--cyan); text-decoration: underline; }
-
 /* ---------- Loader ---------- */
 .loader-splash { position: absolute; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
 .loader-radar { width: 76px; height: 76px; border: 2px solid var(--emerald); border-radius: 50%; position: relative; box-shadow: 0 0 25px var(--emerald-glow); animation: spin 2s linear infinite; }
@@ -225,7 +223,6 @@ button:disabled { opacity: .35; cursor: not-allowed; }
     .zoom-widget { right: 8px; bottom: calc(var(--player-h) + 34px); gap: 5px; } .zoom-btn { width: 34px; height: 34px; }
     .country-drawer { left: 8px; right: 8px; width: auto; top: 172px; bottom: calc(var(--player-h) + 40px); min-height: 120px; }
     .globe-notice { top: 210px; font-size: 11px; }
-    .credits { left: 10px; bottom: calc(var(--player-h) + 14px); font-size: 9px; }
     .reticle-container { width: 80px; height: 80px; } .reticle-ring { width: 52px; height: 52px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
