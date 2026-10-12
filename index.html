@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; media-src 'self' https:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Q-P1NG Radio Globe</title>
+<link rel="stylesheet" href="./assets/app.css"><link rel="icon" href="data:,">
+<!-- Pinned upstream version; no Radio Garden JavaScript is included. -->
+<script defer src="https://unpkg.com/globe.gl@2.32.0/dist/globe.gl.min.js"></script>
+<script defer src="./js/navigation.js"></script>
+<script type="module" src="./js/app.mjs"></script>
+</head><body>
+
+
+    <!-- Splash Loader -->
+    <div id="loaderSplash" class="loader-splash">
+        <div class="loader-radar"></div>
+        <div class="loader-text">Loading catalog and globe…</div>
+    </div>
+
+    <!-- 3D Globe WebGL Container -->
+    <main id="globeViz" aria-label="Interactive radio globe"></main><div id="pointTooltip" class="point-tooltip" hidden></div>
+
+    <p id="globeNotice" class="globe-notice" hidden></p>
+    <!-- Radio Globe Targeting Reticle (Center Screen) -->
+    <div class="reticle-container">
+        <div class="reticle-crosshair h"></div>
+        <div class="reticle-crosshair v"></div>
+        <div class="reticle-ring"></div>
+        <div class="reticle-dot"></div>
+    </div>
+
+    <!-- HUD Overlay: Top Bar -->
+    <header class="hud-overlay top-header">
+        <div class="brand-pill">
+            <div class="brand-dot"></div>
+            <div>
+                <div class="brand-title">Q-P1NG <span>RADIO GLOBE</span></div>
+                <div class="brand-stats" id="statsDisplay">Loading catalog…</div>
+            </div>
+        </div>
+
+        <!-- Search Bar with Category Filters -->
+        <div class="search-wrapper">
+            <div class="search-tabs">
+                <button class="search-tab active" data-type="all">ALL</button>
+                <button class="search-tab" data-type="country">🌍 COUNTRIES</button>
+                <button class="search-tab" data-type="city">🏙️ CITIES</button>
+                <button class="search-tab" data-type="station">📻 STATIONS</button>
+            </div>
+            <div class="search-input-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" aria-label="Search the catalog" aria-controls="searchResults" class="search-input" placeholder="Search country, city or radio station..." autocomplete="off">
+            </div>
+            <div id="searchResults" class="search-results" aria-label="Search results"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-btns">
+            <button class="hud-btn" id="btnRandom" title="Listen to a random radio station somewhere in the world">
+                🎲 RANDOM
+            </button>
+            <button class="hud-btn" id="btnAutoRotate" title="Toggle automatic globe rotation">
+                🌐 AUTO-ROTATE
+            </button>
+        </div>
+    </header>
+
+    <!-- Sidebar: Top Radio Capitals -->
+    <aside class="hud-overlay sidebar-panel" id="sidebarShortcuts">
+        <div class="sidebar-title">
+            <span>Shortcuts</span>
+            <span>📡</span>
+        </div>
+        <div class="capitals-grid" id="capitalsGrid">
+            <!-- Inserted dynamically via JS -->
+        </div>
+    </aside>
+
+    <!-- Tactical Zoom Widget -->
+    <div class="hud-overlay zoom-widget">
+        <button class="zoom-btn" id="btnZoomIn" aria-label="Zoom in on the globe" title="Zoom in">+</button>
+        <button class="zoom-btn" id="btnZoomOut" aria-label="Zoom out of the globe" title="Zoom out">−</button>
+        <button class="zoom-btn" id="btnResetView" title="Reset global view">🎯</button>
+    </div>
+
+    <!-- Country Explorer Drawer -->
+    <aside class="hud-overlay country-drawer" id="countryDrawer" style="display: none;">
+        <div class="country-drawer-header">
+            <div>
+                <span class="country-drawer-title" id="countryDrawerTitle">🌍 Italy</span>
+                <div class="country-drawer-sub" id="countryDrawerMeta">559 cities · 1,285 stations</div>
+            </div>
+            <button class="country-drawer-close" id="countryDrawerClose" aria-label="Close city list">✕</button>
+        </div>
+        <div class="country-cities-list" id="countryCitiesList"></div>
+    </aside>
+
+    <!-- HUD Overlay: Bottom Radio Player -->
+    <footer class="hud-overlay bottom-player">
+        <div class="player-row">
+            <!-- Meta & Info -->
+            <div class="station-meta">
+                <div class="station-header">
+                    <span class="station-title" id="playerTitle">Select a point on the map</span>
+                    <span class="status-badge" id="playerStatus">
+                        <span class="status-dot"></span>
+                        <span id="playerStatusText" role="status" aria-live="polite">READY</span>
+                    </span>
+                </div>
+                <div class="station-location">
+                    <span>📍</span>
+                    <span class="station-location-city" id="playerCity">Explore the planet</span>
+                    <span id="playerCountry">· Click the green dots</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls-group">
+                <button class="btn-icon" id="btnPrevStation" title="Previous station in this city">⏮</button>
+                <button class="btn-play" id="btnPlayPause" title="Play / Pause">▶</button>
+                <button class="btn-icon" id="btnNextStation" title="Next station in this city">⏭</button>
+            </div>
+
+            <!-- Visualizer & Volume -->
+            <div class="right-tools">
+                <span id="playbackIndicator" class="playback-indicator" title="Playback status, not a spectrum analysis" aria-hidden="true">▁ ▃ ▆ ▃ ▁</span>
+                <div class="volume-control">
+                    <span style="font-size: 13px; color: var(--emerald);">🔊</span>
+                    <input type="range" id="volumeSlider" aria-label="Volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
+                </div>
+            </div>
+        </div>
+
+        <p id="playerDetail" class="player-detail">Pick a city or search for a station. The catalog is not a live availability check.</p>
+        <div class="audio-consent" id="audioConsent">
+            <span>To listen, the audio provider will be contacted and will be able to see your IP address. Nothing plays until you consent.</span>
+            <button id="btnAcceptAudio" class="hud-btn">ENABLE AUDIO</button>
+        </div>
+        <div class="player-secondary"><span id="modeBadge">STATIC CATALOG</span>
+            <a id="btnExternal" hidden target="_blank" rel="noopener noreferrer">Open on Radio Garden ↗</a>
+            <button id="btnRevokeAudio" hidden>Disable audio</button></div>
+        <!-- Multi-Station Drawer in City -->
+        <div class="stations-drawer" id="cityStationsDrawer" style="display: none;">
+            <!-- Station tags inserted dynamically -->
+        </div>
+    </footer>
+
+    <!-- Audio Element Hidden -->
+    <div id="audioHolder" hidden></div>
+
+
+</body></html>
