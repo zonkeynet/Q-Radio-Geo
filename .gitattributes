@@ -1,0 +1,2 @@
+# Bundled libraries are checked with SRI hashes: keep their bytes exactly, whatever core.autocrlf says.
+vendor/** -text
