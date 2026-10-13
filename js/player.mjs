@@ -6,8 +6,8 @@ const ERRORS = {
     4: 'Unsupported format, or the station server refused the connection.'
 };
 // HLS (.m3u8) needs hls.js where the browser has no native support (Chrome, Firefox desktop).
-// Loaded on demand, pinned and integrity-checked.
-const HLS_SRC = 'https://unpkg.com/hls.js@1.5.17/dist/hls.light.min.js';
+// Loaded on demand from the site's own copy (vendor/, Apache 2.0), integrity-checked.
+const HLS_SRC = new URL('../vendor/hls.light-1.5.17.min.js', import.meta.url).href;
 const HLS_SRI = 'sha384-aUXIo1rkYXsnqzYlykJMPPxPku80rMufp2z0gLNU59eAyfNRhP87hllql3hwVjUZ';
 let hlsLoader = null;
 /** hls.js wherever Media Source Extensions exist: recent Chrome also claims native HLS but plays fewer streams.

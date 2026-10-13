@@ -4,7 +4,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="World radio, live news and TV, SDR receivers, repeaters, aviation and maritime aids, conflict, migration, censorship, Tor and public Wi-Fi on one interactive 3D globe. No account, no ads, no trackers.">
 <meta name="theme-color" content="#05070b">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; media-src 'self' https: blob:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; media-src 'self' https: blob:; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Q-P1NG Globe</title>
 <link rel="canonical" href="https://globe.qp1ng.com/">
 <!-- Link previews (chat apps, social networks) -->
@@ -23,8 +23,8 @@
 <meta name="apple-mobile-web-app-title" content="Q-P1NG Globe">
 <link rel="stylesheet" href="./assets/app.css">
 <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
-<!-- Pinned, integrity-checked upstream version. -->
-<script defer src="https://unpkg.com/globe.gl@2.46.2/dist/globe.gl.min.js" integrity="sha384-1uolMBZ25k3zJcNwCLEv49+L+m2dZudqAzsoSAJfQTzDCSBxJzrMuZ2dkp/5JKiT" crossorigin="anonymous"></script>
+<!-- globe.gl 2.46.2 (MIT), bundled with the site so it also runs from mirrors; integrity-checked. -->
+<script defer src="./vendor/globe.gl-2.46.2.min.js" integrity="sha384-1uolMBZ25k3zJcNwCLEv49+L+m2dZudqAzsoSAJfQTzDCSBxJzrMuZ2dkp/5JKiT" crossorigin="anonymous"></script>
 <script defer src="./js/navigation.js"></script>
 <script type="module" src="./js/app.mjs"></script>
 </head><body>

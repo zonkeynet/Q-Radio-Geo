@@ -41,7 +41,7 @@ const SOURCES = [
     ['USGS, GDACS, NASA EONET', 'earthquakes, disaster alerts, natural events (live)', 'public data', 'https://earthquake.usgs.gov'],
     ['40+ news outlets (RSS)', 'headlines, summaries and links', '© each outlet, linked to the original', null],
     ['Broadcasters, via the iptv-org index', 'live TV streams', 'streams from each broadcaster; index public domain', 'https://github.com/iptv-org/iptv'],
-    ['globe.gl, three.js, hls.js', 'software', 'MIT, MIT, Apache 2.0', 'https://github.com/vasturiano/globe.gl']
+    ['globe.gl, three.js, hls.js', 'software, bundled with the site', 'MIT, MIT, Apache 2.0', 'https://github.com/vasturiano/globe.gl']
 ];
 
 const SHORTCUTS = [['?', 'this guide'], ['/', 'search'], ['L', 'layer menu'], ['T', 'live TV'], ['R', 'random pick'], ['+ / −', 'zoom in / out'], ['0', 'back to the world view'], ['Esc', 'close a menu, the search or this guide']];
@@ -116,7 +116,7 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
                 ['One sound at a time:', 'starting the radio mutes the TV, and the other way round.']]))],
         ['Shortcuts', section('Keyboard', keys)],
         ['Privacy', section('Privacy and safety', list(['Nothing plays until you allow it. Radio and TV come straight from the station or broadcaster, which sees your IP address.',
-            'Other services see your IP address when the page asks them for data: the globe and video libraries (unpkg.com), map imagery (NASA), headlines (GitHub), live events (USGS, GDACS, NASA), hospitals (public Overpass servers), outages (IODA) and Tor relays (Tor Metrics). Layers that load on request say so behind the ⓘ of their list panel.',
+            'Other services see your IP address when the page asks them for data: map imagery (NASA), headlines (GitHub), live events (USGS, GDACS, NASA), hospitals (public Overpass servers), outages (IODA) and Tor relays (Tor Metrics). Layers that load on request say so behind the ⓘ of their list panel.',
             'Police stations and cameras load from this site, so no other server learns which area you look at.',
             'Your preferences (theme, layer, consents) stay in this browser; nothing is sent anywhere.',
             'For sensitive research use Tor Browser or a VPN you trust. Tor Browser\'s Safest level turns JavaScript off, which the globe needs.',

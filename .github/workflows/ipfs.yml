@@ -1,0 +1,99 @@
+# IPFS mirror of globe.qp1ng.com. On every push to main: packs the site into a CAR (ipfs-car), pins it on Filebase,
+# removes the previous version from the bucket, and points DNSLink (TXT _dnslink.globe.qp1ng.com) at the new CID, so
+# ipns://globe.qp1ng.com and IPFS gateways serve the latest version.
+#
+# Repository secrets (the same values in Quantum-P1NG, which mirrors qp1ng.com into the same bucket):
+#   FILEBASE_KEY, FILEBASE_SECRET  Filebase access key (Access Keys page)
+#   FILEBASE_BUCKET                an IPFS bucket on Filebase
+#   CF_DNS_TOKEN                   Cloudflare API token: Zone · DNS · Edit, zone qp1ng.com only
+#   CF_ZONE_ID                     zone ID of qp1ng.com (Overview page, API section)
+# Without them the run only packs the CAR and reports its CID.
+name: IPFS mirror
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['scripts/**', '.github/workflows/news.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ipfs-mirror
+  cancel-in-progress: true
+
+env:
+  OBJECT: globe                  # object name prefix in the bucket
+  DNSLINK: globe.qp1ng.com       # domains whose _dnslink TXT record points at the new CID
+  FILEBASE_KEY: ${{ secrets.FILEBASE_KEY }}
+  FILEBASE_SECRET: ${{ secrets.FILEBASE_SECRET }}
+  FILEBASE_BUCKET: ${{ secrets.FILEBASE_BUCKET }}
+  CF_DNS_TOKEN: ${{ secrets.CF_DNS_TOKEN }}
+  CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Collect the site (the files GitHub Pages serves, without build scripts)
+        run: |
+          mkdir ../site
+          git ls-files -z | grep -zvE '^(scripts/|\.github/|\.gitignore$|CNAME$)' | xargs -0 cp --parents -t ../site
+          du -sh ../site
+      - name: Pack it as a CAR
+        id: car
+        run: |
+          npx --yes ipfs-car@3.1.0 pack ../site --output ../site.car
+          cid=$(npx --yes ipfs-car@3.1.0 roots ../site.car)
+          echo "cid=$cid" >> "$GITHUB_OUTPUT"
+          echo "### IPFS mirror · \`$cid\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Pin on Filebase
+        if: env.FILEBASE_KEY != '' && env.FILEBASE_SECRET != '' && env.FILEBASE_BUCKET != ''
+        env:
+          CID: ${{ steps.car.outputs.cid }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.FILEBASE_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.FILEBASE_SECRET }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          s3() { aws --endpoint-url https://s3.filebase.com "$@"; }
+          key="$OBJECT-${GITHUB_SHA::12}.car"
+          s3 s3 cp ../site.car "s3://$FILEBASE_BUCKET/$key" --metadata import=car --only-show-errors
+          # Filebase imports the CAR and reports the pinned root CID: it must be the one packed here.
+          pinned=""
+          for i in $(seq 1 36); do
+            pinned=$(s3 s3api head-object --bucket "$FILEBASE_BUCKET" --key "$key" --query Metadata.cid --output text 2>/dev/null || true)
+            [ -n "$pinned" ] && [ "$pinned" != "None" ] && break
+            sleep 5
+          done
+          if [ "$pinned" != "$CID" ]; then echo "::error::Filebase pinned '$pinned', the CAR root is $CID"; exit 1; fi
+          # Earlier versions of this site leave the bucket, which unpins them (none on the first run).
+          old=$(s3 s3api list-objects-v2 --bucket "$FILEBASE_BUCKET" --prefix "$OBJECT-" --query 'Contents[].Key' --output text | tr '\t' '\n' \
+            | grep -E "^$OBJECT-[0-9a-f]{12}\.car$" | grep -vx "$key" || true)
+          for o in $old; do s3 s3 rm "s3://$FILEBASE_BUCKET/$o" --only-show-errors; done
+          echo "- Pinned on Filebase: https://ipfs.filebase.io/ipfs/$CID/" >> "$GITHUB_STEP_SUMMARY"
+      - name: Point DNSLink at the new CID
+        if: env.FILEBASE_KEY != '' && env.CF_DNS_TOKEN != '' && env.CF_ZONE_ID != ''
+        env:
+          CID: ${{ steps.car.outputs.cid }}
+        run: |
+          api="https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records"
+          cf() { curl -fsS -H "Authorization: Bearer $CF_DNS_TOKEN" -H "Content-Type: application/json" "$@"; }
+          for domain in $DNSLINK; do
+            name="_dnslink.$domain"
+            ids=$(cf "$api?type=TXT&name=$name" | jq -r '.result[].id')
+            body=$(jq -nc --arg n "$name" --arg c "dnslink=/ipfs/$CID" '{type: "TXT", name: $n, content: $c, ttl: 300, comment: "IPFS mirror (GitHub Actions)"}')
+            case $(echo "$ids" | grep -c .) in
+              0) cf -X POST "$api" --data "$body" > /dev/null ;;
+              1) cf -X PATCH "$api/$ids" --data "$body" > /dev/null ;;
+              *) echo "::error::$name has several TXT records: keep one"; exit 1 ;;
+            esac
+            echo "- DNSLink: \`ipns://$domain\` · https://inbrowser.link/ipns/$domain/ · https://ipfs.filebase.io/ipns/$domain/" >> "$GITHUB_STEP_SUMMARY"
+          done

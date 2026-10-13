@@ -604,6 +604,24 @@ function shareItem(it) {
     p.set('view', viewText(it.lat, it.lng, Math.min(globe?.world.pointOfView().altitude ?? .5, .5)));
     shareLink(p, `${dir().nameOf(it)} · Q-P1NG Globe`);
 }
+/** Mirrors. Some IPFS gateways add their own Content-Security-Policy, which blocks streams and data from other
+ * servers: the first blocked request says so, with a link to the same view on the main site. */
+const MAIN_SITE = 'https://globe.qp1ng.com/';
+function initMirrorNotice() {
+    if (location.origin === new URL(MAIN_SITE).origin) return;
+    const warn = e => {
+        if (!/^https?:/.test(e.blockedURI) || new URL(e.blockedURI).origin === location.origin) return;
+        document.removeEventListener('securitypolicyviolation', warn);
+        const bar = node('div', 'mirror-notice'), close = Object.assign(node('button', 'mirror-close', '✕'), { type: 'button', title: 'Close', ariaLabel: 'Close' });
+        const main = Object.assign(node('a', '', 'globe.qp1ng.com'), { href: MAIN_SITE, target: '_blank', rel: 'noopener' });
+        main.onclick = () => { main.href = MAIN_SITE + location.hash; }; // the same view
+        close.onclick = () => bar.remove();
+        bar.setAttribute('role', 'status');
+        bar.append(node('span', '', 'This IPFS gateway blocks radio, TV and live data. All of it works on '), main, node('span', '', ' or with IPFS Desktop.'), close);
+        document.body.appendChild(bar);
+    };
+    document.addEventListener('securitypolicyviolation', warn);
+}
 /** Single keys, listed in the guide; ignored while typing or while a dialog is open. */
 function initKeys() {
     const click = id => () => $(id).click();
@@ -738,6 +756,7 @@ async function start() {
         onLayer: id => { if (ready) setMode(id); },
         dbFiles: [['qp1ng.sqlite.gz', 'db/qp1ng.sqlite.gz'], ['qp1ng-surveillance.sqlite.gz', 'db/qp1ng-surveillance.sqlite.gz']] });
     initKeys();
+    initMirrorNotice();
     initThemeMenu();
     initShortcutsPanel();
     initDrawer();
