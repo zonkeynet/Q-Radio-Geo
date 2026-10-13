@@ -26,6 +26,8 @@ concurrency:
 env:
   OBJECT: globe                  # object name prefix in the bucket
   DNSLINK: globe.qp1ng.com       # domains whose _dnslink TXT record points at the new CID
+  WARM_SKIP: '^(data/surveillance/|db/)'          # not fetched to warm the gateway: loaded on demand
+  WARM_EXTRA: data/places.json data/stations.json  # over 1 MB, but every visit needs them
   FILEBASE_KEY: ${{ secrets.FILEBASE_KEY }}
   FILEBASE_SECRET: ${{ secrets.FILEBASE_SECRET }}
   FILEBASE_BUCKET: ${{ secrets.FILEBASE_BUCKET }}
@@ -113,3 +115,15 @@ jobs:
             esac
             echo "- DNSLink: \`ipns://$domain\` · https://inbrowser.link/ipns/$domain/ · https://ipfs.filebase.io/ipns/$domain/" >> "$GITHUB_STEP_SUMMARY"
           done
+      - name: Warm the Filebase gateway (slow on files it has not served yet)
+        if: env.FILEBASE_KEY != '' && env.FILEBASE_BUCKET != ''
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          CID: ${{ steps.car.outputs.cid }}
+        run: |
+          cd ../site
+          { find . -type f -size -1024k ! -name '.*' | sed 's|^\./||' | grep -vE "$WARM_SKIP" || true; printf '%s\n' $WARM_EXTRA; } | sed 's/ /%20/g' \
+            | xargs -P 8 -I{} curl -s -o /dev/null --max-time 120 -w '%{http_code} %{time_total}s {}\n' "https://ipfs.filebase.io/ipfs/$CID/{}" > ../warm.txt || true
+          sort -k2 -n -r ../warm.txt | head -5
+          echo "- Gateway warmed: $(grep -c '^200 ' ../warm.txt) of $(wc -l < ../warm.txt) files answered" >> "$GITHUB_STEP_SUMMARY"

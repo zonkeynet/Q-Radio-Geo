@@ -44,6 +44,14 @@ const SOURCES = [
     ['globe.gl, three.js, hls.js', 'software, bundled with the site', 'MIT, MIT, Apache 2.0', 'https://github.com/vasturiano/globe.gl']
 ];
 
+// The same site on IPFS, updated with every release (see .github/workflows/ipfs.yml).
+const MIRRORS = [
+    ['globe.qp1ng.com', 'https://globe.qp1ng.com/', 'the main site.'],
+    ['inbrowser.link/ipns/globe.qp1ng.com', 'https://inbrowser.link/ipns/globe.qp1ng.com/', 'everything works; your browser checks every file against its IPFS address.'],
+    ['ipfs.filebase.io/ipns/globe.qp1ng.com', 'https://ipfs.filebase.io/ipns/globe.qp1ng.com/', 'layers and search only: this gateway blocks radio, TV and live data. The first visit after an update can take a minute.'],
+    ['ipns://globe.qp1ng.com', null, 'with IPFS Desktop or any IPFS node.']
+];
+
 const SHORTCUTS = [['?', 'this guide'], ['/', 'search'], ['L', 'layer menu'], ['T', 'live TV'], ['R', 'random pick'], ['+ / −', 'zoom in / out'], ['0', 'back to the world view'], ['Esc', 'close a menu, the search or this guide']];
 
 function section(title, ...blocks) {
@@ -95,6 +103,12 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
         li.append(href ? link(name, href) : node('b', '', name), node('span', '', ` · ${what} · `), node('em', '', licence));
         sources.appendChild(li);
     }
+    const mirrors = node('ul', 'guide-list');
+    for (const [text, href, note] of MIRRORS) {
+        const li = node('li');
+        li.append(href ? link(text, href) : node('b', '', text), ` ${note}`);
+        mirrors.appendChild(li);
+    }
     const db = node('p');
     db.append('Offline SQLite database of every layer, for the Q-P1NG app: ', ...dbFiles.flatMap(([text, href], i) => [i ? ' and ' : '', link(text, href)]), '.');
 
@@ -107,7 +121,8 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
                 ['Filters', 'sit in the right panel; on phones and tablets they are the compact menus at the top of the list.'],
                 ['On phones', 'the list is a sheet: drag its handle, or tap it, to make it bigger or smaller.']])),
             section('Share and install', list([['The address bar', 'always holds the layer, filters, view and open item: copy it, or press 🔗 SHARE LINK on a card or 🔗 in the player.'],
-                ['Install', 'from the browser menu (Install app, or Add to Home screen) to open it like an app.']]))],
+                ['Install', 'from the browser menu (Install app, or Add to Home screen) to open it like an app.']])),
+            section('Mirrors', node('p', '', 'If the main address is blocked or down, the same globe is published on IPFS with every update:'), mirrors)],
         ['Layers', section('Layers', node('p', '', 'Pick one to open it. Layers that load data for the area in view say so in their list panel.'), layerList)],
         ['Radio & TV', section('Radio', list([['ENABLE AUDIO', 'once: your browser then connects straight to the station\'s server.'], ['▶ ⏮ ⏭', 'play, and switch between the stations of the same place; the chips list them all.'],
                 ['🎲 RANDOM', 'tunes any station in the world.'], ['Outside the RADIO layer', 'the player shrinks to a mini bar; ▴ opens it again.']])),

@@ -605,19 +605,25 @@ function shareItem(it) {
     shareLink(p, `${dir().nameOf(it)} · Q-P1NG Globe`);
 }
 /** Mirrors. Some IPFS gateways add their own Content-Security-Policy, which blocks streams and data from other
- * servers: the first blocked request says so, with a link to the same view on the main site. */
-const MAIN_SITE = 'https://globe.qp1ng.com/';
+ * servers: the first blocked request says so, with links to the same view on the main site and the full IPFS mirror. */
+const MAIN_SITE = 'https://globe.qp1ng.com/', IPFS_MIRROR = 'https://inbrowser.link/ipns/globe.qp1ng.com/';
 function initMirrorNotice() {
     if (location.origin === new URL(MAIN_SITE).origin) return;
     const warn = e => {
         if (!/^https?:/.test(e.blockedURI) || new URL(e.blockedURI).origin === location.origin) return;
         document.removeEventListener('securitypolicyviolation', warn);
         const bar = node('div', 'mirror-notice'), close = Object.assign(node('button', 'mirror-close', '✕'), { type: 'button', title: 'Close', ariaLabel: 'Close' });
-        const main = Object.assign(node('a', '', 'globe.qp1ng.com'), { href: MAIN_SITE, target: '_blank', rel: 'noopener' });
-        main.onclick = () => { main.href = MAIN_SITE + location.hash; }; // the same view
+        const to = (text, url) => {
+            const a = Object.assign(node('a', '', text), { href: url, target: '_blank', rel: 'noopener' });
+            a.onclick = () => { a.href = url + location.hash; }; // the same view
+            return a;
+        };
         close.onclick = () => bar.remove();
         bar.setAttribute('role', 'status');
-        bar.append(node('span', '', 'This IPFS gateway blocks radio, TV and live data. All of it works on '), main, node('span', '', ' or with IPFS Desktop.'), close);
+        const text = node('span');
+        text.append('This IPFS gateway blocks radio, TV and live data. All of it works on ', to('globe.qp1ng.com', MAIN_SITE),
+            ' and on the ', to('inbrowser.link mirror', IPFS_MIRROR), '.');
+        bar.append(text, close);
         document.body.appendChild(bar);
     };
     document.addEventListener('securitypolicyviolation', warn);

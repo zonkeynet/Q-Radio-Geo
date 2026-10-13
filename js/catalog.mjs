@@ -1,7 +1,8 @@
 import { createIndex, searchIndex } from './core.mjs';
 export async function loadJSON(path, base = document.baseURI) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
+    // IPFS gateways can take a minute for a file they have not served yet: mirrors wait longer than the main site.
+    const controller = new AbortController(), main = globalThis.location?.hostname === 'globe.qp1ng.com';
+    const timer = setTimeout(() => controller.abort(), main ? 20000 : 120000);
     try {
         const response = await fetch(new URL(path, base), { signal: controller.signal, credentials: 'same-origin' });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${path}`);
