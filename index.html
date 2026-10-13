@@ -110,14 +110,20 @@
     </div>
 
     <!-- Country Explorer Drawer -->
-    <aside class="hud-overlay country-drawer" id="countryDrawer" hidden>
-        <div class="country-drawer-header">
-            <div>
+    <aside class="hud-overlay country-drawer" id="countryDrawer" data-sheet="half" hidden>
+        <button class="sheet-handle" id="drawerHandle" aria-label="Resize the list: drag, or tap to switch size" title="Drag or tap to resize"></button>
+        <div class="country-drawer-header" id="drawerHeader">
+            <div class="drawer-heading">
                 <span class="country-drawer-title" id="countryDrawerTitle"></span>
                 <div class="country-drawer-sub" id="countryDrawerMeta"></div>
             </div>
-            <button class="country-drawer-close" id="countryDrawerClose" aria-label="Close city list">✕</button>
+            <div class="drawer-tools">
+                <button class="drawer-tool" id="drawerWide" aria-pressed="false" aria-label="Wider list" title="Wider list">⇔</button>
+                <button class="drawer-tool" id="drawerFold" aria-expanded="true" aria-label="Minimize the list" title="Minimize">–</button>
+                <button class="country-drawer-close" id="countryDrawerClose" aria-label="Close the list" title="Close">✕</button>
+            </div>
         </div>
+        <div class="dir-chips" id="dirChips" hidden></div>
         <div class="dir-live" id="dirLive" hidden></div>
         <div class="country-cities-list" id="countryCitiesList"></div>
     </aside>

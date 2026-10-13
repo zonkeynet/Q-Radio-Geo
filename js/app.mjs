@@ -144,7 +144,7 @@ function selectCountry(country) {
     globe?.navigation.flyTo({ lat: country.lat, lng: country.lng, altitude: 1.2 }, 650);
     $('countryDrawerTitle').textContent = country.country;
     $('countryDrawerMeta').textContent = `${country.cities_count.toLocaleString('en')} cities · ${country.stations_count.toLocaleString('en')} stations`;
-    $('countryDrawer').hidden = false;
+    $('countryDrawer').hidden = false; unfoldDrawer();
     const list = $('countryCitiesList'); list.replaceChildren(); list.scrollTop = 0;
     const places = catalog.countryPlaces(country.country);
     let offset = 0;
@@ -277,6 +277,31 @@ function renderDirSidebar() {
         }
     }
     $('dirCredit').textContent = d.credit;
+    renderDirChips();
+}
+/** Phones and tablets have no right panel: the list panel shows the other filters as chips (the first one is the tabs). */
+const narrow = matchMedia('(max-width: 1050px)');
+function renderDirChips() {
+    const d = dir(), box = $('dirChips'), filters = d && narrow.matches ? d.filters.slice(1) : [];
+    box.hidden = !filters.length;
+    box.replaceChildren();
+    if (!filters.length) return;
+    const { items, values } = state();
+    for (const f of filters) {
+        const row = node('div', 'chip-row');
+        row.appendChild(node('b', '', f.label));
+        for (const o of f.options) {
+            const count = optionCount(d, items, values, f.key, o.id), on = o.id === values[f.key];
+            if (!count && !on) continue;
+            const chip = node('button', `chip${on ? ' active' : ''}`);
+            if (o.color) { const dot = node('i', 'legend-dot'); dot.style.background = `var(${o.color})`; chip.appendChild(dot); }
+            chip.append(node('span', '', o.name), node('small', '', count.toLocaleString('en')));
+            chip.setAttribute('aria-pressed', String(on));
+            chip.onclick = () => setFilter(f.key, o.id);
+            row.appendChild(chip);
+        }
+        box.appendChild(row);
+    }
 }
 /* Per-area loads (police and cameras from this site's tiles, hospitals from Overpass, IODA outages) run only when
  * asked: with the button in the list panel, or while such a tab (police, cameras, hospitals, outages) is on, once
@@ -450,6 +475,7 @@ function setFilter(key, value) {
     liveIfWanted(); // choosing a live tab (cameras, police, …) is the request to load it
 }
 function selectDir(it) {
+    unfoldDrawer();
     explorer.select(it);
     globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: .5 }, 600);
     globe?.select(it.lat, it.lng, .8);
@@ -470,12 +496,77 @@ async function setMode(next) {
     $('btnRandom').title = def ? def.randomTitle : 'Listen to a random station somewhere in the world';
     $('sidebarTitle').textContent = def ? def.sidebarTitle : 'Shortcuts';
     $('sidebarRadio').hidden = Boolean(def); $('sidebarDir').hidden = !def;
+    if (!def) renderDirChips();
     renderTabs(); updateStats();
     if (def) { renderDirSidebar(); explorer.use(def, state().items, state().values); explorer.open(); }
     else $('countryDrawer').hidden = true;
     renderLive();
     globe?.setLayer(def ? dirLayer() : radioLayer());
     renderTicker();
+}
+/* The list panel. Desktop: a wider reading mode and a minimized state. Phones: a bottom sheet with three heights
+ * (peek: the title only, half, full), dragged or tapped on its handle. */
+const phone = matchMedia('(max-width: 640px)');
+function setFolded(folded) {
+    const drawer = $('countryDrawer'), fold = $('drawerFold');
+    if (phone.matches) drawer.dataset.sheet = folded ? 'peek' : 'half';
+    else drawer.classList.toggle('folded', folded);
+    fold.textContent = folded ? '▢' : '–';
+    fold.title = fold.ariaLabel = folded ? 'Show the list' : 'Minimize the list';
+    fold.setAttribute('aria-expanded', String(!folded));
+}
+const isFolded = () => phone.matches ? $('countryDrawer').dataset.sheet === 'peek' : $('countryDrawer').classList.contains('folded');
+function unfoldDrawer() { if (isFolded()) setFolded(false); }
+function initDrawer() {
+    const drawer = $('countryDrawer'), handle = $('drawerHandle'), list = $('countryCitiesList'), wide = $('drawerWide');
+    let prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem('qradio.drawer')) || {}; } catch { /* defaults */ }
+    const setWide = on => {
+        drawer.classList.toggle('wide', on); wide.setAttribute('aria-pressed', String(on));
+        wide.title = wide.ariaLabel = on ? 'Narrower list' : 'Wider list';
+        try { localStorage.setItem('qradio.drawer', JSON.stringify({ wide: on })); } catch { /* not remembered */ }
+    };
+    setWide(Boolean(prefs.wide));
+    wide.onclick = () => setWide(!drawer.classList.contains('wide'));
+    $('drawerFold').onclick = () => setFolded(!isFolded());
+    // A minimized sheet opens again from a tap on its title.
+    $('drawerHeader').addEventListener('click', e => { if (isFolded() && !e.target.closest('button')) setFolded(false); });
+    phone.addEventListener('change', () => { drawer.classList.remove('folded'); drawer.dataset.sheet = 'half'; setFolded(false); });
+    narrow.addEventListener('change', () => { if (dir()) renderDirChips(); });
+    // Drag the handle to resize; a tap steps half → full → peek → half.
+    let drag = null;
+    const SIZES = ['half', 'full', 'peek'];
+    handle.addEventListener('pointerdown', e => {
+        drag = { y: e.clientY, h: drawer.offsetHeight, moved: false };
+        handle.setPointerCapture(e.pointerId); drawer.classList.add('dragging');
+    });
+    handle.addEventListener('pointermove', e => {
+        if (!drag) return;
+        const dy = drag.y - e.clientY;
+        if (Math.abs(dy) > 5) drag.moved = true;
+        if (drag.moved) drawer.style.height = `${Math.max(60, drag.h + dy)}px`;
+    });
+    const release = () => {
+        if (!drag) return;
+        const h = drawer.offsetHeight, moved = drag.moved;
+        drag = null; drawer.classList.remove('dragging'); drawer.style.height = '';
+        const next = moved ? (h < innerHeight * .22 ? 'peek' : h > innerHeight * .55 ? 'full' : 'half')
+            : SIZES[(SIZES.indexOf(drawer.dataset.sheet) + 1) % SIZES.length];
+        setFolded(next === 'peek');
+        drawer.dataset.sheet = next;
+    };
+    handle.addEventListener('pointerup', release);
+    handle.addEventListener('pointercancel', release);
+    // Back to the top of a long list.
+    const top = node('button', 'list-top', '↑');
+    Object.assign(top, { title: 'Back to the top', ariaLabel: 'Back to the top', hidden: true });
+    top.onclick = () => list.scrollTo({ top: 0, behavior: 'smooth' });
+    drawer.appendChild(top);
+    list.addEventListener('scroll', () => { top.hidden = list.scrollTop < 500; }, { passive: true });
+    new ResizeObserver(() => document.documentElement.style.setProperty('--drawer-h', `${drawer.offsetHeight}px`)).observe(drawer);
+    // The full sheet stops under the header, whatever its height.
+    const header = document.querySelector('.top-header');
+    new ResizeObserver(() => document.documentElement.style.setProperty('--header-bottom', `${Math.round(header.getBoundingClientRect().bottom)}px`)).observe(header);
 }
 function initShortcutsPanel() {
     const panel = $('sidebarShortcuts'), toggle = $('btnToggleShortcuts');
@@ -532,6 +623,7 @@ function initThemeMenu() {
 async function start() {
     initThemeMenu();
     initShortcutsPanel();
+    initDrawer();
     for (const id of buttons) $(id).disabled = true;
     $('btnAutoRotate').disabled = true;
     // Overlays above the player follow its real height (it grows with the consent bar and station chips).

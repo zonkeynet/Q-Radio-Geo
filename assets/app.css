@@ -208,7 +208,7 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .zoom-btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: var(--accent); }
 
 /* ---------- Country drawer ---------- */
-.country-drawer { top: 96px; left: 20px; bottom: calc(var(--player-h) + 50px); min-height: 150px; width: 300px; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; pointer-events: auto; z-index: 25; animation: slideIn .22s ease-out; }
+.country-drawer { top: 96px; left: 20px; bottom: calc(var(--player-h) + 50px); min-height: 150px; width: clamp(300px, 24vw, 380px); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; pointer-events: auto; z-index: 25; animation: slideIn .22s ease-out; }
 @keyframes slideIn { from { transform: translateX(-24px); opacity: 0; } }
 .country-drawer-header { padding: 13px 15px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
 .country-drawer-title { font: 800 14px var(--mono); }
@@ -465,4 +465,70 @@ body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-
     body:has(#newsTicker:not([hidden])) { --ticker-h: 38px; }
     body:has(#newsTicker:not([hidden])) .zoom-widget { bottom: calc(var(--player-h) + 34px + var(--ticker-h)); }
     body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-h) + 16px + var(--ticker-h)); }
+}
+
+/* ---------- List panel: tools, sections, chips, phone sheet ---------- */
+.country-drawer { transition: width .25s cubic-bezier(.2, .8, .2, 1), height .25s cubic-bezier(.2, .8, .2, 1); }
+.country-drawer.wide { width: min(560px, calc(100vw - var(--rail-w) - 80px)); }
+#countryDrawer.folded { bottom: auto !important; min-height: 0; } /* over the ticker rule, whose :has(#id) outranks plain ids */
+.country-drawer.folded > :not(.country-drawer-header) { display: none !important; }
+.country-drawer-header { gap: 8px; }
+.drawer-heading { flex: 1; min-width: 0; }
+.country-drawer-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-tools { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.drawer-tool { width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); color: var(--text-dim); font-size: 12px; display: grid; place-items: center; }
+.drawer-tool:hover, .drawer-tool[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.sheet-handle { display: none; }
+.country-cities-list { position: relative; }
+.dir-section { position: sticky; top: -8px; z-index: 2; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 4px -8px 0; padding: 7px 12px 6px;
+    font: 700 9.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
+    background: color-mix(in srgb, var(--panel-solid) 94%, transparent); border-bottom: 1px solid var(--line); }
+.dir-section:first-child { margin-top: -8px; }
+.dir-section small { font: 600 9.5px var(--mono); color: var(--text-faint); letter-spacing: 0; }
+.dir-item-text { flex: 1; }
+.dir-badge { flex-shrink: 0; align-self: center; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 6px; border-radius: 999px;
+    font: 700 8.5px var(--mono); letter-spacing: .05em; color: var(--type-color); border: 1px solid color-mix(in srgb, var(--type-color) 40%, transparent); }
+.dir-badge:empty { display: none; }
+.dir-item-snippet { margin-top: 2px; font-size: 10.5px; line-height: 1.35; color: var(--text-faint); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.country-drawer.wide .dir-item-snippet { -webkit-line-clamp: 2; }
+.country-drawer.wide .dir-item-name { font-size: 12.5px; }
+.dir-item.fresh .dir-dot { animation: tv-pulse 1.6s ease-in-out infinite; }
+.list-top { position: absolute; right: 14px; bottom: 14px; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-accent);
+    background: var(--panel-solid); color: var(--accent); font-size: 15px; box-shadow: var(--shadow); }
+.list-top:hover { border-color: var(--accent); }
+.dir-chips { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.chip-row { display: flex; align-items: center; gap: 5px; overflow-x: auto; scrollbar-width: none; }
+.chip-row::-webkit-scrollbar { display: none; }
+.chip-row > b { flex-shrink: 0; margin-right: 2px; font: 700 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
+.chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); color: var(--text-dim); font-size: 10.5px; white-space: nowrap; }
+.chip small { font: 9px var(--mono); color: var(--text-faint); }
+.chip .legend-dot { width: 6px; height: 6px; }
+.chip.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.chip.active small { color: var(--accent); }
+
+@media (max-width: 1050px) {
+    .country-drawer.wide { width: min(520px, calc(100vw - 40px)); }
+}
+@media (max-width: 640px) {
+    /* A bottom sheet: drag or tap the handle (peek: the title only, half, full: up to the header). */
+    .country-drawer { height: min(46dvh, calc(100dvh - var(--player-h) - 200px)); }
+    .country-drawer[data-sheet="peek"] { height: 76px; min-height: 0; }
+    .country-drawer[data-sheet="full"] { height: calc(100dvh - var(--header-bottom, 170px) - var(--player-h) - var(--ticker-h, 0px) - 30px); }
+    .country-drawer.dragging { transition: none; }
+    .country-drawer[data-sheet="peek"] > :not(.country-drawer-header):not(.sheet-handle) { display: none !important; }
+    .country-drawer[data-sheet="peek"] .country-drawer-header { cursor: pointer; border-bottom: 0; }
+    .sheet-handle { display: block; flex-shrink: 0; width: 100%; height: 20px; padding: 0; border: 0; background: none; position: relative; touch-action: none; cursor: grab; }
+    .sheet-handle::before { content: ''; position: absolute; left: 50%; top: 8px; width: 46px; height: 4px; border-radius: 2px; background: var(--text-faint); transform: translateX(-50%); }
+    .sheet-handle:active::before { background: var(--accent); }
+    .country-drawer-header { padding: 2px 12px 9px; }
+    #drawerWide { display: none; }
+    .country-drawer.wide { width: auto; }
+    .dir-item { padding: 10px 11px; }
+    .dir-item-name { font-size: 13px; }
+    .dir-item-snippet { -webkit-line-clamp: 2; }
+    .chip { padding: 6px 11px; font-size: 11.5px; }
+    /* The zoom buttons sit above the sheet, and step aside when it fills the screen. */
+    body:has(#countryDrawer:not([hidden])) .zoom-widget { bottom: calc(var(--player-h) + var(--ticker-h, 0px) + var(--drawer-h, 0px) + 26px); }
+    body:has(#countryDrawer[data-sheet="full"]:not([hidden])) .zoom-widget { display: none; }
+    .list-top { right: 12px; bottom: 12px; }
 }

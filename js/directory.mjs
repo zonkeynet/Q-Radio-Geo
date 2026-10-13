@@ -45,16 +45,22 @@ export function typeBadge(text, colorVar, className = 'dir-type') {
     return b;
 }
 
-/** The left drawer: the selected item's card, then every filtered item (featured, then nearest to the view). */
+// Sections of a list sorted by distance from the view (a mode can define its own with def.sectionOf).
+const DISTANCE_SECTIONS = [[50, 'Within 50 km'], [300, 'Within 300 km'], [1000, 'Within 1,000 km'], [Infinity, 'Further away']];
+
+/** The left drawer: the selected item's card, then every filtered item (featured, then nearest to the view), in sections. */
 export function createExplorer({ drawer, title, meta, list, getCenter, onPick }) {
-    let def = null, items = [], values = {}, selected = null;
+    let def = null, items = [], values = {}, selected = null, more = null;
+    // "Show more" loads itself when it scrolls into view; the button stays for keyboards.
+    const autoMore = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) more?.click(); }, { root: list, rootMargin: '400px' });
     const shown = () => applyFilters(def, items, values);
     function item(it) {
-        const b = node('button', `dir-item${it === selected ? ' active' : ''}`);
+        const b = node('button', `dir-item${it === selected ? ' active' : ''}${def.fresh?.(it) ? ' fresh' : ''}`);
         b.style.setProperty('--type-color', `var(${def.colorOf(it)})`);
-        const text = node('span', 'dir-item-text');
+        const text = node('span', 'dir-item-text'), snippet = def.snippetOf?.(it);
         text.append(node('span', 'dir-item-name', `${def.featured?.(it) ? '★ ' : ''}${def.nameOf(it)}`), node('span', 'dir-item-sub', def.subOf(it)));
-        b.append(node('i', 'dir-dot'), text);
+        if (snippet) text.append(node('span', 'dir-item-snippet', snippet));
+        b.append(node('i', 'dir-dot'), text, node('span', 'dir-badge', def.shortBadge?.(it) || ''));
         b.onclick = () => onPick(it);
         return b;
     }
@@ -96,15 +102,29 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick })
         drawer.hidden = false;
         list.replaceChildren(); list.scrollTop = 0;
         if (selected) list.append(card(selected));
-        let offset = 0;
+        const sectionOf = def.sectionOf || (def.listOrder ? null
+            : it => def.featured?.(it) ? '★ Featured' : DISTANCE_SECTIONS.find(([limit]) => km(center, it) < limit)[1]);
+        const sections = new Map();
+        if (sectionOf) for (const it of sorted) { const s = sectionOf(it); sections.set(s, (sections.get(s) || 0) + 1); }
+        let offset = 0, current = null;
+        autoMore.disconnect(); more = null;
         const page = () => {
-            list.querySelector('.load-more')?.remove(); list.querySelector('.dir-footer')?.remove();
+            more?.remove(); more = null; list.querySelector('.dir-footer')?.remove();
             const fragment = document.createDocumentFragment();
-            for (const it of sorted.slice(offset, offset + 60)) fragment.append(item(it));
+            for (const it of sorted.slice(offset, offset + 60)) {
+                const s = sectionOf?.(it);
+                if (s && s !== current) {
+                    current = s;
+                    const head = node('p', 'dir-section', s);
+                    head.append(node('small', '', sections.get(s).toLocaleString('en')));
+                    fragment.append(head);
+                }
+                fragment.append(item(it));
+            }
             offset += 60; list.append(fragment);
             if (offset < sorted.length) {
-                const more = node('button', 'hud-btn load-more', `Show more (${sorted.length - offset})`);
-                more.onclick = page; list.append(more);
+                more = node('button', 'hud-btn load-more', `Show more (${sorted.length - offset})`);
+                more.onclick = page; list.append(more); autoMore.observe(more);
             }
             list.append(footer());
         };

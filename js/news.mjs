@@ -49,6 +49,9 @@ export const NEWS = {
     searchText: it => `${it.name} ${it.source} ${it.place || ''} ${TOPIC[it.topic] || ''} ${it.summary || ''} ${it.type || ''} ${it.category || ''}`,
     searchOrder: (a, b) => b.ts.localeCompare(a.ts),
     listOrder: (a, b) => b.ts.localeCompare(a.ts),
+    sectionOf: it => { const m = age(it); return m < 60 ? 'Last hour' : m < 360 ? 'Last 6 hours' : m < 1440 ? 'Last 24 hours' : 'Earlier'; },
+    snippetOf: it => it.kind === 'NEWS' ? it.summary : it.kind === 'ALERT' ? it.severity : null,
+    fresh: it => age(it) < 60,
     filters: [
         { key: 'kind', label: 'Show', options: [{ id: 'all', label: 'ALL', name: 'Everything' },
             ...Object.entries(KIND).map(([id, [name, color, label]]) => ({ id, label, name, color }))], test: (it, v) => it.kind === v },
