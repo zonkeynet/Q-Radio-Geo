@@ -379,3 +379,90 @@ button:disabled { opacity: .35; cursor: not-allowed; }
     .reticle-container { width: 80px; height: 80px; } .reticle-ring { width: 52px; height: 52px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- Live TV dock ---------- */
+.tv-btn[aria-pressed="true"] { border-color: color-mix(in srgb, var(--red) 70%, transparent); color: var(--text); box-shadow: 0 0 16px color-mix(in srgb, var(--red) 25%, transparent); }
+.tv-dock { right: 20px; bottom: calc(var(--player-h) + 30px + var(--ticker-h, 0px)); width: min(460px, 36vw); z-index: 30; pointer-events: auto;
+    display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line-accent);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: var(--shadow), 0 0 40px color-mix(in srgb, var(--red) 8%, transparent); }
+.tv-dock[hidden] { display: none; }
+.tv-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tv-title { display: flex; align-items: center; gap: 6px; font: 800 10.5px var(--mono); letter-spacing: .12em; color: var(--red); flex-shrink: 0; }
+.tv-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); animation: tv-pulse 1.6s ease-in-out infinite; }
+@keyframes tv-pulse { 50% { opacity: .35; box-shadow: 0 0 2px var(--red); } }
+.tv-now { flex: 1; min-width: 0; font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-tools { display: flex; gap: 3px; flex-shrink: 0; }
+.tv-tool { width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); color: var(--text); font-size: 12px; display: grid; place-items: center; }
+.tv-tool:hover { border-color: var(--accent); color: var(--accent); }
+.tv-tool[hidden] { display: none; }
+.tv-wall { display: grid; gap: 6px; }
+.tv-dock.grid .tv-wall { grid-template-columns: 1fr 1fr; }
+.tv-wall[hidden], .tv-consent[hidden] { display: none; }
+.tv-screen { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 11px; overflow: hidden; outline: 1px solid var(--line); }
+.tv-screen[hidden] { display: none; }
+.tv-dock.grid .tv-screen { cursor: pointer; }
+.tv-screen.focus { outline: 2px solid var(--accent); box-shadow: 0 0 18px var(--accent-glow); }
+.tv-screen video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tv-label { position: absolute; top: 7px; left: 7px; max-width: calc(100% - 14px); padding: 2px 8px; border-radius: 999px; background: rgba(0, 0, 0, .62); color: #fff;
+    font: 700 10px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.tv-label:empty { display: none; }
+.tv-msg { position: absolute; inset: auto 0 0 0; padding: 18px 10px 9px; background: linear-gradient(transparent, rgba(0, 0, 0, .85)); color: #dfe6ee; font-size: 11px; text-align: center; pointer-events: none; }
+.tv-screen[data-state="live"] .tv-msg, .tv-screen[data-state="idle"] .tv-msg { display: none; }
+.tv-screen[data-state="error"] .tv-msg { color: #ffb3c0; }
+.tv-consent { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 14px; border-radius: 12px; border: 1px dashed var(--line-accent); text-align: center; font-size: 12px; color: var(--text-dim); }
+.tv-langs, .tv-channels { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding-bottom: 1px; }
+.tv-langs::-webkit-scrollbar, .tv-channels::-webkit-scrollbar { display: none; }
+.tv-lang { flex: 0 0 auto; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--text-dim); font: 700 9.5px var(--mono); }
+.tv-lang.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.tv-channels { max-height: 92px; flex-wrap: wrap; overflow-y: auto; }
+.tv-chan { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 5px 9px; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03); color: var(--text); font-size: 11px; text-align: left; }
+.tv-chan small { font: 9px var(--mono); color: var(--text-dim); }
+.tv-chan:hover { border-color: var(--accent); }
+.tv-chan.on { border-color: color-mix(in srgb, var(--red) 70%, transparent); background: color-mix(in srgb, var(--red) 10%, transparent); }
+.tv-note { font-size: 9.5px; line-height: 1.4; color: var(--text-faint); }
+.tv-dock.small { width: min(320px, 36vw); }
+.tv-dock.small .tv-wall, .tv-dock.small .tv-langs, .tv-dock.small .tv-channels, .tv-dock.small .tv-note, .tv-dock.small .tv-consent { display: none; }
+.tv-dock:fullscreen { width: 100vw; height: 100vh; border-radius: 0; padding: 14px; background: #000; }
+.tv-dock:fullscreen .tv-wall { flex: 1; min-height: 0; }
+.tv-dock:fullscreen .tv-screen { aspect-ratio: auto; height: 100%; }
+.tv-dock:fullscreen.grid .tv-screen { height: auto; }
+.tv-dock:fullscreen .tv-channels { max-height: 54px; }
+/* The zoom buttons, the right panel and the list make room for the dock and the ticker. */
+body:has(#tvDock:not([hidden])) .zoom-widget { right: calc(min(460px, 36vw) + 32px); }
+body:has(#tvDock.small:not([hidden])) .zoom-widget { right: calc(min(320px, 36vw) + 32px); }
+body:has(#tvDock:not([hidden])) .sidebar-panel { max-height: calc(100dvh - var(--player-h) - var(--tv-h, 0px) - var(--ticker-h, 0px) - 136px - var(--menu-push, 0px)); }
+body:has(#newsTicker:not([hidden])) { --ticker-h: 44px; }
+body:has(#newsTicker:not([hidden])) .zoom-widget { bottom: calc(var(--player-h) + 30px + var(--ticker-h)); }
+body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-h) + 50px + var(--ticker-h)); }
+
+/* ---------- News ticker ---------- */
+.news-ticker { bottom: calc(var(--player-h) + 22px); left: 50%; transform: translateX(-50%); width: min(760px, calc(100vw - 32px)); height: 34px; z-index: 12;
+    display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px; border-radius: 999px; pointer-events: auto; overflow: hidden;
+    background: var(--panel); border: 1px solid var(--line-accent); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: var(--shadow); }
+.news-ticker[hidden] { display: none; }
+.ticker-label { display: flex; align-items: center; gap: 6px; flex-shrink: 0; font: 800 10px var(--mono); letter-spacing: .12em; color: var(--red); }
+.ticker-track { flex: 1; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); }
+.ticker-move { display: flex; gap: 26px; width: max-content; animation: ticker var(--ticker-s, 60s) linear infinite; }
+.ticker-track:hover .ticker-move, .ticker-track:focus-within .ticker-move { animation-play-state: paused; }
+@keyframes ticker { to { transform: translateX(-50%); } }
+.ticker-item { display: inline-flex; align-items: baseline; gap: 7px; padding: 4px 0; background: none; border: 0; color: var(--text); font-size: 12px; white-space: nowrap; cursor: pointer; }
+.ticker-item:hover .ticker-text { color: var(--accent); }
+.ticker-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--type-color, var(--accent)); align-self: center; box-shadow: 0 0 8px var(--type-color, var(--accent)); }
+.ticker-src { color: var(--text-dim); font: 9.5px var(--mono); }
+@media (prefers-reduced-motion: reduce) { .ticker-track { overflow-x: auto; scrollbar-width: none; } }
+
+@media (max-width: 640px) {
+    .tv-dock { left: 8px; right: 8px; width: auto; bottom: calc(var(--player-h) + 16px + var(--ticker-h, 0px)); padding: 8px; border-radius: 16px; }
+    .tv-dock.small { width: auto; }
+    .tv-channels { max-height: 70px; }
+    .tv-now { display: none; }
+    body:has(#tvDock:not([hidden])) .zoom-widget { display: none; }
+    /* One panel at a time above the player on phones: the TV hides the list until it is closed. */
+    body:has(#tvDock:not([hidden])) .country-drawer { display: none; }
+    .news-ticker { width: calc(100vw - 16px); bottom: calc(var(--player-h) + 14px); height: 30px; }
+    .ticker-item { font-size: 11px; }
+    body:has(#newsTicker:not([hidden])) { --ticker-h: 38px; }
+    body:has(#newsTicker:not([hidden])) .zoom-widget { bottom: calc(var(--player-h) + 34px + var(--ticker-h)); }
+    body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-h) + 16px + var(--ticker-h)); }
+}

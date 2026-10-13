@@ -10,7 +10,7 @@ const ERRORS = {
 const HLS_SRC = 'https://unpkg.com/hls.js@1.5.17/dist/hls.light.min.js';
 const HLS_SRI = 'sha384-aUXIo1rkYXsnqzYlykJMPPxPku80rMufp2z0gLNU59eAyfNRhP87hllql3hwVjUZ';
 let hlsLoader = null;
-function loadHls() {
+export function loadHls() {
     if (globalThis.Hls) return Promise.resolve(globalThis.Hls);
     hlsLoader ??= new Promise((resolve, reject) => {
         const script = Object.assign(document.createElement('script'), { src: HLS_SRC, integrity: HLS_SRI, crossOrigin: 'anonymous', async: true });

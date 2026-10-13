@@ -67,6 +67,7 @@
         <div class="action-btns">
             <button class="hud-btn" id="btnRandom" title="Listen to a random station somewhere in the world">🎲 RANDOM</button>
             <button class="hud-btn" id="btnAutoRotate" title="Toggle automatic globe rotation" aria-pressed="false">🌐 ROTATE</button>
+            <button class="hud-btn tv-btn" id="btnTv" title="Watch live news channels" aria-pressed="false">📺 TV</button>
             <div class="theme-picker">
                 <button class="hud-btn" id="btnTheme" title="Change the look of the globe" aria-haspopup="menu" aria-expanded="false" aria-controls="themeMenu">🎨 THEME</button>
                 <div class="theme-menu" id="themeMenu" role="menu" aria-label="Themes" hidden></div>
@@ -120,6 +121,12 @@
         <div class="dir-live" id="dirLive" hidden></div>
         <div class="country-cities-list" id="countryCitiesList"></div>
     </aside>
+
+    <!-- News ticker (layers with a ticker, such as NEWS) -->
+    <div class="hud-overlay news-ticker" id="newsTicker" hidden aria-label="Latest stories">
+        <span class="ticker-label"><i class="tv-live-dot"></i>LIVE</span>
+        <div class="ticker-track"><div class="ticker-move" id="tickerMove"></div></div>
+    </div>
 
     <!-- Bottom Radio Player -->
     <footer class="hud-overlay bottom-player" id="bottomPlayer">

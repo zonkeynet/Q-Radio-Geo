@@ -1,0 +1,348 @@
+{
+ "generated_at": "2026-10-13T12:26:30.646Z",
+ "source": "Stream index: iptv-org (public domain); streams from the broadcasters",
+ "channels": [
+  {
+   "id": "france24-fr-english",
+   "name": "France 24 English",
+   "lang": "en",
+   "cc": "FR",
+   "owner": "French public broadcaster",
+   "url": "https://live.france24.com/hls/live/2037218-b/F24_EN_HI_HLS/master_5000.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "dw-de-english",
+   "name": "DW News",
+   "lang": "en",
+   "cc": "DE",
+   "owner": "German public broadcaster",
+   "url": "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "aljazeera-qa-english",
+   "name": "Al Jazeera English",
+   "lang": "en",
+   "cc": "QA",
+   "owner": "funded by the State of Qatar",
+   "url": "https://live-hls-apps-aje-fa.getaj.net/AJE/index.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "nhkworldjapan-jp",
+   "name": "NHK World-Japan",
+   "lang": "en",
+   "cc": "JP",
+   "owner": "Japanese public broadcaster",
+   "url": "https://masterpl.hls.nhkworld.jp/hls/w/live/smarttv.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "euronewsenglish-fr",
+   "name": "Euronews English",
+   "lang": "en",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-en/25002/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "africanewsenglish-fr",
+   "name": "Africanews",
+   "lang": "en",
+   "cc": "CG",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/africanews-en/25049/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "cbsnews247-us",
+   "name": "CBS News 24/7",
+   "lang": "en",
+   "cc": "US",
+   "owner": "private",
+   "url": "https://cbsn-us-vtt.cbsnstream.cbsnews.com/out/v1/ef868690d34144509eda696884bf1619/master.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "abcnewslive1-us",
+   "name": "ABC News Live",
+   "lang": "en",
+   "cc": "US",
+   "owner": "private",
+   "url": "https://abcnews-streams.akamaized.net/hls/live/2023560/abcnewshudson1/master.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "nbcnewsnow-us",
+   "name": "NBC News NOW",
+   "lang": "en",
+   "cc": "US",
+   "owner": "private",
+   "url": "https://xumo-drct-nbcnn-ir8ze.fast.nbcuni.com/live/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "trtworld-tr",
+   "name": "TRT World",
+   "lang": "en",
+   "cc": "TR",
+   "owner": "Turkish state broadcaster",
+   "url": "https://tv-trtworld.medya.trt.com.tr/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "cgtn-cn",
+   "name": "CGTN",
+   "lang": "en",
+   "cc": "CN",
+   "owner": "Chinese state broadcaster",
+   "url": "https://english-livebkali.cgtn.com/live/encgtn.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "arirangtv-kr",
+   "name": "Arirang TV",
+   "lang": "en",
+   "cc": "KR",
+   "owner": "Korean public broadcaster",
+   "url": "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "ndtv24x7-in",
+   "name": "NDTV 24x7",
+   "lang": "en",
+   "cc": "IN",
+   "owner": "private (Adani Group)",
+   "url": "https://ndtv24x7elemarchana.akamaized.net/hls/live/2003678/ndtv24x7/master.m3u8",
+   "quality": "480p"
+  },
+  {
+   "id": "i24newsenglishworld-il",
+   "name": "i24NEWS English",
+   "lang": "en",
+   "cc": "IL",
+   "owner": "private",
+   "url": "https://i24newsenglish-cdn.encoders.immergo.tv/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "voatv-us",
+   "name": "Voice of America",
+   "lang": "en",
+   "cc": "US",
+   "owner": "US government broadcaster",
+   "url": "https://voa-ingest.akamaized.net/hls/live/2033874/tvmc06/playlist.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "france24-fr-french",
+   "name": "France 24",
+   "lang": "fr",
+   "cc": "FR",
+   "owner": "French public broadcaster",
+   "url": "https://live.france24.com/hls/live/2037179-b/F24_FR_HI_HLS/master_5000.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "euronewsfrench-fr",
+   "name": "Euronews",
+   "lang": "fr",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-fr/25026/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "africanewsfrench-fr",
+   "name": "Africanews",
+   "lang": "fr",
+   "cc": "CG",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/africanews-fr/25050/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "i24newsfrench-il",
+   "name": "i24NEWS",
+   "lang": "fr",
+   "cc": "IL",
+   "owner": "private",
+   "url": "https://i24newsfrench-cdn.encoders.immergo.tv/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "france24-fr-spanish",
+   "name": "France 24 Español",
+   "lang": "es",
+   "cc": "FR",
+   "owner": "French public broadcaster",
+   "url": "https://live.france24.com/hls/live/2037220-b/F24_ES_HI_HLS/master_5000.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "dw-de-espanol",
+   "name": "DW Español",
+   "lang": "es",
+   "cc": "DE",
+   "owner": "German public broadcaster",
+   "url": "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "24horas-es",
+   "name": "Canal 24 Horas",
+   "lang": "es",
+   "cc": "ES",
+   "owner": "Spanish public broadcaster",
+   "url": "https://ztnr.rtve.es/ztnr/1694255.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "euronewsspanish-fr",
+   "name": "Euronews",
+   "lang": "es",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-es/25053/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "aljazeera-qa-arabic",
+   "name": "الجزيرة",
+   "lang": "ar",
+   "cc": "QA",
+   "owner": "funded by the State of Qatar",
+   "url": "https://live-hls-apps-aja-fa.getaj.net/AJA/01.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "aljazeeramubasher-qa",
+   "name": "الجزيرة مباشر",
+   "lang": "ar",
+   "cc": "QA",
+   "owner": "funded by the State of Qatar",
+   "url": "https://live-hls-apps-ajm-fa.getaj.net/AJM/index.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "france24-fr-arabic",
+   "name": "فرانس 24",
+   "lang": "ar",
+   "cc": "FR",
+   "owner": "French public broadcaster",
+   "url": "https://live.france24.com/hls/live/2037222-b/F24_AR_HI_HLS/master_5000.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "dw-de-arabic",
+   "name": "DW عربية",
+   "lang": "ar",
+   "cc": "DE",
+   "owner": "German public broadcaster",
+   "url": "https://dwamdstream103.akamaized.net/hls/live/2015526/dwstream103/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "alarabiya-ae",
+   "name": "العربية",
+   "lang": "ar",
+   "cc": "SA",
+   "owner": "Saudi-owned (MBC Group)",
+   "url": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "asharqnews-sa",
+   "name": "الشرق",
+   "lang": "ar",
+   "cc": "SA",
+   "owner": "Saudi-owned (SRMG)",
+   "url": "https://live-news.asharq.com/asharq.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "trtarabi-tr",
+   "name": "TRT عربي",
+   "lang": "ar",
+   "cc": "TR",
+   "owner": "Turkish state broadcaster",
+   "url": "https://tv-trtarabi.medya.trt.com.tr/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "euronewsgerman-fr",
+   "name": "Euronews",
+   "lang": "de",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-de/25027/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "euronewsitalian-fr",
+   "name": "Euronews",
+   "lang": "it",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-it/25085/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "euronewsportuguese-fr",
+   "name": "Euronews",
+   "lang": "pt",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-pt/25040/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "euronewsgreek-fr",
+   "name": "Euronews",
+   "lang": "el",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-el/25068/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "euronewshungarian-fr",
+   "name": "Euronews",
+   "lang": "hu",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-hu/25075/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "dw-de-russian",
+   "name": "DW на русском",
+   "lang": "ru",
+   "cc": "DE",
+   "owner": "German public broadcaster",
+   "url": "https://dwamdstream110.akamaized.net/hls/live/2017971/dwstream110/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "euronewsrussian-fr",
+   "name": "Euronews",
+   "lang": "ru",
+   "cc": "BE",
+   "owner": "private (Euronews)",
+   "url": "https://cdn-euronews.akamaized.net/live/eds/euronews-ru/25071/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "voatvpersian-us",
+   "name": "VOA فارسی",
+   "lang": "fa",
+   "cc": "US",
+   "owner": "US government broadcaster",
+   "url": "https://voa-ingest.akamaized.net/hls/live/2033876/tvmc07/playlist.m3u8",
+   "quality": "1080p"
+  }
+ ]
+}

@@ -11,8 +11,10 @@ import { MARITIME } from './maritime.mjs';
 import { EMBASSIES, SECURITY, FIRES, CONFLICT, INTERNET } from './osint.mjs';
 import { MIGRATION } from './migration.mjs';
 import { TOR, WIFI } from './connectivity.mjs';
+import { NEWS } from './news.mjs';
+import { createTv } from './tv.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card).
-const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
+const DIRECTORIES = { news: NEWS, sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
@@ -23,7 +25,7 @@ const RADIO_TABS = [{ id: 'all', label: 'ALL' }, { id: 'country', label: 'COUNTR
 const DOT_SIZES = [5, 6, 7.5, 9];
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
-let mode = 'radio', explorer = null;
+let mode = 'radio', explorer = null, tv = null;
 const dirState = {}; // mode -> { items, values } once loaded
 const dir = () => DIRECTORIES[mode], state = () => dirState[mode];
 const dirShown = () => applyFilters(dir(), state().items, state().values);
@@ -41,12 +43,14 @@ const dirLayer = () => ({
     groupOf: dir().colorOf, // the theme variable is the group
     sizeOf: dir().sizeOf,
     describe: dir().describe,
-    colors: Object.fromEntries(dir().palette.map(v => [v, v]))
+    colors: Object.fromEntries(dir().palette.map(v => [v, v])),
+    pulses: dir().pulses?.(dirShown())
 });
 const buttons = ['btnRandom','btnPrevStation','btnNextStation','btnPlayPause'];
 function markState({ state, detail, station }) {
     const labels = { idle: 'READY', ready: 'PRESS PLAY', buffering: 'TUNING', playing: 'ON AIR', paused: 'PAUSED', ended: 'ENDED', error: 'ERROR' };
     $('playerStatus').className = `status-badge ${state === 'playing' ? 'live' : state}`;
+    if (state === 'playing' || state === 'buffering') tv?.mute(); // one sound at a time
     $('playerStatusText').textContent = labels[state] || state;
     $('playerDetail').textContent = detail; $('playerDetail').title = detail;
     const active = ['playing','buffering'].includes(state);
@@ -120,7 +124,7 @@ function selectPlace(place, stationId = null) {
     const altitude = currentPlace.loc === 'n' ? 1.4 : currentPlace.loc === 'r' ? .9 : .48;
     globe?.navigation.flyTo({ lat: currentPlace.lat, lng: currentPlace.lng, altitude }, 600);
     // Ring size in degrees, proportional to the view so it stays a marker, not a huge circle.
-    globe?.world.ringMaxRadius(Math.max(.15, altitude * 1.6)).ringsData([{ lat: currentPlace.lat, lng: currentPlace.lng }]);
+    globe?.select(currentPlace.lat, currentPlace.lng, Math.max(.15, altitude * 1.6));
     $('playerCity').textContent = currentPlace.city;
     $('playerCity').classList.toggle('approx', Boolean(currentPlace.loc));
     $('playerCity').title = currentPlace.loc ? `Approximate location (${LOC_LABEL[currentPlace.loc]})` : '';
@@ -336,15 +340,17 @@ async function loadLive(def) {
         if (!complete) st.liveTried = { ...area.need, partial: true }; // capped: any new view loads again
         const kept = new Map(st.items.filter(it => it.live).map(it => [it.id, it])); // an open card stays open
         st.items = indexItems(def, loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it));
-        st.liveStatus = def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC.`
+        st.liveAt = Date.now();
+        st.liveStatus = def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC${note ? `; ${note}` : ''}.`
             : `${(st.items.length - st.base.length).toLocaleString('en')} loaded ${note || (area.cut ? `within ${def.live.boxKm / 2} km of the view center` : 'for the area in view')}${liveTabOn(def) ? '; they follow the view' : ''}.`;
         if (dir() === def) {
             renderDirSidebar(); explorer.use(def, st.items, st.values);
             if (!$('countryDrawer').hidden) explorer.open();
-            globe?.setLayer(dirLayer());
+            globe?.setLayer(dirLayer()); renderTicker(); updateStats();
         }
     } catch (e) {
         if (liveRun === run) {
+            st.liveAt = Date.now(); // the next timed refresh tries again
             st.liveFails = (st.liveFails || 0) + 1; st.liveFailedAt = Date.now();
             st.liveStatus = `Not loaded: ${e.message}${liveTabOn(def) ? ' Trying again shortly.' : ''}`;
         }
@@ -367,16 +373,19 @@ function liveIfWanted() {
     if (tried && tried !== true && (tried.partial ? same(area.need, tried) : inside(area.need, tried)) && (pending || !retryDue(st))) return;
     loadLive(d); // a view that moved elsewhere replaces a pending request
 }
-/** While a live tab is on, follows the view: loads each new area once the globe has stopped moving. */
+/** While a live tab is on, follows the view: loads each new area once the globe has stopped moving. A mode with
+ * live.every (news) also refreshes on its own while it is open. */
 function watchLive() {
     setInterval(() => {
-        if (!liveTabOn(dir()) || document.hidden) { lastView = null; return; }
+        const d = dir();
+        if (d?.live?.every && !document.hidden && liveRun?.def !== d && Date.now() - (state().liveAt || 0) > d.live.every) loadLive(d);
+        if (!liveTabOn(d) || document.hidden) { lastView = null; return; }
         const b = globe?.viewBounds(), prev = lastView;
         lastView = b;
         if (b && prev && Math.abs(b.s - prev.s) + Math.abs(b.n - prev.n) + Math.abs(b.w - prev.w) + Math.abs(b.e - prev.e) < 1e-3) liveIfWanted();
     }, 1000);
 }
-const MODE_GROUPS = ['Listen', 'Navigate', 'Safety & OSINT', 'Connectivity'];
+const MODE_GROUPS = ['Live', 'Listen', 'Navigate', 'Safety & OSINT', 'Connectivity'];
 const RADIO_MODE = { id: 'radio', icon: '📻', label: 'RADIO', group: 'Listen', sidebarTitle: 'Radio stations' };
 /** The grouped layer menu next to the title. */
 function initModeMenu() {
@@ -413,6 +422,25 @@ function markMode() {
     $('modeIcon').textContent = m.icon; $('modeName').textContent = m.label;
     for (const item of $('modeMenu').querySelectorAll('.mode-option')) item.setAttribute('aria-checked', String(item.dataset.mode === mode));
 }
+/** The news ticker: the latest stories of a mode that has one, scrolling above the player. */
+function renderTicker() {
+    const d = dir(), box = $('newsTicker'), track = $('tickerMove');
+    const items = d?.ticker ? d.ticker(state().items) : [];
+    box.hidden = !items.length;
+    if (!items.length) return;
+    track.replaceChildren();
+    for (const copy of [0, 1]) { // two copies scroll as one seamless loop
+        for (const it of items) {
+            const b = node('button', 'ticker-item');
+            b.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
+            b.append(node('i', 'ticker-dot'), node('span', 'ticker-text', d.nameOf(it)), node('small', 'ticker-src', d.subOf(it)));
+            b.onclick = () => selectDir(it);
+            if (copy) { b.setAttribute('aria-hidden', 'true'); b.tabIndex = -1; }
+            track.appendChild(b);
+        }
+    }
+    track.style.setProperty('--ticker-s', `${Math.max(40, items.length * 7)}s`);
+}
 function setFilter(key, value) {
     state().values[key] = value;
     renderTabs(); renderDirSidebar(); renderLive();
@@ -424,7 +452,7 @@ function setFilter(key, value) {
 function selectDir(it) {
     explorer.select(it);
     globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: .5 }, 600);
-    globe?.world.ringMaxRadius(.8).ringsData([{ lat: it.lat, lng: it.lng }]);
+    globe?.select(it.lat, it.lng, .8);
 }
 async function setMode(next) {
     const def = DIRECTORIES[next];
@@ -447,6 +475,7 @@ async function setMode(next) {
     else $('countryDrawer').hidden = true;
     renderLive();
     globe?.setLayer(def ? dirLayer() : radioLayer());
+    renderTicker();
 }
 function initShortcutsPanel() {
     const panel = $('sidebarShortcuts'), toggle = $('btnToggleShortcuts');
@@ -564,6 +593,7 @@ async function start() {
         }
         $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
         initModeMenu(); markMode(); watchLive();
+        tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });
         let savedMode = null;
         try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
         if (DIRECTORIES[savedMode]) await setMode(savedMode);

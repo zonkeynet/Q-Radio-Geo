@@ -23,7 +23,8 @@ const cssColor = name => getComputedStyle(document.documentElement).getPropertyV
 /** onSelect(item) receives an item of the current layer. */
 export function createGlobe(container, onSelect, onManualInput) {
     if (typeof globalThis.Globe !== 'function') throw new Error('3D library not loaded');
-    // layer: { items, groupOf(item), sizeOf(item) in CSS px, describe(item) for the tooltip, colors: { group: '--css-var' } }
+    // layer: { items, groupOf(item), sizeOf(item) in CSS px, describe(item) for the tooltip, colors: { group: '--css-var' },
+    //         pulses?: [{ lat, lng, color: '--css-var' }] rings that keep pulsing (fresh events) }
     let layer = { items: [], groupOf: () => '', sizeOf: () => 5, describe: () => '', colors: {} };
     let dotSets = [], positions = [];
     const world = Globe()(container)
@@ -32,7 +33,8 @@ export function createGlobe(container, onSelect, onManualInput) {
         .particleAltitude(DOT_ALTITUDE).particlesSize(s => s.size).particlesSizeAttenuation(false)
         .enablePointerInteraction(false)
         .ringsData([]).ringLat('lat').ringLng('lng')
-        .ringMaxRadius(2.5).ringPropagationSpeed(2).ringRepeatPeriod(850)
+        .ringMaxRadius(r => r.radius).ringPropagationSpeed(r => r.speed).ringRepeatPeriod(r => r.period)
+        .ringColor(r => t => `rgba(${r.rgb},${Math.sqrt(Math.max(0, 1 - t)) * r.alpha})`)
         .hexPolygonResolution(3).hexPolygonAltitude(.001).hexPolygonsTransitionDuration(0);
     world.pointOfView({ lat: 41.9, lng: 12.5, altitude: 2.2 }, 0);
     world.controls().autoRotate = false; world.controls().autoRotateSpeed = .5;
@@ -70,9 +72,16 @@ export function createGlobe(container, onSelect, onManualInput) {
     function applyDotColors() {
         const colors = Object.fromEntries(Object.entries(layer.colors).map(([group, name]) => [group, cssColor(name)]));
         world.particlesColor(s => colors[s.group] || '#ffffff');
-        const ring = rgb(cssColor('--accent'));
-        world.ringColor(() => t => `rgba(${ring},${Math.sqrt(Math.max(0, 1 - t))})`);
+        drawRings();
     }
+    // The layer's pulses (slow, faint) plus the selected point's ring (fast, bright); colours follow the theme.
+    let selected = null;
+    function drawRings() {
+        const pulses = (layer.pulses || []).map(p => ({ lat: p.lat, lng: p.lng, radius: 1.4, speed: .9, period: 1900, alpha: .75, rgb: rgb(cssColor(p.color)) }));
+        world.ringsData(selected ? [...pulses, { ...selected, speed: 2, period: 850, alpha: 1, rgb: rgb(cssColor('--accent')) }] : pulses);
+    }
+    /** Rings the chosen point; radius in degrees. */
+    function select(lat, lng, radius) { selected = { lat, lng, radius }; drawRings(); }
     function setLayer(next) {
         layer = next;
         positions = layer.items.map(p => world.getCoords(p.lat, p.lng, 0));
@@ -84,7 +93,8 @@ export function createGlobe(container, onSelect, onManualInput) {
             sets.get(key).list.push(item);
         }
         dotSets = [...sets.values()];
-        world.particlesData(dotSets).ringsData([]);
+        selected = null;
+        world.particlesData(dotSets);
         tooltip.hidden = true;
         applyDotColors();
         roundDots();
@@ -245,7 +255,7 @@ export function createGlobe(container, onSelect, onManualInput) {
         return e - w > 180 ? null : { s: Math.min(...lats), n: Math.max(...lats), w, e };
     }
     return {
-        world, navigation, setTheme, setLayer, viewBounds,
+        world, navigation, setTheme, setLayer, viewBounds, select,
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });

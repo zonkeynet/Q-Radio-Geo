@@ -89,9 +89,10 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick })
     }
     function render() {
         const center = getCenter(), list_ = shown();
-        const sorted = [...list_].sort((a, b) => (def.featured?.(b) ? 1 : 0) - (def.featured?.(a) ? 1 : 0) || km(center, a) - km(center, b));
+        // Nearest to the view first, unless the mode orders its list itself (news: newest first).
+        const sorted = [...list_].sort(def.listOrder || ((a, b) => (def.featured?.(b) ? 1 : 0) - (def.featured?.(a) ? 1 : 0) || km(center, a) - km(center, b)));
         title.textContent = `${def.icon} ${def.titleOf(values)}`;
-        meta.textContent = `${list_.length.toLocaleString('en')} ${def.noun} · nearest to the view first`;
+        meta.textContent = `${list_.length.toLocaleString('en')} ${def.noun} · ${def.listOrder ? 'newest first' : 'nearest to the view first'}`;
         drawer.hidden = false;
         list.replaceChildren(); list.scrollTop = 0;
         if (selected) list.append(card(selected));

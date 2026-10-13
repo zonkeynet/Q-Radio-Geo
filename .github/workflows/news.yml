@@ -1,0 +1,40 @@
+# Rebuilds the NEWS layer's headlines every 10 minutes and publishes them as news.json on the news-data branch,
+# which the page reads from raw.githubusercontent.com. The branch holds one commit, replaced on every run, so the
+# repository does not grow; main and the GitHub Pages site are not touched.
+name: News headlines
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news-headlines
+  cancel-in-progress: true
+
+jobs:
+  headlines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the headlines
+        run: node scripts/build_news.mjs --out out/news.json
+      - name: Publish to the news-data branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd out
+          git init -q -b news-data
+          git add news.json
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -q -m "Headlines $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" news-data
