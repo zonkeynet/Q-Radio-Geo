@@ -1,7 +1,7 @@
 {
   "name": "Q-P1NG Globe",
   "short_name": "Q-P1NG Globe",
-  "description": "World radio, live news and TV, SDR receivers, repeaters, aviation and maritime aids, conflict, migration, censorship, Tor and public Wi-Fi on one interactive 3D globe.",
+  "description": "Global spectrum & tactical awareness on a live 3D globe: news, radio, SDR, Wi-Fi, surveillance and infrastructure. No account, no ads, no trackers.",
   "id": "/",
   "start_url": "./",
   "scope": "./",
