@@ -49,7 +49,7 @@ export function typeBadge(text, colorVar, className = 'dir-type') {
 const DISTANCE_SECTIONS = [[50, 'Within 50 km'], [300, 'Within 300 km'], [1000, 'Within 1,000 km'], [Infinity, 'Further away']];
 
 /** The left drawer: the selected item's card, then every filtered item (featured, then nearest to the view), in sections. */
-export function createExplorer({ drawer, title, meta, list, getCenter, onPick }) {
+export function createExplorer({ drawer, title, meta, list, getCenter, onPick, onShare }) {
     let def = null, items = [], values = {}, selected = null, more = null;
     // "Show more" loads itself when it scrolls into view; the button stays for keyboards.
     const autoMore = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) more?.click(); }, { root: list, rootMargin: '400px' });
@@ -76,6 +76,11 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick })
         for (const [k, v] of def.facts(it)) if (v) facts.append(node('dt', '', k), node('dd', '', v));
         if (facts.children.length) box.append(facts);
         for (const a of def.actions(it)) box.append(link(a.label, a.href, a.secondary ? 'dir-open secondary' : 'dir-open'));
+        if (onShare) {
+            const share = Object.assign(node('button', 'dir-open secondary dir-share', '🔗 SHARE LINK'), { type: 'button', title: 'Copy a link that opens this card' });
+            share.onclick = () => onShare(it);
+            box.append(share);
+        }
         const here = shown().filter(x => x !== it && Math.abs(x.lat - it.lat) < 1e-3 && Math.abs(x.lng - it.lng) < 1e-3);
         if (here.length) {
             box.append(node('p', 'dir-sub', `Also at this site · ${here.length}`));
@@ -139,6 +144,7 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick })
         },
         open: render,
         select(it) { selected = it; render(); },
+        get selected() { return selected; },
         close() { drawer.hidden = true; }
     };
 }

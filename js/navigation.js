@@ -1,5 +1,5 @@
 /**
- * Q-P1NG Radio Globe navigation controller, 2026-10-12.
+ * Q-P1NG Globe navigation controller, 2026-10-12.
  * Compatible with the public Globe.gl 2.46 API.
  * Loaded by index.html as a local script; no additional package dependency.
  */

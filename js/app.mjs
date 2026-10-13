@@ -13,6 +13,7 @@ import { MIGRATION } from './migration.mjs';
 import { TOR, WIFI } from './connectivity.mjs';
 import { NEWS } from './news.mjs';
 import { createTv } from './tv.mjs';
+import { createGuide } from './guide.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card).
 const DIRECTORIES = { news: NEWS, sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
@@ -25,7 +26,7 @@ const RADIO_TABS = [{ id: 'all', label: 'ALL' }, { id: 'country', label: 'COUNTR
 const DOT_SIZES = [5, 6, 7.5, 9];
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
-let mode = 'radio', explorer = null, tv = null;
+let mode = 'radio', explorer = null, tv = null, guide = null;
 const dirState = {}; // mode -> { items, values } once loaded
 const dir = () => DIRECTORIES[mode], state = () => dirState[mode];
 const dirShown = () => applyFilters(dir(), state().items, state().values);
@@ -61,6 +62,7 @@ function markState({ state, detail, station }) {
     const homepage = safeLinkURL(station?.homepage);
     $('btnExternal').hidden = !homepage;
     if (homepage) $('btnExternal').href = homepage;
+    $('btnShareStation').hidden = !station;
 }
 function updateRotate(enabled) {
     $('btnAutoRotate').setAttribute('aria-pressed', String(enabled));
@@ -117,14 +119,14 @@ function renderChips() {
     drawer.appendChild(chips);
     draw();
 }
-function selectPlace(place, stationId = null) {
+function selectPlace(place, stationId = null, { fly = true } = {}) {
     if (!ready || !place) return;
     currentPlace = catalog.byId.get(place.id);
     if (!currentPlace) return;
     const altitude = currentPlace.loc === 'n' ? 1.4 : currentPlace.loc === 'r' ? .9 : .48;
-    globe?.navigation.flyTo({ lat: currentPlace.lat, lng: currentPlace.lng, altitude }, 600);
+    if (fly) globe?.navigation.flyTo({ lat: currentPlace.lat, lng: currentPlace.lng, altitude }, 600);
     // Ring size in degrees, proportional to the view so it stays a marker, not a huge circle.
-    globe?.select(currentPlace.lat, currentPlace.lng, Math.max(.15, altitude * 1.6));
+    globe?.select(currentPlace.lat, currentPlace.lng, Math.max(.15, (fly ? altitude : globe.world.pointOfView().altitude) * 1.6));
     $('playerCity').textContent = currentPlace.city;
     $('playerCity').classList.toggle('approx', Boolean(currentPlace.loc));
     $('playerCity').title = currentPlace.loc ? `Approximate location (${LOC_LABEL[currentPlace.loc]})` : '';
@@ -383,6 +385,8 @@ async function loadLive(def) {
             renderDirSidebar(); explorer.use(def, st.items, st.values);
             if (!$('countryDrawer').hidden) explorer.open();
             globe?.setLayer(dirLayer()); renderTicker(); updateStats();
+            const linked = pendingPick?.mode === def.id && st.items.find(it => String(it.id) === pendingPick.id);
+            if (linked) selectDir(linked, { fly: false });
         }
     } catch (e) {
         if (liveRun === run) {
@@ -413,6 +417,7 @@ function liveIfWanted() {
  * live.every (news) also refreshes on its own while it is open. */
 function watchLive() {
     setInterval(() => {
+        syncLink();
         const d = dir();
         if (d?.live?.every && !document.hidden && liveRun?.def !== d && Date.now() - (state().liveAt || 0) > d.live.every) loadLive(d);
         if (!liveTabOn(d) || document.hidden) { lastView = null; return; }
@@ -485,10 +490,12 @@ function setFilter(key, value) {
     triggerSearch();
     liveIfWanted(); // choosing a live tab (cameras, police, …) is the request to load it
 }
-function selectDir(it) {
+function selectDir(it, { fly = true } = {}) {
+    pendingPick = null;
     unfoldDrawer();
     explorer.select(it);
-    globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: .5 }, 600);
+    // Closer, never further: items that load with their area (cameras) stay loaded, and a link keeps that zoom.
+    if (fly) globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, .5) }, 600);
     globe?.select(it.lat, it.lng, .8);
 }
 async function setMode(next) {
@@ -502,6 +509,9 @@ async function setMode(next) {
     document.documentElement.dataset.mode = mode;
     try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
     markMode();
+    pendingPick = null;
+    playerMini = null; applyPlayerSize();
+    if (!player?.station) $('playerTitle').textContent = def ? 'Radio · pick a station in the 📻 RADIO layer' : 'Select a point on the map';
     hideSearch(); $('searchInput').value = '';
     $('searchInput').placeholder = def ? def.placeholder : 'Search country, city or station…';
     $('btnRandom').title = def ? def.randomTitle : 'Listen to a random station somewhere in the world';
@@ -516,6 +526,97 @@ async function setMode(next) {
     globe?.setLayer(def ? dirLayer() : radioLayer());
     renderTicker();
 }
+/* The player: full in RADIO, a one-line bar in the other layers, so the list and the globe keep the room. The user's
+ * choice (▾ ▴) holds until the layer changes. */
+let playerMini = null;
+function applyPlayerSize() {
+    const mini = playerMini ?? mode !== 'radio', b = $('btnPlayerSize');
+    $('bottomPlayer').classList.toggle('mini', mini);
+    b.textContent = mini ? '▴' : '▾';
+    b.title = b.ariaLabel = mini ? 'Show the full player' : 'Shrink the player';
+    b.setAttribute('aria-expanded', String(!mini));
+}
+
+/* Links. The address always holds the layer, its filters, the view and the open card or station, without adding
+ * history entries; opening such a link restores them. #layer=news&kind=quake&view=35.700,139.700,0.50&id=… */
+let linked = false, pendingPick = null; // pendingPick: a linked item that loads with its area (police, cameras)
+const linkText = p => [...p].map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%2C/g, ',')}`).join('&');
+const linkUrl = p => `${location.origin}${location.pathname}#${linkText(p)}`;
+const viewText = (lat, lng, altitude) => `${lat.toFixed(3)},${lng.toFixed(3)},${altitude.toFixed(2)}`;
+function linkParams() {
+    const p = new URLSearchParams({ layer: mode });
+    if (mode === 'radio') { if (player?.station) p.set('station', player.station.id); }
+    else {
+        for (const [k, v] of Object.entries(state().values)) if (v !== 'all') p.set(k, v);
+        if (explorer.selected) p.set('id', explorer.selected.id);
+    }
+    const pov = globe?.world.pointOfView();
+    if (pov) p.set('view', viewText(pov.lat, pov.lng, pov.altitude));
+    return p;
+}
+function syncLink() {
+    if (!linked) return;
+    const hash = `#${linkText(linkParams())}`;
+    if (location.hash !== hash) history.replaceState(null, '', hash);
+}
+const readLink = () => { const p = new URLSearchParams(location.hash.slice(1)); return p.has('layer') || p.has('view') ? p : null; };
+/** Opens what a link describes: the layer, the view, the filters, then the card or station. Unknown values are ignored. */
+async function applyLink(p) {
+    const layer = p.get('layer');
+    if (layer && layer !== mode && (layer === 'radio' || DIRECTORIES[layer])) await setMode(layer);
+    if (layer && layer !== mode) return; // unknown, or its data did not load
+    const view = (p.get('view') || '').split(',').map(Number);
+    const hasView = view.length === 3 && view.every(Number.isFinite);
+    if (hasView) globe?.navigation.flyTo({ lat: view[0], lng: view[1], altitude: view[2] }, 0); // before the filters: live tabs load this area
+    if (mode === 'radio') {
+        const s = p.get('station') && catalog.stations.find(x => x.id === p.get('station'));
+        if (s) selectPlace(catalog.byId.get(s.place_id), s.id, { fly: !hasView });
+        return;
+    }
+    const d = dir(), values = state().values;
+    for (const f of d.filters) { const v = p.get(f.key); values[f.key] = v && f.options.some(o => o.id === v) ? v : 'all'; }
+    setFilter(d.filters[0].key, values[d.filters[0].key]);
+    const id = p.get('id');
+    if (!id) return;
+    const it = state().items.find(x => String(x.id) === id);
+    if (it) selectDir(it, { fly: !hasView });
+    else pendingPick = { mode, id };
+}
+function toast(text) {
+    const t = $('toast');
+    t.textContent = text; t.hidden = false;
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+/** Phones open their share sheet; elsewhere the link goes to the clipboard. */
+async function shareLink(p, title) {
+    const url = linkUrl(p);
+    try {
+        if (phone.matches && navigator.share) await navigator.share({ title, url });
+        else { await navigator.clipboard.writeText(url); toast('Link copied'); }
+    } catch (e) {
+        if (e.name !== 'AbortError') prompt('Copy this link:', url);
+    }
+}
+/** A card's link opens it close up, also for items that load with their area. */
+function shareItem(it) {
+    const p = linkParams();
+    p.set('id', it.id);
+    p.set('view', viewText(it.lat, it.lng, Math.min(globe?.world.pointOfView().altitude ?? .5, .5)));
+    shareLink(p, `${dir().nameOf(it)} · Q-P1NG Globe`);
+}
+/** Single keys, listed in the guide; ignored while typing or while a dialog is open. */
+function initKeys() {
+    const click = id => () => $(id).click();
+    const keys = { '?': () => guide.open(), '/': () => $('searchInput').focus(), l: click('btnMode'), t: click('btnTv'), r: click('btnRandom'),
+        '+': click('btnZoomIn'), '=': click('btnZoomIn'), '-': click('btnZoomOut'), '0': click('btnResetView') };
+    document.addEventListener('keydown', e => {
+        const act = e.key.length === 1 && keys[e.key.toLowerCase()];
+        if (!act || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]')
+            || e.target.closest?.('input, select, textarea, [contenteditable]')) return;
+        e.preventDefault(); act();
+    });
+}
+
 /* The list panel. Desktop: a wider reading mode and a minimized state. Phones: a bottom sheet with three heights
  * (peek: the title only, half, full), dragged or tapped on its handle. */
 const phone = matchMedia('(max-width: 640px)');
@@ -633,6 +734,10 @@ function initThemeMenu() {
     });
 }
 async function start() {
+    guide = createGuide({ button: $('btnGuide'), layers: [RADIO_MODE, ...Object.values(DIRECTORIES)], groups: MODE_GROUPS,
+        onLayer: id => { if (ready) setMode(id); },
+        dbFiles: [['qp1ng.sqlite.gz', 'db/qp1ng.sqlite.gz'], ['qp1ng-surveillance.sqlite.gz', 'db/qp1ng-surveillance.sqlite.gz']] });
+    initKeys();
     initThemeMenu();
     initShortcutsPanel();
     initDrawer();
@@ -647,7 +752,13 @@ async function start() {
     };
     $('btnRevokeAudio').onclick = () => { player.setConsent(false); $('audioConsent').hidden = false; $('btnRevokeAudio').hidden = true; };
     $('volumeSlider').oninput = e => player.setVolume(e.target.value);
-    $('btnPlayPause').onclick = () => { if (!player.allowed) { $('audioConsent').hidden = false; $('btnAcceptAudio').focus(); } else player.toggle(); };
+    $('btnPlayPause').onclick = () => {
+        if (player.allowed) { player.toggle(); return; }
+        playerMini = false; applyPlayerSize(); // the consent bar is in the full player
+        $('audioConsent').hidden = false; $('btnAcceptAudio').focus();
+    };
+    $('btnPlayerSize').onclick = () => { playerMini = !$('bottomPlayer').classList.contains('mini'); applyPlayerSize(); };
+    $('btnShareStation').onclick = () => { if (player.station) shareLink(new URLSearchParams({ layer: 'radio', station: player.station.id }), `${player.station.title} · Q-P1NG Globe`); };
     $('btnNextStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex+1)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnPrevStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex-1+cityStations.length)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnRandom').onclick = () => {
@@ -663,7 +774,7 @@ async function start() {
     explorer = createExplorer({
         drawer: $('countryDrawer'), title: $('countryDrawerTitle'), meta: $('countryDrawerMeta'), list: $('countryCitiesList'),
         getCenter: () => globe ? globe.world.pointOfView() : { lat: 41.9, lng: 12.5 },
-        onPick: selectDir
+        onPick: selectDir, onShare: shareItem
     });
     $('countryDrawerClose').onclick = () => { $('countryDrawer').hidden = true; };
     $('searchInput').oninput = triggerSearch;
@@ -700,7 +811,11 @@ async function start() {
         tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });
         let savedMode = null;
         try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
-        if (DIRECTORIES[savedMode]) await setMode(savedMode);
+        const link = readLink(); // a shared link wins over the layer used last time
+        if (link) await applyLink(link);
+        else if (DIRECTORIES[savedMode]) await setMode(savedMode);
+        linked = true;
+        window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
     } catch (e) {
         $('playerTitle').textContent = 'Loading failed';
         $('playerDetail').textContent = 'Serve the folder over HTTP/HTTPS, not via file://. Check the data/ files and app-config.json, then reload.';
