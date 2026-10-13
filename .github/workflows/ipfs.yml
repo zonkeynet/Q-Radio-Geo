@@ -64,7 +64,9 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
         run: |
           s3() { aws --endpoint-url https://s3.filebase.com "$@"; }
-          meta() { s3 s3api head-object --bucket "$FILEBASE_BUCKET" --key "$1" --query Metadata --output json 2>/dev/null || echo '{}'; }
+          # The object's metadata, keys in lower case (the AWS CLI shows Filebase's as Cid, Pinning-Status).
+          meta() { { s3 s3api head-object --bucket "$FILEBASE_BUCKET" --key "$1" --query Metadata --output json 2>/dev/null || echo '{}'; } \
+            | jq -c '(. // {}) | with_entries(.key |= ascii_downcase)'; }
           versions=$(s3 s3api list-objects-v2 --bucket "$FILEBASE_BUCKET" --prefix "$OBJECT-" --query 'Contents[].Key' --output text | tr '\t' '\n' \
             | grep -E "^$OBJECT-[0-9a-f]{12}\.car$" || true)
           # The same content (a commit that only changes the workflow) is already pinned: keep it.
