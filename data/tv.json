@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-13T12:26:30.646Z",
+ "generated_at": "2026-10-13T13:06:27.871Z",
  "source": "Stream index: iptv-org (public domain); streams from the broadcasters",
  "channels": [
   {
@@ -66,15 +66,6 @@
    "quality": "720p"
   },
   {
-   "id": "abcnewslive1-us",
-   "name": "ABC News Live",
-   "lang": "en",
-   "cc": "US",
-   "owner": "private",
-   "url": "https://abcnews-streams.akamaized.net/hls/live/2023560/abcnewshudson1/master.m3u8",
-   "quality": "720p"
-  },
-  {
    "id": "nbcnewsnow-us",
    "name": "NBC News NOW",
    "lang": "en",
@@ -136,6 +127,150 @@
    "owner": "US government broadcaster",
    "url": "https://voa-ingest.akamaized.net/hls/live/2033874/tvmc06/playlist.m3u8",
    "quality": "1080p"
+  },
+  {
+   "id": "reuterstv-us",
+   "name": "Reuters",
+   "lang": "en",
+   "cc": "GB",
+   "owner": "news agency (Thomson Reuters)",
+   "url": "https://amg00453-reuters-amg00453c1-rakuten-uk-2110.playouts.now.amagi.tv/playlist/amg00453-reuters-reuters-rakutenuk/playlist.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "abcnews-au",
+   "name": "ABC News Australia",
+   "lang": "en",
+   "cc": "AU",
+   "owner": "Australian public broadcaster",
+   "url": "https://abc-news-dmd-streams-1.akamaized.net/out/v1/701126012d044971b3fa89406a440133/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "indiatoday-in",
+   "name": "India Today",
+   "lang": "en",
+   "cc": "IN",
+   "owner": "private (India Today Group)",
+   "url": "https://indiatodaylive.akamaized.net/hls/live/2014320/indiatoday/indiatodaylive/playlist.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "tagesschau24-de",
+   "name": "tagesschau24",
+   "lang": "de",
+   "cc": "DE",
+   "owner": "German public broadcaster (ARD)",
+   "url": "https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "bfmtv-fr",
+   "name": "BFM TV",
+   "lang": "fr",
+   "cc": "FR",
+   "owner": "private",
+   "url": "https://live-cdn-stream-euw1.bfmtv.bct.nextradiotv.com/master.m3u8",
+   "quality": "576p"
+  },
+  {
+   "id": "telesur-ve",
+   "name": "teleSUR",
+   "lang": "es",
+   "cc": "VE",
+   "owner": "funded mainly by Venezuela's government",
+   "url": "https://mblenmain01.telesur.ultrabase.net/mblivev3/hd/playlist.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "skynewsarabia-ae",
+   "name": "سكاي نيوز عربية",
+   "lang": "ar",
+   "cc": "AE",
+   "owner": "UAE-based (Abu Dhabi)",
+   "url": "https://live-stream.skynewsarabia.com/c-horizontal-channel/horizontal-stream/index.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "dabangatv-sd",
+   "name": "Dabanga",
+   "lang": "ar",
+   "cc": "SD",
+   "owner": "independent Sudanese media, based in the Netherlands",
+   "url": "https://hls.dabangasudan.org/hls/stream.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "rudawtv-iq",
+   "name": "Rudaw",
+   "lang": "ku",
+   "cc": "IQ",
+   "owner": "Kurdistan Region broadcaster",
+   "url": "https://live.rudaw.net/hls/rudaw-tv/master.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "trthaber-tr",
+   "name": "TRT Haber",
+   "lang": "tr",
+   "cc": "TR",
+   "owner": "Turkish state broadcaster",
+   "url": "https://tv-trthaber.medya.trt.com.tr/master.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "halktv-tr",
+   "name": "Halk TV",
+   "lang": "tr",
+   "cc": "TR",
+   "owner": "private",
+   "url": "https://halktv-live.daioncdn.net/halktv/halktv.m3u8",
+   "quality": "1080p"
+  },
+  {
+   "id": "afghanistaninternational-uk",
+   "name": "Afghanistan International",
+   "lang": "fa",
+   "cc": "AF",
+   "owner": "private, based in London",
+   "url": "https://hls.afintl.com/hls/stream.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "dvbtv-mm",
+   "name": "DVB",
+   "lang": "my",
+   "cc": "MM",
+   "owner": "independent Myanmar media",
+   "url": "https://live-stream.dvb.no/hls/stream_src/index.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "aajtak-in",
+   "name": "Aaj Tak",
+   "lang": "hi",
+   "cc": "IN",
+   "owner": "private (India Today Group)",
+   "url": "https://aajtaklive-amd.akamaized.net/hls/live/2014416/aajtak/aajtaklive/live_404p/chunks.m3u8",
+   "quality": "404p"
+  },
+  {
+   "id": "dunyanews-pk",
+   "name": "Dunya News",
+   "lang": "ur",
+   "cc": "PK",
+   "owner": "private",
+   "url": "https://imob.dunyanews.tv/livehd/ngrp:dunyalivehd_2_all/playlist.m3u8",
+   "quality": "720p"
+  },
+  {
+   "id": "nhkworldpremium-jp",
+   "name": "NHK World Premium",
+   "lang": "ja",
+   "cc": "JP",
+   "owner": "Japanese public broadcaster",
+   "url": "https://media-tyo.hls.nhkworld.jp/hls/wp/live/master.m3u8",
+   "quality": "720p"
   },
   {
    "id": "france24-fr-french",

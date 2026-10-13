@@ -10,6 +10,9 @@ const ERRORS = {
 const HLS_SRC = 'https://unpkg.com/hls.js@1.5.17/dist/hls.light.min.js';
 const HLS_SRI = 'sha384-aUXIo1rkYXsnqzYlykJMPPxPku80rMufp2z0gLNU59eAyfNRhP87hllql3hwVjUZ';
 let hlsLoader = null;
+/** hls.js wherever Media Source Extensions exist: recent Chrome also claims native HLS but plays fewer streams.
+ * Native HLS only where hls.js cannot run (older iPhones). */
+export const useHlsJs = media => 'MediaSource' in globalThis || 'ManagedMediaSource' in globalThis || !media.canPlayType('application/vnd.apple.mpegurl');
 export function loadHls() {
     if (globalThis.Hls) return Promise.resolve(globalThis.Hls);
     hlsLoader ??= new Promise((resolve, reject) => {
@@ -81,7 +84,7 @@ export class RadioPlayer {
         this.emit('buffering', this.config.streamMode === 'proxy' ? 'Connecting via the configured backend…' : 'Connecting directly to the station server…');
         armTimeout();
         const isHls = this.station.hls === 1 || /\.m3u8$/i.test(new URL(url).pathname);
-        if (isHls && !audio.canPlayType('application/vnd.apple.mpegurl')) {
+        if (isHls && useHlsJs(audio)) {
             let Hls;
             try { Hls = await loadHls(); } catch { failed('The HLS player could not be loaded. Check the connection and try again.'); return; }
             if (!active()) return;

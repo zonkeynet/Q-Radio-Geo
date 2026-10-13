@@ -1,10 +1,11 @@
 // 📺 Live TV: official live news channels (data/tv.json, from scripts/build_tv.mjs) played in the page through hls.js,
 // one screen or a wall of four. Nothing loads until the viewer presses play; each broadcaster then sees their IP.
-import { loadHls } from './player.mjs';
+import { loadHls, useHlsJs } from './player.mjs';
 
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const button = (className, text, label) => Object.assign(node('button', className, text), { type: 'button', title: label, ariaLabel: label });
-const LANGS = { en: 'English', fr: 'Français', es: 'Español', ar: 'العربية', de: 'Deutsch', it: 'Italiano', pt: 'Português', el: 'Ελληνικά', hu: 'Magyar', ru: 'Русский', fa: 'فارسی' };
+const LANGS = { en: 'English', fr: 'Français', es: 'Español', ar: 'العربية', de: 'Deutsch', it: 'Italiano', pt: 'Português', el: 'Ελληνικά', hu: 'Magyar', ru: 'Русский',
+    tr: 'Türkçe', fa: 'فارسی', ku: 'Kurdî', hi: 'हिन्दी', ur: 'اردو', ja: '日本語', my: 'မြန်မာ' };
 const STORE = 'qradio.tv';
 const DEFAULT_SLOTS = ['france24-fr-english', 'dw-de-english', 'aljazeera-qa-english', 'euronewsenglish-fr'];
 const read = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } };
@@ -74,7 +75,7 @@ export function createTv({ toggle, onSound }) {
         stop(s);
         s.channel = ch; s.el.dataset.state = 'loading'; s.label.textContent = ch.name; s.msg.textContent = 'Connecting…';
         s.video.muted = s !== focused() || st.muted;
-        if (s.video.canPlayType('application/vnd.apple.mpegurl')) s.video.src = ch.url;
+        if (!useHlsJs(s.video)) s.video.src = ch.url;
         else {
             let Hls;
             try { Hls = await loadHls(); } catch { fail(s, 'The video player could not be loaded. Check the connection.'); return; }
