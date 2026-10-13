@@ -9,9 +9,10 @@ import { REPEATERS } from './repeaters.mjs';
 import { AVIATION } from './aviation.mjs';
 import { MARITIME } from './maritime.mjs';
 import { EMBASSIES, SECURITY, FIRES, CONFLICT, INTERNET } from './osint.mjs';
+import { MIGRATION } from './migration.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card).
 const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
-    embassies: EMBASSIES, security: SECURITY, fires: FIRES, conflict: CONFLICT, internet: INTERNET };
+    embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };
@@ -272,26 +273,26 @@ function renderDirSidebar() {
     }
     $('dirCredit').textContent = d.credit;
 }
-/* Live loads (OpenStreetMap for the area in view, IODA outages) run only when asked: with the button in the list
- * panel, or while a live tab (police, cameras, hospitals, outages) is on, once per area the view stops on.
- * Those servers see the user's IP address, as each mode's note says. */
+/* Per-area loads (police and cameras from this site's tiles, hospitals from Overpass, IODA outages) run only when
+ * asked: with the button in the list panel, or while such a tab (police, cameras, hospitals, outages) is on, once
+ * per area the view stops on. Third-party servers see the user's IP address, as each mode's note says. */
 let liveRun = null, lastView = null;
-// Requests stay small and polite: at most a box this wide around the center of the view, and only once the view
-// is closer than a continent. Kilometres, not degrees, so the limit is the same at every latitude and screen size.
-const LIVE_BOX_KM = 200, LIVE_MAX_VIEW_DEG = 20;
+// Loads start once the view is closer than a continent. A mode can also cap each request to def.live.boxKm around
+// the view center (kilometres, so the cap is the same at every latitude and screen size).
+const LIVE_MAX_VIEW_DEG = 20;
 const liveTabOn = d => Boolean(d?.live) && d.filters.some(f => f.options.find(o => o.id === dirState[d.id].values[f.key])?.live);
 const inside = (b, a) => b.s >= a.s && b.n <= a.n && b.w >= a.w && b.e <= a.e;
-/** What to load for the view: `need` is the view cut to LIVE_BOX_KM around its center, `query` the same with a
- * margin so small moves need no new request, `cut` whether the view is wider than the box. Null when zoomed out too far. */
-function liveArea() {
+/** What to load for the view: `need` is the view, cut to def.live.boxKm around its center if set; `query` the same
+ * with a margin so small moves need no new request; `cut` whether the view is wider than the box. Null when zoomed out too far. */
+function liveArea(def) {
     const view = globe?.viewBounds();
     if (!view || view.n - view.s > LIVE_MAX_VIEW_DEG) return null;
-    const { lat, lng } = globe.world.pointOfView();
-    const dLat = LIVE_BOX_KM / 2 / 111.2, dLng = dLat / Math.max(Math.cos(lat * Math.PI / 180), .2);
+    const { lat, lng } = globe.world.pointOfView(), km = def.live.boxKm || 1e5;
+    const dLat = km / 2 / 111.2, dLng = dLat / Math.max(Math.cos(lat * Math.PI / 180), .2);
     const clip = pad => {
         const p = (view.n - view.s) * pad, q = (view.e - view.w) * pad, k = 1 + pad, fix = v => Math.round(v * 1e4) / 1e4;
-        return { s: fix(Math.max(lat - dLat * k, view.s - p)), n: fix(Math.min(lat + dLat * k, view.n + p)),
-            w: fix(Math.max(lng - dLng * k, view.w - q)), e: fix(Math.min(lng + dLng * k, view.e + q)) };
+        return { s: fix(Math.max(lat - dLat * k, view.s - p, -90)), n: fix(Math.min(lat + dLat * k, view.n + p, 90)),
+            w: fix(Math.max(lng - dLng * k, view.w - q, -180)), e: fix(Math.min(lng + dLng * k, view.e + q, 180)) };
     };
     const need = clip(0);
     return { need, query: clip(.25), cut: need.s > view.s || need.n < view.n || need.w > view.w || need.e < view.e };
@@ -320,21 +321,22 @@ async function loadLive(def) {
     const st = dirState[def.id];
     let area = null;
     if (def.live.needsView !== false) {
-        area = liveArea();
+        area = liveArea(def);
         if (!area) { setLiveStatus(def, 'Zoom in to a country or a city to load them here.'); return; }
     }
     stopLive();
     const run = liveRun = { def, ctrl: new AbortController(), area: area?.query || true };
     st.liveTried = run.area; // a failed area is not retried by itself: the button retries
-    setLiveStatus(def, 'Loading… public servers can take up to a minute.');
+    setLiveStatus(def, def.live.slow ? 'Loading… public servers can take up to a minute.' : 'Loading…');
     try {
-        const loaded = await def.live.load(area?.query, st.base, run.ctrl.signal);
+        const { items: loaded, note, complete = true } = await def.live.load(area?.query, st.base, run.ctrl.signal);
         if (liveRun !== run) return; // replaced by a newer request
         st.liveFails = 0;
+        if (!complete) st.liveTried = { ...area.need, partial: true }; // capped: any new view loads again
         const kept = new Map(st.items.filter(it => it.live).map(it => [it.id, it])); // an open card stays open
         st.items = indexItems(def, loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it));
         st.liveStatus = def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC.`
-            : `${(st.items.length - st.base.length).toLocaleString('en')} loaded ${area.cut ? `within ${LIVE_BOX_KM / 2} km of the view center` : 'for the area in view'}${liveTabOn(def) ? '; they follow the view' : ''}.`;
+            : `${(st.items.length - st.base.length).toLocaleString('en')} loaded ${note || (area.cut ? `within ${def.live.boxKm / 2} km of the view center` : 'for the area in view')}${liveTabOn(def) ? '; they follow the view' : ''}.`;
         if (dir() === def) {
             renderDirSidebar(); explorer.use(def, st.items, st.values);
             if (!$('countryDrawer').hidden) explorer.open();
@@ -358,9 +360,10 @@ function liveIfWanted() {
     if (!liveTabOn(d)) return;
     const st = state(), pending = liveRun?.def === d, tried = pending ? liveRun.area : st.liveTried;
     if (d.live.needsView === false) { if (!pending && (!tried || retryDue(st))) loadLive(d); return; }
-    const area = liveArea();
+    const area = liveArea(d);
     if (!area) { if (!pending) loadLive(d); return; } // shows "zoom in"
-    if (tried && tried !== true && inside(area.need, tried) && (pending || !retryDue(st))) return;
+    const same = (a, b) => Math.abs(a.s - b.s) + Math.abs(a.n - b.n) + Math.abs(a.w - b.w) + Math.abs(a.e - b.e) < 1e-3;
+    if (tried && tried !== true && (tried.partial ? same(area.need, tried) : inside(area.need, tried)) && (pending || !retryDue(st))) return;
     loadLive(d); // a view that moved elsewhere replaces a pending request
 }
 /** While a live tab is on, follows the view: loads each new area once the globe has stopped moving. */

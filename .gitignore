@@ -1,2 +1,2 @@
-db/qp1ng.sqlite
+db/*.sqlite
 db/*.tmp

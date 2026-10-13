@@ -5,6 +5,7 @@
     --accent: #00ff88;      /* UI accent and city-level dots */
     --accent-2: #00e5ff;    /* links, focus, secondary highlights */
     --approx: #ffb703;      /* approximate-location dots */
+    --accent-3: #b388ff;    /* a fourth data colour (border controls, refugee sites, sea routes); must stay a plain colour */
     --on-accent: #03140b;   /* text on accent-filled buttons */
     --text: #eef3f8;
     --text-dim: #8b9bb4;
@@ -27,27 +28,27 @@
 }
 /* [data-preview] scopes a palette to one element (the swatches in the theme menu). */
 :root[data-theme="satellite"], [data-preview="satellite"] {
-    --bg: #02040a; --panel-solid: #0a1220; --accent: #ffd60a; --accent-2: #7ec8ff; --approx: #ff7b54; --on-accent: #1a1400;
+    --bg: #02040a; --panel-solid: #0a1220; --accent: #ffd60a; --accent-2: #7ec8ff; --approx: #ff7b54; --on-accent: #1a1400; --accent-3: #c792ea;
     --text-dim: #93a4bd; --text-faint: #5d6b80;
     --sky: radial-gradient(ellipse at 50% 50%, #0a1830 0%, #02040a 60%);
 }
 :root[data-theme="neon"], [data-preview="neon"] {
-    --bg: #0a0214; --panel-solid: #14072a; --accent: #00f0ff; --accent-2: #ff2bd6; --approx: #fff200; --on-accent: #001418;
+    --bg: #0a0214; --panel-solid: #14072a; --accent: #00f0ff; --accent-2: #ff2bd6; --approx: #fff200; --on-accent: #001418; --accent-3: #7dff5a;
     --text-dim: #a99bc7; --text-faint: #6e5f8f;
     --sky: radial-gradient(ellipse at 50% 115%, #4a0b6e 0%, transparent 55%), radial-gradient(ellipse at 50% -15%, #06303f 0%, transparent 50%), #0a0214;
 }
 :root[data-theme="synthwave"], [data-preview="synthwave"] {
-    --bg: #12002a; --panel-solid: #1e0740; --accent: #ff6ec7; --accent-2: #a46bff; --approx: #ffd319; --on-accent: #2a0018;
+    --bg: #12002a; --panel-solid: #1e0740; --accent: #ff6ec7; --accent-2: #a46bff; --approx: #ffd319; --on-accent: #2a0018; --accent-3: #2de2e6;
     --text-dim: #b39ddb; --text-faint: #7a5fa8;
     --sky: radial-gradient(circle at 50% 64%, #ff2e88 0%, #a1207f 14%, transparent 42%), linear-gradient(#0d0022 0%, #2b0547 58%, #12002a 100%);
 }
 :root[data-theme="netrunner"], [data-preview="netrunner"] {
-    --bg: #000807; --panel-solid: #021412; --accent: #00ffd5; --accent-2: #39ff14; --approx: #ff3864; --on-accent: #00140f;
+    --bg: #000807; --panel-solid: #021412; --accent: #00ffd5; --accent-2: #39ff14; --approx: #ff3864; --on-accent: #00140f; --accent-3: #b388ff;
     --text-dim: #7fb3a9; --text-faint: #4b7a72;
     --sky: radial-gradient(ellipse at 50% 50%, #012a24 0%, #000807 62%);
 }
 :root[data-theme="replicant"], [data-preview="replicant"] {
-    --bg: #0d0602; --panel-solid: #1c0e05; --accent: #ff9e00; --accent-2: #00e0c6; --approx: #ff3c3c; --on-accent: #1a0d00;
+    --bg: #0d0602; --panel-solid: #1c0e05; --accent: #ff9e00; --accent-2: #00e0c6; --approx: #ff3c3c; --on-accent: #1a0d00; --accent-3: #7aa2ff;
     --text-dim: #c2a383; --text-faint: #806449;
     --sky: radial-gradient(ellipse at 50% 105%, #6b2a00 0%, transparent 58%), radial-gradient(ellipse at 15% 0%, #2e1406 0%, transparent 45%), #0d0602;
 }

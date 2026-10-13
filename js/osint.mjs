@@ -1,6 +1,8 @@
 // Safety and OSINT layers as directory modes: diplomatic missions, security sites, thermal anomalies,
-// conflict events and network interference. Live loads (OpenStreetMap via Overpass, IODA) only run when
-// the user asks, because those servers see the user's IP address and the area or country requested.
+// conflict events and network interference. Police and cameras load per area from tiles on this site. Live
+// loads (hospitals via Overpass, outages via IODA) only run when the user asks, because those servers see the
+// user's IP address and the area or country requested.
+import { loadJSON } from './catalog.mjs';
 let regionNames = null;
 const country = cc => { try { regionNames ??= new Intl.DisplayNames(['en'], { type: 'region' }); return cc ? regionNames.of(cc) : ''; } catch { return cc || ''; } };
 const osmUrl = id => `https://www.openstreetmap.org/${({ n: 'node', w: 'way', r: 'relation' })[id[0]]}/${id.slice(1)}`;
@@ -40,14 +42,15 @@ function liveItem(el, kind, extra) {
 }
 
 // ---------- 🏛️ Diplomatic missions (+ hospitals live) ----------
-const EMB_COLORS = { EMBASSY: '--accent', CONSULATE: '--accent-2', MISSION: '--approx', HOSPITAL: '--red' };
-const EMB_LABEL = { EMBASSY: 'Embassy', CONSULATE: 'Consulate', MISSION: 'Mission / delegation', HOSPITAL: 'Hospital' };
-const EMB_PLURAL = { EMBASSY: 'Embassies', CONSULATE: 'Consulates', MISSION: 'Missions & delegations', HOSPITAL: 'Hospitals' };
+const EMB_COLORS = { EMBASSY: '--accent', CONSULATE: '--accent-2', MISSION: '--approx', REFUGE: '--accent-3', HOSPITAL: '--red' };
+const EMB_LABEL = { EMBASSY: 'Embassy', CONSULATE: 'Consulate', MISSION: 'Mission / delegation', REFUGE: 'Refugee site', HOSPITAL: 'Hospital' };
+const EMB_PLURAL = { EMBASSY: 'Embassies', CONSULATE: 'Consulates', MISSION: 'Missions & delegations', REFUGE: 'Refugee sites', HOSPITAL: 'Hospitals' };
+const DIPLOMATIC = new Set(['EMBASSY', 'CONSULATE', 'MISSION']);
 export const EMBASSIES = {
     id: 'embassies', icon: '🏛️', label: 'EMBASSIES', group: 'Safety & OSINT', noun: 'places', dataUrl: 'data/embassies.json',
     sidebarTitle: 'Embassies & havens', placeholder: 'Search country represented, city or name…', randomTitle: 'Show a random mission',
     prepare: json => json.items || [],
-    searchText: it => `${it.name} ${country(it.from)} ${it.from || ''} ${it.host || ''} ${it.city || ''} ${EMB_LABEL[it.kind]}`,
+    searchText: it => `${it.name} ${country(it.from)} ${it.from || ''} ${it.host || ''} ${it.city || ''} ${EMB_LABEL[it.kind]} ${it.detail || ''} ${it.operator || ''}`,
     filters: [{ key: 'kind', label: 'Type', options: [{ id: 'all', label: 'ALL', name: 'All' },
         ...Object.keys(EMB_COLORS).map(k => ({ id: k, label: k === 'MISSION' ? 'MISSIONS' : EMB_PLURAL[k].toUpperCase(), name: k === 'HOSPITAL' ? 'Hospitals (live, in view)' : EMB_PLURAL[k], color: EMB_COLORS[k], live: k === 'HOSPITAL' }))],
         test: (it, v) => it.kind === v }],
@@ -56,23 +59,24 @@ export const EMBASSIES = {
     sizeOf: it => it.kind === 'EMBASSY' ? 6 : 5,
     nameOf: it => it.name || (it.from ? `${EMB_LABEL[it.kind]} of ${country(it.from)}` : EMB_LABEL[it.kind]),
     placeOf: it => [it.city, it.host].filter(Boolean).join(', '),
-    subOf: it => [it.from ? `${EMB_LABEL[it.kind]} of ${country(it.from)}` : EMB_LABEL[it.kind], it.city || it.host].filter(Boolean).join(' · '),
-    badgeOf: it => EMB_LABEL[it.kind], shortBadge: it => ({ EMBASSY: 'EMB', CONSULATE: 'CONS', MISSION: 'MISS', HOSPITAL: 'HOSP' })[it.kind],
+    subOf: it => [it.from ? `${EMB_LABEL[it.kind]} of ${country(it.from)}` : it.detail || EMB_LABEL[it.kind], it.city || it.host].filter(Boolean).join(' · '),
+    badgeOf: it => EMB_LABEL[it.kind], shortBadge: it => ({ EMBASSY: 'EMB', CONSULATE: 'CONS', MISSION: 'MISS', REFUGE: 'REF', HOSPITAL: 'HOSP' })[it.kind],
     describe: it => `${it.name || EMB_LABEL[it.kind]}\n${[it.from && `represents ${country(it.from)}`, it.city || it.host].filter(Boolean).join(' · ')}`,
-    facts: it => [['Represents', it.from && country(it.from)], ['Host country', it.host], ['City', it.city], ['Phone', it.phone],
+    facts: it => [['Represents', it.from && country(it.from)], ['Facility', it.detail], ['Host country', it.host], ['City', it.city], ['Phone', it.phone],
         ['Emergency', it.emergency], ['Operator', it.operator], ['Source', it.live ? 'OpenStreetMap (live)' : 'OpenStreetMap']],
     actions: it => [...(it.web ? [{ label: 'OFFICIAL WEBSITE ↗', href: it.web }] : []), { label: 'OPENSTREETMAP ↗', href: osmUrl(it.id), secondary: Boolean(it.web) }],
     note: `Verify contacts on the mission's official site before relying on them. ${OSM_CREDIT}`,
-    titleOf: v => v.kind === 'all' ? 'Embassies, consulates & hospitals' : EMB_PLURAL[v.kind],
-    stats: items => `${items.filter(it => !it.live).length.toLocaleString('en')} DIPLOMATIC MISSIONS`,
+    titleOf: v => v.kind === 'all' ? 'Embassies, refugee sites & hospitals' : EMB_PLURAL[v.kind],
+    stats: items => `${items.filter(it => DIPLOMATIC.has(it.kind)).length.toLocaleString('en')} DIPLOMATIC MISSIONS · ${items.filter(it => it.kind === 'REFUGE').length.toLocaleString('en')} REFUGEE SITES`,
     live: {
         label: 'Load hospitals in view',
         note: OVERPASS_NOTE,
+        boxKm: 200, slow: true, // a polite request to a free public server, which can queue it
         async load(b, base, signal) {
             const els = await overpass(`[out:json][timeout:30];(nwr["amenity"="hospital"]${box(b)};nwr["healthcare"="hospital"]${box(b)};);out center tags 3000;`, signal);
             const items = els.map(el => liveItem(el, 'HOSPITAL', t => ({ phone: clean(t.phone || t['contact:phone'], 40) || undefined, emergency: t.emergency === 'yes' ? 'Emergency department' : undefined })))
                 .filter(Boolean);
-            return [...base, ...new Map(items.map(it => [it.id, it])).values()];
+            return { items: [...base, ...new Map(items.map(it => [it.id, it])).values()] };
         }
     },
     links: [['Help for people at risk', [
@@ -85,18 +89,49 @@ export const EMBASSIES = {
 };
 
 // ---------- 🚨 Security sites (+ police and cameras live) ----------
-const SEC_COLORS = { PRISON: '--approx', MILITARY: '--red', POLICE: '--accent-2', CAMERA: '--accent' };
-const secGroup = it => /MILITARY|NAVAL/.test(it.kind) ? 'MILITARY' : it.kind;
+const SEC_COLORS = { PRISON: '--approx', MILITARY: '--red', BORDER: '--accent-3', POLICE: '--accent-2', CAMERA: '--accent' };
+// Police stations and cameras: an OpenStreetMap snapshot in tiles (scripts/build_surveillance.mjs), fetched from
+// this site for the area in view, nearest tiles first, up to SURV_MAX points at once.
+const SURV = 'data/surveillance/', SURV_MAX = 80000;
+let survIndex = null;
+const survTiles = new Map(); // tile key -> Promise of items; the oldest tiles are dropped past 80
+const camera = ([id, lat, lng, survType, camType, zone, where, direction, operator, name]) => ({ id: `n${id}`, kind: 'CAMERA', live: true, lat, lng,
+    name: name || '', survType: survType || undefined, camType: camType || undefined, zone: zone || where || undefined, direction: direction || undefined, operator: operator || undefined });
+const police = ([id, lat, lng, name, operator, phone]) => ({ id, kind: 'POLICE', live: true, lat, lng, name: name || '', operator: operator || undefined, phone: phone || undefined });
+function survTile([s, w, size]) {
+    const key = `${size}_${s}_${w}`;
+    if (!survTiles.has(key)) {
+        if (survTiles.size >= 80) survTiles.delete(survTiles.keys().next().value);
+        survTiles.set(key, loadJSON(`${SURV}${key}.json`).then(t => [...(t.c || []).map(camera), ...(t.p || []).map(police)])
+            .catch(e => { survTiles.delete(key); throw e; }));
+    }
+    return survTiles.get(key);
+}
+async function loadSurveillance(b, base, signal) {
+    survIndex ??= loadJSON(`${SURV}index.json`).catch(e => { survIndex = null; throw e; });
+    const index = await survIndex, lat = (b.s + b.n) / 2, lng = (b.w + b.e) / 2, k = Math.cos(lat * Math.PI / 180);
+    const far = ([s, w, size]) => Math.hypot(s + size / 2 - lat, (w + size / 2 - lng) * k);
+    const hits = index.tiles.filter(([s, w, size]) => s < b.n && s + size > b.s && w < b.e && w + size > b.w).sort((x, y) => far(x) - far(y));
+    const chosen = [];
+    for (let i = 0, total = 0; i < hits.length && (total < SURV_MAX || !chosen.length); i++) { chosen.push(hits[i]); total += hits[i][3] + hits[i][4]; }
+    const lists = await Promise.all(chosen.map(survTile));
+    if (signal.aborted) throw new DOMException('Replaced by a newer request', 'AbortError');
+    const items = lists.flat().filter(it => it.lat >= b.s && it.lat <= b.n && it.lng >= b.w && it.lng <= b.e);
+    const complete = chosen.length === hits.length;
+    return { items: [...base, ...items], complete, note: `${complete ? 'for the area in view' : 'nearest the view center (zoom in for all)'} · OpenStreetMap of ${index.generated_at.slice(0, 10)}` };
+}
+const secGroup = it => /MILITARY|NAVAL/.test(it.kind) ? 'MILITARY' : /BORDER/.test(it.kind) ? 'BORDER' : it.kind;
 export const SECURITY = {
     id: 'security', icon: '🚨', label: 'SECURITY', group: 'Safety & OSINT', noun: 'sites', dataUrl: 'data/security.json',
-    sidebarTitle: 'Security & surveillance', placeholder: 'Search prison, base, operator or country…', randomTitle: 'Show a random site',
+    sidebarTitle: 'Security & surveillance', placeholder: 'Search prison, base, border, operator or country…', randomTitle: 'Show a random site',
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${it.kind} ${it.operator || ''} ${it.host || ''} ${it.detail || ''}`,
     filters: [{ key: 'kind', label: 'Type', options: [{ id: 'all', label: 'ALL', name: 'All sites' },
         { id: 'PRISON', label: 'PRISONS', name: 'Prisons & detention', color: SEC_COLORS.PRISON },
         { id: 'MILITARY', label: 'MILITARY', name: 'Bases, naval bases, airfields', color: SEC_COLORS.MILITARY },
-        { id: 'POLICE', label: 'POLICE', name: 'Police (live, in view)', color: SEC_COLORS.POLICE, live: true },
-        { id: 'CAMERA', label: 'CAMERAS', name: 'Surveillance cameras (live, in view)', color: SEC_COLORS.CAMERA, live: true }],
+        { id: 'BORDER', label: 'BORDERS', name: 'Border controls', color: SEC_COLORS.BORDER },
+        { id: 'POLICE', label: 'POLICE', name: 'Police (in view)', color: SEC_COLORS.POLICE, live: true },
+        { id: 'CAMERA', label: 'CAMERAS', name: 'Surveillance cameras (in view)', color: SEC_COLORS.CAMERA, live: true }],
         test: (it, v) => secGroup(it) === v }],
     palette: Object.values(SEC_COLORS),
     colorOf: it => SEC_COLORS[secGroup(it)],
@@ -104,26 +139,19 @@ export const SECURITY = {
     nameOf: it => it.name || (it.kind === 'CAMERA' ? `Camera${it.camType ? ` (${it.camType})` : ''}` : it.kind.charAt(0) + it.kind.slice(1).toLowerCase()),
     placeOf: it => it.host,
     subOf: it => [it.kind.toLowerCase(), it.operator, it.host].filter(Boolean).join(' · '),
-    badgeOf: it => it.kind, shortBadge: it => ({ PRISON: 'PRIS', POLICE: 'POL', CAMERA: 'CAM' })[it.kind] || 'MIL',
+    badgeOf: it => it.kind, shortBadge: it => ({ PRISON: 'PRIS', POLICE: 'POL', CAMERA: 'CAM', 'BORDER CONTROL': 'BORD' })[it.kind] || 'MIL',
     describe: it => `${it.name || it.kind.toLowerCase()}\n${[it.kind.toLowerCase(), it.operator].filter(Boolean).join(' · ')}`,
     facts: it => [['Type', it.kind.toLowerCase()], ['Operator', it.operator], ['Detail', it.detail], ['Access', it.access],
-        ['Surveillance', it.survType], ['Camera', it.camType], ['Direction', it.direction], ['Zone', it.zone], ['Host country', it.host],
-        ['Source', it.live ? 'OpenStreetMap (live)' : 'OpenStreetMap']],
+        ['Surveillance', it.survType], ['Camera', it.camType], ['Direction', it.direction], ['Zone', it.zone], ['Phone', it.phone], ['Host country', it.host],
+        ['Source', 'OpenStreetMap']],
     actions: it => [{ label: 'OPENSTREETMAP ↗', href: osmUrl(it.id), secondary: true }],
     note: OSM_CREDIT,
-    titleOf: v => ({ all: 'Security sites', PRISON: 'Prisons & detention', MILITARY: 'Military sites', POLICE: 'Police', CAMERA: 'Surveillance cameras' })[v.kind],
-    stats: items => `${items.filter(it => !it.live).length.toLocaleString('en')} PRISONS & MILITARY SITES`,
+    titleOf: v => ({ all: 'Security sites', PRISON: 'Prisons & detention', MILITARY: 'Military sites', BORDER: 'Border controls', POLICE: 'Police', CAMERA: 'Surveillance cameras' })[v.kind],
+    stats: items => `${items.filter(it => !it.live).length.toLocaleString('en')} PRISONS, MILITARY & BORDER SITES`,
     live: {
-        label: 'Load police & cameras in view',
-        note: OVERPASS_NOTE,
-        async load(b, base, signal) {
-            const els = await overpass(`[out:json][timeout:30];(nwr["amenity"="police"]${box(b)};node["man_made"="surveillance"]${box(b)};);out center tags 6000;`, signal);
-            const items = els.map(el => el.tags?.man_made === 'surveillance'
-                ? liveItem(el, 'CAMERA', t => ({ survType: clean(t['surveillance:type'], 30) || undefined, camType: clean(t['camera:type'], 30) || undefined,
-                    direction: clean(t['camera:direction'] || t.direction, 20) || undefined, zone: clean(t['surveillance:zone'] || t.surveillance, 30) || undefined }))
-                : liveItem(el, 'POLICE', t => ({ phone: clean(t.phone, 40) || undefined }))).filter(Boolean);
-            return [...base, ...new Map(items.map(it => [it.id, it])).values()];
-        }
+        label: 'Show police & cameras in view',
+        note: 'Loaded from this site (an OpenStreetMap snapshot): no other server learns which area you view.',
+        load: loadSurveillance
     },
     links: [['Surveillance research', [
         ['EFF Atlas of Surveillance (US)', 'https://atlasofsurveillance.org/'],
@@ -251,6 +279,7 @@ export const INTERNET = {
     live: {
         label: 'Check internet outages now (IODA)',
         note: 'Asks IODA (Georgia Tech) for outage alerts of the last 24 hours; IODA sees your IP address.',
+        slow: true,
         needsView: false,
         async load(_b, base, signal) {
             const until = Math.floor(Date.now() / 1000), from = until - 86400;
@@ -263,7 +292,7 @@ export const INTERNET = {
                 if (!byCc.has(cc)) byCc.set(cc, []);
                 byCc.get(cc).push({ level: a.level, source: a.datasource, time: new Date(a.time * 1000).toISOString().slice(11, 16) });
             }
-            return base.map(it => ({ ...it, outages: (byCc.get(it.cc) || []).slice(-6) }));
+            return { items: base.map(it => ({ ...it, outages: (byCc.get(it.cc) || []).slice(-6) })) };
         }
     },
     links: [['Censorship and shutdowns', [

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Builds the OSINT and safety layers (all open data):
- *   data/embassies.json  embassies, consulates and missions   OpenStreetMap (ODbL)
- *   data/security.json   prisons and military sites            OpenStreetMap (ODbL)
+ *   data/embassies.json  embassies, consulates, missions and refugee sites   OpenStreetMap (ODbL)
+ *   data/security.json   prisons, military sites and border controls        OpenStreetMap (ODbL)
+ *   data/migration.json  migrant deaths and disappearances since 2014        IOM Missing Migrants Project (CC BY 4.0)
  *   data/fires.json      thermal anomalies, last 24 h          NASA FIRMS VIIRS (free, cite "NASA FIRMS")
  *   data/conflict.json   georeferenced conflict events         UCDP GED + candidate events (CC BY 4.0)
  *   data/internet.json   network interference per country     OONI, last 30 days (CC BY 4.0)
@@ -119,12 +120,31 @@ for (const el of diplomatic) {
     if (t.diplomatic === 'consulate' && clean(t.consulate)) it.sub = clean(t.consulate, 30);
     embassies.push(it);
 }
+// Refugee camps and facilities for refugees, migrants and asylum seekers (shelters, reception centres).
+const refugeEls = await overpass('refugee', '[out:json][timeout:900];(nwr["amenity"="refugee_site"];nwr["social_facility:for"~"(^|;)(refugee|migrant|asylum_seeker)(;|$)"];);out center tags;');
+for (const el of refugeEls) {
+    const [lat, lng] = osmPoint(el), t = el.tags || {};
+    if (!valid(lat, lng)) continue;
+    const host = hostOf(lat, lng);
+    const it = { id: osmId(el), kind: 'REFUGE', name: osmName(t), lat: round(lat), lng: round(lng) };
+    if (host) { it.host = host.name; if (host.iso) it.hostCc = host.iso; }
+    if (clean(t['addr:city'])) it.city = clean(t['addr:city'], 50);
+    if (clean(t.operator)) it.operator = clean(t.operator, 60);
+    const detail = t.amenity === 'refugee_site' ? clean(t.refugee_site || t['refugee_site:type'] || 'refugee site', 40)
+        : clean([t.social_facility, t['social_facility:for']].filter(Boolean).join(' for '), 60);
+    if (detail) it.detail = detail;
+    if (clean(t.phone || t['contact:phone'])) it.phone = clean(t.phone || t['contact:phone'], 40);
+    const web = safeUrl(t.website || t['contact:website']); if (web) it.web = web;
+    embassies.push(it);
+}
 stats.embassies = embassies.length;
 
 const prisonEls = await overpass('prisons', '[out:json][timeout:900];nwr["amenity"="prison"];out center tags;');
 const militaryEls = await overpass('military', '[out:json][timeout:900];nwr["military"~"^(base|naval_base|airfield)$"];out center tags;');
+const borderEls = await overpass('border_control', '[out:json][timeout:900];nwr["barrier"="border_control"];out center tags;');
 const security = [];
-for (const [els, kindOf] of [[prisonEls, () => 'PRISON'], [militaryEls, t => ({ base: 'MILITARY BASE', naval_base: 'NAVAL BASE', airfield: 'MILITARY AIRFIELD' })[t.military]]]) {
+for (const [els, kindOf] of [[prisonEls, () => 'PRISON'], [militaryEls, t => ({ base: 'MILITARY BASE', naval_base: 'NAVAL BASE', airfield: 'MILITARY AIRFIELD' })[t.military]],
+    [borderEls, () => 'BORDER CONTROL']]) {
     for (const el of els) {
         const [lat, lng] = osmPoint(el), t = el.tags || {};
         if (!valid(lat, lng)) continue;
@@ -132,7 +152,7 @@ for (const [els, kindOf] of [[prisonEls, () => 'PRISON'], [militaryEls, t => ({ 
         const it = { id: osmId(el), kind: kindOf(t), name: osmName(t), lat: round(lat), lng: round(lng) };
         if (host) { it.host = host.name; if (host.iso) it.hostCc = host.iso; }
         if (clean(t.operator)) it.operator = clean(t.operator, 60);
-        if (clean(t['prison:type'] || t.prison_type)) it.detail = clean(t['prison:type'] || t.prison_type, 40);
+        if (clean(t['prison:type'] || t.prison_type || t.border_type)) it.detail = clean(t['prison:type'] || t.prison_type || t.border_type, 40);
         if (clean(t.access) && t.access !== 'yes') it.access = clean(t.access, 20);
         security.push(it);
     }
@@ -213,11 +233,49 @@ for (const [cc, tests] of byCountry) {
 }
 stats.internet_countries = internet.length;
 
+// ---------- IOM Missing Migrants Project: deaths and disappearances on migration routes ----------
+// Corridors group the project's routes; an incident without a route takes the corridor of its region.
+const CORRIDORS = [
+    ['MED_C', /^Central Mediterranean$/],
+    ['MED_SEA', /Mediterranean|Canary Islands/],
+    ['EUROPE', /Balkans|to the UK|Türkiye-Europe|Belarus-EU|Italy to France|Ukraine to Europe|^Europe$/],
+    ['AMERICAS', /US-Mexico|Darien|Caribbean|Puerto Rico|Dominican Republic|America/],
+    ['AFRICA', /Sahara|EHOA|Horn of Africa|Southern Africa|Mayotte|DRC to Uganda|Africa/],
+    ['ASIA', /Afghanistan|Iran|Syria to Türkiye|Bengal|Andaman|Naf River|Asia/]
+];
+const corridorOf = (route, region) => (CORRIDORS.find(([, re]) => route && re.test(route)) || CORRIDORS.find(([, re]) => re.test(region)) || ['OTHER'])[0];
+const MMP_COLS = ['Main ID', 'Incident Type', 'Region of Incident', 'Incident Date', 'Number of Dead', 'Minimum Estimated Number of Missing', 'Number of Survivors',
+    'Number of Females', 'Number of Males', 'Number of Children', 'Country of Origin', 'Cause of Death', 'Country of Incident', 'Migration Route',
+    'Location of Incident', 'Coordinates', 'Information Source', 'URL', 'Source Quality'];
+const mmpText = (await cached('mmp_all.csv', 'https://missingmigrants.iom.int/sites/g/files/tmzbdl601/files/report-migrant-incident/Missing_Migrants_Global_Figures_allData.csv', {}, 24)).toString('utf8');
+const migration = [];
+const count = v => Math.max(0, Math.round(Number(String(v).replace(/,/g, '')) || 0));
+for (const r of csvObjects(mmpText, MMP_COLS)) {
+    const [lat, lng] = r.Coordinates.split(',').map(Number);
+    if (!valid(lat, lng) || !/^\d{4}-\d{2}-\d{2}/.test(r['Incident Date'])) continue;
+    const route = clean(r['Migration Route'], 60), region = clean(r['Region of Incident'], 40);
+    const it = { id: clean(r['Main ID'], 30), d: r['Incident Date'].slice(0, 10), g: corridorOf(route, region), lat: round(lat), lng: round(lng),
+        dead: count(r['Number of Dead']), miss: count(r['Minimum Estimated Number of Missing']) };
+    if (route) it.route = route;
+    if (region) it.region = region;
+    for (const [k, col] of [['surv', 'Number of Survivors'], ['f', 'Number of Females'], ['m', 'Number of Males'], ['ch', 'Number of Children']]) if (count(r[col])) it[k] = count(r[col]);
+    for (const [k, col, max] of [['cause', 'Cause of Death', 90], ['cc', 'Country of Incident', 60], ['place', 'Location of Incident', 160], ['origin', 'Country of Origin', 120], ['src', 'Information Source', 120]]) {
+        if (clean(r[col]) && !/^unknown$/i.test(clean(r[col]))) it[k] = clean(r[col], max);
+    }
+    const url = safeUrl(String(r.URL).split(/[\s,;]+/)[0]); if (url) it.url = url;
+    const q = Math.max(0, ...String(r['Source Quality']).split(',').map(Number).filter(Number.isFinite)); if (q) it.q = q;
+    if (r['Incident Type'] !== 'Incident') it.type = clean(r['Incident Type'], 40);
+    migration.push(it);
+}
+migration.sort((x, y) => y.d.localeCompare(x.d));
+stats.migration = migration.length;
+
 const generated_at = new Date().toISOString();
 const write = (file, items, sources, extra = {}) => writeFileSync(join(OUT, file), JSON.stringify({ generated_at, sources, ...extra, items }));
 write('embassies.json', embassies, { osm: '© OpenStreetMap contributors, ODbL — https://www.openstreetmap.org/copyright' });
 write('security.json', security, { osm: '© OpenStreetMap contributors, ODbL — https://www.openstreetmap.org/copyright' });
 write('fires.json', fires, { firms: 'NASA FIRMS, VIIRS 375 m active fire product (Suomi NPP, NOAA-20), last 24 hours — https://firms.modaps.eosdis.nasa.gov' });
 write('conflict.json', conflict, { ucdp: `UCDP Georeferenced Event Dataset 26.1 and candidate events, ${SINCE}– (CC BY 4.0) — https://ucdp.uu.se` }, { since: SINCE });
+write('migration.json', migration, { iom: "IOM's Missing Migrants Project (CC BY 4.0), locations often approximate — https://missingmigrants.iom.int" });
 write('internet.json', internet, { ooni: 'OONI measurements, aggregated per country (CC BY 4.0) — https://ooni.org' }, { since: day(since), until: day(until), tests: TESTS });
 console.log(JSON.stringify({ stats }, null, 1));

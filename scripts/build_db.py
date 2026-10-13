@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-Builds db/qp1ng.sqlite: one offline SQLite database with every layer of the globe,
-from the JSON files in data/ (run the scripts/build_*.mjs first).
+Builds the offline SQLite databases of the globe's layers, from the JSON files in data/
+(run the scripts/build_*.mjs first). Two files, so each published .gz stays under GitHub's 50 MB
+warning size and an app can skip the large one:
 
-Tables: sources (licence of each source), metadata, radio_places, radio_stations,
-sdr_receivers, repeaters, nav_radio_beacons (aviation + maritime radio aids),
-maritime_lights, airports, airport_frequencies. Every table has a (lat, lon) index.
+db/qp1ng.sqlite: sources (licence of each source), metadata, radio_places, radio_stations,
+  sdr_receivers, repeaters, nav_radio_beacons (aviation + maritime radio aids), maritime_lights,
+  airports, airport_frequencies, safe_havens (with refugee sites), security_sites (with border
+  controls), migrant_incidents, thermal_anomalies, conflict_events, network_interference.
+db/qp1ng-surveillance.sqlite: sources, metadata, police_stations, surveillance_nodes (cameras).
+Every table with positions has a (lat, lon) index.
 
-Usage: python scripts/build_db.py [--data data] [--out db/qp1ng.sqlite]   (also writes <out>.gz, the published copy)
+Usage: python scripts/build_db.py [--data data] [--out db/qp1ng.sqlite]   (also writes the .gz copies, the published ones)
 """
 import argparse
 import gzip
@@ -57,10 +61,14 @@ CREATE TABLE airports (id TEXT PRIMARY KEY, ident TEXT, iata TEXT, name TEXT, ty
     lat REAL, lon REAL, elevation_m REAL, source TEXT);
 CREATE TABLE airport_frequencies (airport_id TEXT REFERENCES airports(id), type TEXT, description TEXT,
     frequency_mhz REAL);
-CREATE TABLE safe_havens (id TEXT PRIMARY KEY, name TEXT, type TEXT,   -- embassy | consulate | mission
+CREATE TABLE safe_havens (id TEXT PRIMARY KEY, name TEXT, type TEXT,   -- embassy | consulate | mission | refugee site
     represents TEXT, host_country TEXT, city TEXT, lat REAL, lon REAL, phone TEXT, website TEXT, source TEXT);
-CREATE TABLE security_sites (id TEXT PRIMARY KEY, name TEXT, type TEXT, -- prison | military base | naval base | military airfield
+CREATE TABLE security_sites (id TEXT PRIMARY KEY, name TEXT, type TEXT, -- prison | military base | naval base | military airfield | border control
     operator TEXT, detail TEXT, access TEXT, host_country TEXT, lat REAL, lon REAL, source TEXT);
+CREATE TABLE migrant_incidents (id TEXT PRIMARY KEY, date TEXT, corridor TEXT, route TEXT, region TEXT,
+    dead INTEGER, missing INTEGER, survivors INTEGER, females INTEGER, males INTEGER, children INTEGER, cause TEXT,
+    country TEXT, location TEXT, origin TEXT, information_source TEXT, url TEXT, source_quality INTEGER, incident_type TEXT,
+    lat REAL, lon REAL, source TEXT);
 CREATE TABLE thermal_anomalies (timestamp TEXT, lat REAL, lon REAL, brightness REAL, frp_mw REAL,
     confidence TEXT, daynight TEXT, satellite TEXT, country TEXT, source TEXT);
 CREATE TABLE conflict_events (id TEXT PRIMARY KEY, date TEXT, date_end TEXT, event_type TEXT, conflict TEXT,
@@ -82,10 +90,23 @@ CREATE INDEX idx_airports_geo ON airports(lat, lon);
 CREATE INDEX idx_airport_freq ON airport_frequencies(airport_id);
 CREATE INDEX idx_havens_geo ON safe_havens(lat, lon);
 CREATE INDEX idx_security_geo ON security_sites(lat, lon);
+CREATE INDEX idx_migrant_geo ON migrant_incidents(lat, lon);
+CREATE INDEX idx_migrant_date ON migrant_incidents(date);
 CREATE INDEX idx_thermal_geo ON thermal_anomalies(lat, lon);
 CREATE INDEX idx_conflict_geo ON conflict_events(lat, lon);
 CREATE INDEX idx_conflict_date ON conflict_events(date);
 CREATE INDEX idx_interference_country ON network_interference(country);
+"""
+SURVEILLANCE_SCHEMA = """
+CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE sources (id TEXT PRIMARY KEY, name TEXT, url TEXT, license TEXT, notes TEXT);
+CREATE TABLE police_stations (id TEXT PRIMARY KEY, name TEXT, operator TEXT, phone TEXT, lat REAL, lon REAL, source TEXT);
+CREATE TABLE surveillance_nodes (osm_node_id INTEGER PRIMARY KEY, lat REAL, lon REAL, -- the OSM node id is the rowid
+    surveillance_type TEXT, camera_type TEXT, zone TEXT, surveillance TEXT, direction TEXT, operator TEXT, name TEXT, source TEXT);
+"""
+SURVEILLANCE_INDEXES = """
+CREATE INDEX idx_police_geo ON police_stations(lat, lon);
+CREATE INDEX idx_surveillance_geo ON surveillance_nodes(lat, lon);
 """
 SOURCES = [
     ("radio-browser", "Radio Browser", "https://www.radio-browser.info", "community database, see site", "radio stations and direct stream links"),
@@ -100,11 +121,42 @@ SOURCES = [
     ("ourairports", "OurAirports", "https://ourairports.com/data/", "public domain", "navaids, airports, airport frequencies"),
     ("nga", "NGA List of Lights, Pubs 110-116", "https://msi.nga.mil", "US Government work, public domain",
      "lights, RACONs, radiobeacons, DGPS; US waters excluded"),
-    ("osm", "OpenStreetMap", "https://www.openstreetmap.org/copyright", "ODbL 1.0", "embassies, consulates, prisons, military sites"),
+    ("osm", "OpenStreetMap", "https://www.openstreetmap.org/copyright", "ODbL 1.0", "embassies, consulates, refugee sites, prisons, military sites, border controls, police stations, surveillance cameras"),
+    ("iom-mmp", "IOM Missing Migrants Project", "https://missingmigrants.iom.int", "CC BY 4.0",
+     "deaths and disappearances of people on the move since 2014; locations often approximate"),
     ("firms", "NASA FIRMS VIIRS 375 m", "https://firms.modaps.eosdis.nasa.gov", "free and open, cite NASA FIRMS", "thermal anomalies, last 24 h at build time"),
     ("ucdp", "UCDP Georeferenced Event Dataset and candidate events", "https://ucdp.uu.se", "CC BY 4.0", "conflict events"),
     ("ooni", "OONI", "https://ooni.org", "CC BY 4.0", "network interference per country, 30 days"),
 ]
+
+
+class Database:
+    """A SQLite file written as <out>.tmp, renamed when complete, then gzipped to <out>.gz (the published copy)."""
+
+    def __init__(self, out, schema, sources):
+        self.out, self.tmp, self.counts = out, out.with_suffix(".tmp"), {}
+        self.tmp.unlink(missing_ok=True)
+        self.db = sqlite3.connect(self.tmp)
+        self.db.executescript(schema)
+        self.insert("sources", sources)
+
+    def insert(self, table, rows):
+        rows = list(rows)
+        if rows:
+            self.db.executemany(f"INSERT INTO {table} VALUES ({','.join('?' * len(rows[0]))})", rows)
+        self.counts[table] = self.counts.get(table, 0) + len(rows)
+
+    def finish(self, indexes):
+        self.insert("metadata", [("generated_at", dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")),
+                                 ("schema_version", "3"), ("counts", json.dumps(self.counts))])
+        self.db.executescript(indexes)
+        self.db.commit()
+        self.db.execute("VACUUM")
+        self.db.close()
+        self.tmp.replace(self.out)
+        with open(self.out, "rb") as src, gzip.open(f"{self.out}.gz", "wb", compresslevel=9) as dst:
+            shutil.copyfileobj(src, dst)
+        return {"out": f"{self.out}.gz", "bytes": self.out.stat().st_size, "gzip_bytes": Path(f"{self.out}.gz").stat().st_size, "rows": self.counts}
 
 
 def main():
@@ -115,19 +167,8 @@ def main():
     data, out = Path(args.data), Path(args.out)
     load = lambda name: json.loads((data / name).read_text(encoding="utf-8"))
     out.parent.mkdir(parents=True, exist_ok=True)
-    tmp = out.with_suffix(".tmp")
-    tmp.unlink(missing_ok=True)
-    db = sqlite3.connect(tmp)
-    db.executescript(SCHEMA)
-    counts = {}
-
-    def insert(table, rows):
-        rows = list(rows)
-        if rows:
-            db.executemany(f"INSERT INTO {table} VALUES ({','.join('?' * len(rows[0]))})", rows)
-        counts[table] = counts.get(table, 0) + len(rows)
-
-    insert("sources", SOURCES)
+    main_db = Database(out, SCHEMA, SOURCES)
+    insert = main_db.insert
     precision = {None: "city", "r": "region", "n": "country"}
     insert("radio_places", ((p["id"], p["city"], p["country"], p["lat"], p["lng"], p["count"], precision.get(p.get("loc"), "city"))
                             for p in load("places.json")))
@@ -160,10 +201,13 @@ def main():
                                 m.get("height"), m.get("structure"), m["cc"], m.get("region"), m.get("remarks"), m["vol"], "nga")
                                for m in maritime if m["kind"] == "LIGHT"))
     for e in load("embassies.json")["items"]:
-        insert("safe_havens", [(e["id"], e["name"], e["kind"].lower(), e.get("from"), e.get("host"), e.get("city"), e["lat"], e["lng"],
+        insert("safe_havens", [(e["id"], e["name"], "refugee site" if e["kind"] == "REFUGE" else e["kind"].lower(), e.get("from"), e.get("host"), e.get("city"), e["lat"], e["lng"],
                                 e.get("phone"), e.get("web"), "osm")])
     insert("security_sites", ((s["id"], s["name"], s["kind"].lower(), s.get("operator"), s.get("detail"), s.get("access"), s.get("host"),
                                s["lat"], s["lng"], "osm") for s in load("security.json")["items"]))
+    insert("migrant_incidents", ((m["id"], m["d"], m["g"], m.get("route"), m.get("region"), m["dead"], m["miss"], m.get("surv"), m.get("f"), m.get("m"),
+                                  m.get("ch"), m.get("cause"), m.get("cc"), m.get("place"), m.get("origin"), m.get("src"), m.get("url"), m.get("q"),
+                                  m.get("type", "Incident"), m["lat"], m["lng"], "iom-mmp") for m in load("migration.json")["items"]))
     insert("thermal_anomalies", ((f["t"], f["lat"], f["lng"], f["bt"], f["frp"], "high" if f["c"] == "h" else "nominal",
                                   "day" if f["dn"] == "D" else "night", "NOAA-20" if f["s"] == "J" else "Suomi NPP", f.get("host"), "firms")
                                  for f in load("fires.json")["items"]))
@@ -172,17 +216,19 @@ def main():
     net = load("internet.json")
     insert("network_interference", ((n["cc"], n["name"], test, t["m"], t["a"], t["c"], t["f"], net["since"], net["until"], n["level"], "ooni")
                                     for n in net["items"] for test, t in n["tests"].items()))
-    insert("metadata", [("generated_at", dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")),
-                        ("schema_version", "1"), ("counts", json.dumps(counts))])
-    db.executescript(INDEXES)
-    db.commit()
-    db.execute("VACUUM")
-    db.close()
-    tmp.replace(out)
-    # The published copy is gzipped (the raw file is over GitHub's 50 MB warning size).
-    with open(out, "rb") as src, gzip.open(f"{out}.gz", "wb", compresslevel=9) as dst:
-        shutil.copyfileobj(src, dst)
-    print(json.dumps({"out": f"{out}.gz", "bytes": out.stat().st_size, "gzip_bytes": Path(f"{out}.gz").stat().st_size, "rows": counts}, indent=1))
+    report = [main_db.finish(INDEXES)]
+
+    # Police stations and cameras come as tiles (scripts/build_surveillance.mjs); rows are compact arrays.
+    surveillance = Database(out.with_name(f"{out.stem}-surveillance{out.suffix}"), SURVEILLANCE_SCHEMA, [s for s in SOURCES if s[0] == "osm"])
+    pad = lambda row, n: list(row) + [""] * (n - len(row))
+    for tile in sorted((data / "surveillance").glob("*_*.json")):
+        t = json.loads(tile.read_text(encoding="utf-8"))
+        surveillance.insert("police_stations", ((i, name or None, op or None, phone or None, lat, lng, "osm")
+                                                for i, lat, lng, name, op, phone in (pad(r, 6) for r in t.get("p", []))))
+        surveillance.insert("surveillance_nodes", ((i, lat, lng, *(v or None for v in rest), "osm")
+                                                   for i, lat, lng, *rest in (pad(r, 10) for r in t.get("c", []))))
+    report.append(surveillance.finish(SURVEILLANCE_INDEXES))
+    print(json.dumps(report, indent=1))
 
 
 if __name__ == "__main__":
