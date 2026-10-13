@@ -14,7 +14,7 @@ import { resolve } from 'node:path';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []));
 const OUT = resolve(args.out || 'data/tv.json');
-const ORIGIN = 'https://zonkeynet.github.io';
+const ORIGIN = 'https://globe.qp1ng.com'; // the site's origin: streams must allow it (CORS)
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 
 // [iptv-org channel, feed (or ''), display name, language, country, who runs it, broadcaster's own stream hosts]
