@@ -298,7 +298,11 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .mode-menu .dir-sub:first-child { margin-top: 2px; }
 .mode-icon { flex-shrink: 0; width: 30px; text-align: center; font-size: 17px; }
 /* Live loads in the side panel */
-.live-box { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+/* Live loads sit in the list panel, which every screen size shows (the right panel is hidden on small screens). */
+.dir-live { display: flex; flex-direction: column; gap: 5px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+.dir-live[hidden] { display: none; }
+.dir-live .live-status { color: var(--accent); font-family: var(--mono); }
+.dir-live .live-status:empty { display: none; }
 .live-btn { justify-content: center; font-size: 10.5px; padding: 8px 10px; }
 .live-status { color: var(--text-dim); }
 /* Search tabs in SDR mode carry the colour of their receiver type. */

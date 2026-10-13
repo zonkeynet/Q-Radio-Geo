@@ -7,20 +7,28 @@ const osmUrl = id => `https://www.openstreetmap.org/${({ n: 'node', w: 'way', r:
 const OSM_CREDIT = '© OpenStreetMap contributors (ODbL): may be incomplete or out of date.';
 
 // ---------- live OpenStreetMap queries for the area in view ----------
-// Public Overpass instances, tried in order (the main one can refuse some browsers). Instances run on
-// infrastructure of governments that target journalists are deliberately left out.
-const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
-const OVERPASS_NOTE = 'Queries a public OpenStreetMap server (overpass-api.de, else overpass.kumi.systems or overpass.private.coffee), which sees your IP address and the area in view.';
+// Public Overpass instances, tried in order. overpass-api.de comes last because it currently refuses browser
+// requests (HTTP 406, without CORS headers). Instances run on infrastructure of governments that target
+// journalists are deliberately left out.
+const OVERPASS = ['https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter'];
+const OVERPASS_WAIT_MS = 40000; // per server: public instances can queue a request for a long time
+const OVERPASS_NOTE = 'Public OpenStreetMap servers (overpass.kumi.systems, else private.coffee or overpass-api.de) see your IP address and the area in view.';
 async function overpass(query, signal) {
     let last = null;
     for (const url of OVERPASS) {
+        const attempt = new AbortController(), stop = () => attempt.abort(), timer = setTimeout(stop, OVERPASS_WAIT_MS);
+        signal?.addEventListener('abort', stop, { once: true });
         try {
-            const res = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: query }), signal });
+            const res = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: query }), signal: attempt.signal });
             if (res.ok) return (await res.json()).elements || [];
-            last = new Error(res.status === 429 ? 'the server is busy, try again in a minute' : `server error ${res.status}`);
-        } catch (e) { if (e.name === 'AbortError') throw e; last = e; }
+            last = res.status === 429 ? 'too many requests' : `error ${res.status}`;
+        } catch (e) {
+            if (signal?.aborted) throw e;
+            // Overloaded servers often answer without CORS headers, which the browser reports as a network error.
+            last = attempt.signal.aborted ? 'too slow' : 'no answer';
+        } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
     }
-    throw new Error(`OpenStreetMap unreachable (${last?.message || 'no server answered'})`);
+    throw new Error(`OpenStreetMap servers unavailable (${last}); they are often overloaded.`);
 }
 const box = b => `(${b.s},${b.w},${b.n},${b.e})`;
 const point = el => el.type === 'node' ? [el.lat, el.lon] : el.center ? [el.center.lat, el.center.lon] : [NaN, NaN];
@@ -41,7 +49,7 @@ export const EMBASSIES = {
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${country(it.from)} ${it.from || ''} ${it.host || ''} ${it.city || ''} ${EMB_LABEL[it.kind]}`,
     filters: [{ key: 'kind', label: 'Type', options: [{ id: 'all', label: 'ALL', name: 'All' },
-        ...Object.keys(EMB_COLORS).map(k => ({ id: k, label: k === 'MISSION' ? 'MISSIONS' : EMB_PLURAL[k].toUpperCase(), name: k === 'HOSPITAL' ? 'Hospitals (live, in view)' : EMB_PLURAL[k], color: EMB_COLORS[k] }))],
+        ...Object.keys(EMB_COLORS).map(k => ({ id: k, label: k === 'MISSION' ? 'MISSIONS' : EMB_PLURAL[k].toUpperCase(), name: k === 'HOSPITAL' ? 'Hospitals (live, in view)' : EMB_PLURAL[k], color: EMB_COLORS[k], live: k === 'HOSPITAL' }))],
         test: (it, v) => it.kind === v }],
     palette: Object.values(EMB_COLORS),
     colorOf: it => EMB_COLORS[it.kind],
@@ -61,7 +69,7 @@ export const EMBASSIES = {
         label: 'Load hospitals in view',
         note: OVERPASS_NOTE,
         async load(b, base, signal) {
-            const els = await overpass(`[out:json][timeout:60];(nwr["amenity"="hospital"]${box(b)};nwr["healthcare"="hospital"]${box(b)};);out center tags 3000;`, signal);
+            const els = await overpass(`[out:json][timeout:30];(nwr["amenity"="hospital"]${box(b)};nwr["healthcare"="hospital"]${box(b)};);out center tags 3000;`, signal);
             const items = els.map(el => liveItem(el, 'HOSPITAL', t => ({ phone: clean(t.phone || t['contact:phone'], 40) || undefined, emergency: t.emergency === 'yes' ? 'Emergency department' : undefined })))
                 .filter(Boolean);
             return [...base, ...new Map(items.map(it => [it.id, it])).values()];
@@ -87,8 +95,8 @@ export const SECURITY = {
     filters: [{ key: 'kind', label: 'Type', options: [{ id: 'all', label: 'ALL', name: 'All sites' },
         { id: 'PRISON', label: 'PRISONS', name: 'Prisons & detention', color: SEC_COLORS.PRISON },
         { id: 'MILITARY', label: 'MILITARY', name: 'Bases, naval bases, airfields', color: SEC_COLORS.MILITARY },
-        { id: 'POLICE', label: 'POLICE', name: 'Police (live, in view)', color: SEC_COLORS.POLICE },
-        { id: 'CAMERA', label: 'CAMERAS', name: 'Surveillance cameras (live, in view)', color: SEC_COLORS.CAMERA }],
+        { id: 'POLICE', label: 'POLICE', name: 'Police (live, in view)', color: SEC_COLORS.POLICE, live: true },
+        { id: 'CAMERA', label: 'CAMERAS', name: 'Surveillance cameras (live, in view)', color: SEC_COLORS.CAMERA, live: true }],
         test: (it, v) => secGroup(it) === v }],
     palette: Object.values(SEC_COLORS),
     colorOf: it => SEC_COLORS[secGroup(it)],
@@ -109,7 +117,7 @@ export const SECURITY = {
         label: 'Load police & cameras in view',
         note: OVERPASS_NOTE,
         async load(b, base, signal) {
-            const els = await overpass(`[out:json][timeout:60];(nwr["amenity"="police"]${box(b)};node["man_made"="surveillance"]${box(b)};);out center tags 6000;`, signal);
+            const els = await overpass(`[out:json][timeout:30];(nwr["amenity"="police"]${box(b)};node["man_made"="surveillance"]${box(b)};);out center tags 6000;`, signal);
             const items = els.map(el => el.tags?.man_made === 'surveillance'
                 ? liveItem(el, 'CAMERA', t => ({ survType: clean(t['surveillance:type'], 30) || undefined, camType: clean(t['camera:type'], 30) || undefined,
                     direction: clean(t['camera:direction'] || t.direction, 20) || undefined, zone: clean(t['surveillance:zone'] || t.surveillance, 30) || undefined }))
@@ -218,7 +226,7 @@ export const INTERNET = {
     filters: [{ key: 'level', label: 'Website blocking', options: [{ id: 'all', label: 'ALL', name: 'All countries' },
         ...Object.keys(NET_COLORS).map(k => ({ id: k, label: ({ 'none confirmed': 'NONE', 'little data': 'NO DATA' })[k] || k.toUpperCase(), name: k.charAt(0).toUpperCase() + k.slice(1), color: NET_COLORS[k] }))],
         test: (it, v) => it.level === v },
-        { key: 'outage', label: 'IODA outages (live)', options: [{ id: 'all', name: 'Any' }, { id: 'yes', name: 'Outage alerts, last 24 h' }], test: it => Boolean(it.outages?.length) }],
+        { key: 'outage', label: 'IODA outages (live)', options: [{ id: 'all', name: 'Any' }, { id: 'yes', name: 'Outage alerts, last 24 h', live: true }], test: it => Boolean(it.outages?.length) }],
     palette: Object.values(NET_COLORS),
     colorOf: it => NET_COLORS[it.level],
     sizeOf: it => it.outages?.length ? 11 : 8,

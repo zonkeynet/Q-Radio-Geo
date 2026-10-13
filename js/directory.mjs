@@ -13,13 +13,15 @@ function km(a, b) {
     return 12742 * Math.asin(Math.sqrt(h));
 }
 
+/** Gives items the fields searchDirectory reads (also for items loaded live). */
+export function indexItems(def, items) {
+    for (const it of items) if (it.search === undefined) { it.search = normalize(def.searchText(it)); it.compact = compactOf(it.search); }
+    return items;
+}
 /** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. */
 export function loadDirectory(def) {
-    def.loading ??= loadJSON(def.dataUrl).then(json => {
-        const items = def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng));
-        for (const it of items) { it.search = normalize(def.searchText(it)); it.compact = compactOf(it.search); }
-        return items;
-    }).catch(e => { def.loading = null; throw e; });
+    def.loading ??= loadJSON(def.dataUrl).then(json => indexItems(def, def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng))))
+        .catch(e => { def.loading = null; throw e; });
     return def.loading;
 }
 export const initialValues = def => Object.fromEntries(def.filters.map(f => [f.key, 'all']));
