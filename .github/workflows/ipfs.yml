@@ -34,13 +34,13 @@ env:
 
 jobs:
   mirror:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04          # has the AWS CLI and jq
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Collect the site (the files GitHub Pages serves, without build scripts)
@@ -64,21 +64,35 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
         run: |
           s3() { aws --endpoint-url https://s3.filebase.com "$@"; }
-          key="$OBJECT-${GITHUB_SHA::12}.car"
-          s3 s3 cp ../site.car "s3://$FILEBASE_BUCKET/$key" --metadata import=car --only-show-errors
-          # Filebase imports the CAR and reports the pinned root CID: it must be the one packed here.
-          pinned=""
-          for i in $(seq 1 36); do
-            pinned=$(s3 s3api head-object --bucket "$FILEBASE_BUCKET" --key "$key" --query Metadata.cid --output text 2>/dev/null || true)
-            [ -n "$pinned" ] && [ "$pinned" != "None" ] && break
-            sleep 5
+          meta() { s3 s3api head-object --bucket "$FILEBASE_BUCKET" --key "$1" --query Metadata --output json 2>/dev/null || echo '{}'; }
+          versions=$(s3 s3api list-objects-v2 --bucket "$FILEBASE_BUCKET" --prefix "$OBJECT-" --query 'Contents[].Key' --output text | tr '\t' '\n' \
+            | grep -E "^$OBJECT-[0-9a-f]{12}\.car$" || true)
+          # The same content (a commit that only changes the workflow) is already pinned: keep it.
+          key=""
+          for k in $versions; do
+            if [ "$(meta "$k" | jq -r '.cid // empty')" = "$CID" ]; then key=$k; break; fi
           done
-          if [ "$pinned" != "$CID" ]; then echo "::error::Filebase pinned '$pinned', the CAR root is $CID"; exit 1; fi
+          if [ -n "$key" ]; then
+            echo "Already pinned as $key"
+          else
+            key="$OBJECT-${GITHUB_SHA::12}.car"
+            s3 s3 cp ../site.car "s3://$FILEBASE_BUCKET/$key" --metadata import=car --only-show-errors
+            # Filebase imports the CAR in the background (minutes for a few hundred MB), then reports the pinned root
+            # CID, which must be the one packed here.
+            pinned="" m='{}'
+            for i in $(seq 1 120); do
+              m=$(meta "$key")
+              pinned=$(jq -r '.cid // empty' <<< "$m")
+              if [ -n "$pinned" ] || [ "$(jq -r '."pinning-status" // empty' <<< "$m")" = failed ]; then break; fi
+              sleep 10
+            done
+            if [ "$pinned" != "$CID" ]; then echo "::error::Filebase pinned '${pinned:-nothing}' ($(jq -c . <<< "$m")), the CAR root is $CID"; exit 1; fi
+          fi
           # Earlier versions of this site leave the bucket, which unpins them (none on the first run).
-          old=$(s3 s3api list-objects-v2 --bucket "$FILEBASE_BUCKET" --prefix "$OBJECT-" --query 'Contents[].Key' --output text | tr '\t' '\n' \
-            | grep -E "^$OBJECT-[0-9a-f]{12}\.car$" | grep -vx "$key" || true)
-          for o in $old; do s3 s3 rm "s3://$FILEBASE_BUCKET/$o" --only-show-errors; done
-          echo "- Pinned on Filebase: https://ipfs.filebase.io/ipfs/$CID/" >> "$GITHUB_STEP_SUMMARY"
+          for o in $versions; do
+            if [ "$o" != "$key" ]; then s3 s3 rm "s3://$FILEBASE_BUCKET/$o" --only-show-errors; fi
+          done
+          echo "- Pinned on Filebase as \`$key\`: https://ipfs.filebase.io/ipfs/$CID/" >> "$GITHUB_STEP_SUMMARY"
       - name: Point DNSLink at the new CID
         if: env.FILEBASE_KEY != '' && env.CF_DNS_TOKEN != '' && env.CF_ZONE_ID != ''
         env:
