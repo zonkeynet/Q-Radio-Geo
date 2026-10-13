@@ -279,7 +279,8 @@ function renderDirSidebar() {
     $('dirCredit').textContent = d.credit;
     renderDirChips();
 }
-/** Phones and tablets have no right panel: the list panel shows the other filters as chips (the first one is the tabs). */
+/** Phones and tablets have no right panel: the list panel shows its other filters (the first one is the tabs) as one
+ * row of compact menus, so the list keeps the space; the phone opens its own picker. */
 const narrow = matchMedia('(max-width: 1050px)');
 function renderDirChips() {
     const d = dir(), box = $('dirChips'), filters = d && narrow.matches ? d.filters.slice(1) : [];
@@ -288,19 +289,22 @@ function renderDirChips() {
     if (!filters.length) return;
     const { items, values } = state();
     for (const f of filters) {
-        const row = node('div', 'chip-row');
-        row.appendChild(node('b', '', f.label));
+        const wrap = node('label', `chip-select${values[f.key] !== 'all' ? ' active' : ''}`), select = node('select');
         for (const o of f.options) {
             const count = optionCount(d, items, values, f.key, o.id), on = o.id === values[f.key];
             if (!count && !on) continue;
-            const chip = node('button', `chip${on ? ' active' : ''}`);
-            if (o.color) { const dot = node('i', 'legend-dot'); dot.style.background = `var(${o.color})`; chip.appendChild(dot); }
-            chip.append(node('span', '', o.name), node('small', '', count.toLocaleString('en')));
-            chip.setAttribute('aria-pressed', String(on));
-            chip.onclick = () => setFilter(f.key, o.id);
-            row.appendChild(chip);
+            const option = node('option', '', `${o.name} · ${count.toLocaleString('en')}`);
+            Object.assign(option, { value: o.id, selected: on });
+            select.appendChild(option);
         }
-        box.appendChild(row);
+        select.onchange = () => setFilter(f.key, select.value);
+        wrap.append(node('span', '', f.label), select);
+        box.appendChild(wrap);
+    }
+    if (filters.some(f => values[f.key] !== 'all')) {
+        const reset = node('button', 'chip-reset', 'Reset');
+        reset.onclick = () => { for (const f of filters.slice(1)) values[f.key] = 'all'; setFilter(filters[0].key, 'all'); };
+        box.appendChild(reset);
     }
 }
 /* Per-area loads (police and cameras from this site's tiles, hospitals from Overpass, IODA outages) run only when
@@ -327,14 +331,21 @@ function liveArea(def) {
     const need = clip(0);
     return { need, query: clip(.25), cut: need.s > view.s || need.n < view.n || need.w > view.w || need.e < view.e };
 }
+/** One row: the button, the latest status, and ⓘ, which opens the note on who sees the request. */
+let liveNoteOpen = false;
 function renderLive() {
     const d = dir(), box = $('dirLive');
     box.hidden = !d?.live;
     if (!d?.live) return;
-    const button = node('button', 'hud-btn live-btn', d.live.label);
-    button.disabled = liveRun?.def === d;
+    const button = Object.assign(node('button', 'hud-btn live-btn', `↻ ${d.live.label}`), { title: d.live.label, disabled: liveRun?.def === d });
     button.onclick = () => loadLive(d);
-    box.replaceChildren(button, node('p', 'dir-note live-status', state().liveStatus || ''), node('p', 'dir-note', d.live.note));
+    const text = state().liveStatus || '', status = Object.assign(node('span', 'live-status', text), { title: text });
+    const info = Object.assign(node('button', 'live-info', 'i'), { title: 'Who sees this request', ariaLabel: 'Who sees this request' });
+    info.setAttribute('aria-expanded', String(liveNoteOpen));
+    info.onclick = () => { liveNoteOpen = !liveNoteOpen; renderLive(); };
+    const row = node('div', 'live-row');
+    row.append(button, status, info);
+    box.replaceChildren(row, Object.assign(node('p', 'live-note', d.live.note), { hidden: !liveNoteOpen }));
 }
 function setLiveStatus(def, text) {
     if (dirState[def.id].liveStatus === text) return;
@@ -497,6 +508,7 @@ async function setMode(next) {
     $('sidebarTitle').textContent = def ? def.sidebarTitle : 'Shortcuts';
     $('sidebarRadio').hidden = Boolean(def); $('sidebarDir').hidden = !def;
     if (!def) renderDirChips();
+    liveNoteOpen = false;
     renderTabs(); updateStats();
     if (def) { renderDirSidebar(); explorer.use(def, state().items, state().values); explorer.open(); }
     else $('countryDrawer').hidden = true;

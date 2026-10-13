@@ -300,7 +300,13 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .mode-icon { flex-shrink: 0; width: 30px; text-align: center; font-size: 17px; }
 /* Live loads in the side panel */
 /* Live loads sit in the list panel, which every screen size shows (the right panel is hidden on small screens). */
-.dir-live { display: flex; flex-direction: column; gap: 5px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+.dir-live { display: flex; flex-direction: column; gap: 5px; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.live-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.live-row .live-btn { flex: 0 1 auto; max-width: 62%; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-row .live-status { flex: 1; min-width: 0; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-info { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--text-dim); font: italic 700 11px Georgia, serif; }
+.live-info:hover, .live-info[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.live-note { font-size: 10px; line-height: 1.4; color: var(--text-faint); }
 .dir-live[hidden] { display: none; }
 .dir-live .live-status { color: var(--accent); font-family: var(--mono); }
 .dir-live .live-status:empty { display: none; }
@@ -496,15 +502,19 @@ body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-
 .list-top { position: absolute; right: 14px; bottom: 14px; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-accent);
     background: var(--panel-solid); color: var(--accent); font-size: 15px; box-shadow: var(--shadow); }
 .list-top:hover { border-color: var(--accent); }
-.dir-chips { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
-.chip-row { display: flex; align-items: center; gap: 5px; overflow-x: auto; scrollbar-width: none; }
-.chip-row::-webkit-scrollbar { display: none; }
-.chip-row > b { flex-shrink: 0; margin-right: 2px; font: 700 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
-.chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); color: var(--text-dim); font-size: 10.5px; white-space: nowrap; }
-.chip small { font: 9px var(--mono); color: var(--text-faint); }
-.chip .legend-dot { width: 6px; height: 6px; }
-.chip.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
-.chip.active small { color: var(--accent); }
+/* One row of compact filter menus (phones and tablets). */
+.dir-chips { display: flex; align-items: center; gap: 6px; padding: 6px 10px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.dir-chips::-webkit-scrollbar { display: none; }
+.chip-select { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 22px 0 9px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, .03); cursor: pointer; }
+.chip-select span { flex-shrink: 0; font: 700 8.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
+.chip-select select { appearance: none; -webkit-appearance: none; max-width: 150px; padding: 0; border: 0; background: none; color: var(--text); text-overflow: ellipsis; cursor: pointer; outline: none; font-size: 11px; font-family: inherit; }
+.chip-select select option { background: var(--panel-solid); color: var(--text); }
+.chip-select::after { content: '▾'; position: absolute; right: 8px; font-size: 10px; color: var(--text-dim); pointer-events: none; }
+.chip-select:focus-within { border-color: var(--accent-2); }
+.chip-select.active { border-color: var(--accent); background: var(--accent-soft); }
+.chip-select.active select, .chip-select.active::after { color: var(--accent); }
+.chip-reset { flex: 0 0 auto; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--red) 50%, transparent); background: none; color: var(--red); font: 700 9.5px var(--mono); letter-spacing: .06em; }
 
 @media (max-width: 1050px) {
     .country-drawer.wide { width: min(520px, calc(100vw - 40px)); }
@@ -526,9 +536,9 @@ body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-
     .dir-item { padding: 10px 11px; }
     .dir-item-name { font-size: 13px; }
     .dir-item-snippet { -webkit-line-clamp: 2; }
-    .chip { padding: 6px 11px; font-size: 11.5px; }
-    /* The zoom buttons sit above the sheet, and step aside when it fills the screen. */
+    .chip-select, .chip-reset { height: 32px; } .chip-select select { font-size: 12px; max-width: 170px; }
+    /* The zoom buttons sit above the sheet when it shows only its title, and step aside otherwise. */
     body:has(#countryDrawer:not([hidden])) .zoom-widget { bottom: calc(var(--player-h) + var(--ticker-h, 0px) + var(--drawer-h, 0px) + 26px); }
-    body:has(#countryDrawer[data-sheet="full"]:not([hidden])) .zoom-widget { display: none; }
+    body:has(#countryDrawer:not([hidden]):not([data-sheet="peek"])) .zoom-widget { display: none; } /* pinch to zoom meanwhile */
     .list-top { right: 12px; bottom: 12px; }
 }

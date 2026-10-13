@@ -76,7 +76,6 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick })
         for (const [k, v] of def.facts(it)) if (v) facts.append(node('dt', '', k), node('dd', '', v));
         if (facts.children.length) box.append(facts);
         for (const a of def.actions(it)) box.append(link(a.label, a.href, a.secondary ? 'dir-open secondary' : 'dir-open'));
-        if (def.note) box.append(node('p', 'dir-note', def.note));
         const here = shown().filter(x => x !== it && Math.abs(x.lat - it.lat) < 1e-3 && Math.abs(x.lng - it.lng) < 1e-3);
         if (here.length) {
             box.append(node('p', 'dir-sub', `Also at this site · ${here.length}`));
@@ -90,6 +89,7 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick })
             f.append(node('p', 'dir-sub', heading));
             for (const [text, href] of links) f.append(link(`${text} ↗`, href, 'dir-link'));
         }
+        if (def.note) f.append(node('p', 'dir-note', def.note));
         f.append(node('p', 'dir-note', def.credit));
         return f;
     }
