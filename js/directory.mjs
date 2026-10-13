@@ -2,6 +2,7 @@
 // A mode is a plain definition object (see sdr.mjs, repeaters.mjs); everything here is shared.
 import { loadJSON } from './catalog.mjs';
 import { normalize } from './core.mjs';
+import { COUNTRY_ALIASES } from './aliases.mjs';
 
 export const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 export const link = (text, href, className = '') => Object.assign(node('a', className, text), { href, target: '_blank', rel: 'noopener noreferrer' });
@@ -25,13 +26,16 @@ export const initialValues = def => Object.fromEntries(def.filters.map(f => [f.k
 export const applyFilters = (def, items, values) => items.filter(it => def.filters.every(f => values[f.key] === 'all' || f.test(it, values[f.key])));
 /** How many items each option of a filter would show, given the other filters. */
 export const optionCount = (def, items, values, key, option) => applyFilters(def, items, { ...values, [key]: option }).length;
-/** Every word must appear, in any order ("racon genova"); a phrase typed without spaces also matches. */
+/** Every word must appear, in any order ("racon genova"); Italian country names count as their English
+ * name ("francia italia"); a phrase typed without spaces also matches. def.searchOrder breaks ties. */
 export function searchDirectory(def, items, values, input) {
     const q = normalize(input), qc = compactOf(q), words = q.split(/\s+/).filter(Boolean);
     if (q.length < 2) return [];
+    const alias = w => COUNTRY_ALIASES[w] ? normalize(COUNTRY_ALIASES[w]) : null;
+    const has = (it, w) => it.search.includes(w) || (alias(w) !== null && it.search.includes(alias(w)));
     const rank = it => (it.search.startsWith(q) ? 0 : it.search.startsWith(words[0]) ? 1 : 2) - (def.featured?.(it) ? .5 : 0);
-    return applyFilters(def, items, values).filter(it => words.every(w => it.search.includes(w)) || (qc.length >= 3 && it.compact.includes(qc)))
-        .sort((a, b) => rank(a) - rank(b) || def.nameOf(a).localeCompare(def.nameOf(b))).slice(0, 40);
+    return applyFilters(def, items, values).filter(it => words.every(w => has(it, w)) || (qc.length >= 3 && it.compact.includes(qc)))
+        .sort((a, b) => rank(a) - rank(b) || (def.searchOrder ? def.searchOrder(a, b) : def.nameOf(a).localeCompare(def.nameOf(b)))).slice(0, 40);
 }
 export function typeBadge(text, colorVar, className = 'dir-type') {
     const b = node('span', className, text);

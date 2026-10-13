@@ -141,7 +141,7 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 
 /* ---------- Top bar ---------- */
 .top-header { z-index: 40; top: 18px; left: 20px; right: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.brand-pill { padding: 9px 16px; border-radius: 16px; display: flex; align-items: center; gap: 12px; pointer-events: auto; }
+.brand-pill { position: relative; z-index: 3; /* above the search and buttons, for the layer menu */ padding: 9px 16px; border-radius: 16px; display: flex; align-items: center; gap: 12px; pointer-events: auto; }
 .brand-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: pulse 2.2s infinite; }
 .brand-title { font: 800 14px var(--mono); letter-spacing: 1.5px; }
 .brand-title span { color: var(--accent); }
@@ -287,16 +287,20 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .station-tag.more { color: var(--accent-2); }
 .station-empty { font-size: 11px; color: var(--text-faint); padding: 5px 0; }
 
-/* ---------- Radio / SDR mode ---------- */
-.mode-switch { display: flex; flex-shrink: 0; margin-left: 4px; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); }
-.mode-tab { border: 0; background: transparent; color: var(--text-dim); font: 700 9.5px var(--mono); letter-spacing: .06em; padding: 5px 9px; border-radius: 999px; white-space: nowrap; transition: background .15s, color .15s; }
-.mode-tab:hover { color: var(--text); }
-.mode-tab[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
-/* Icons for every mode, the name only on the active one (and none on phones); title attributes name them all. */
-.mode-tab { font-size: 13px; padding: 3px 8px; }
-.mode-label { display: none; font: 700 9.5px var(--mono); letter-spacing: .06em; }
-.mode-tab[aria-selected="true"] .mode-label { display: inline; }
-@media (max-width: 640px) { .mode-tab[aria-selected="true"] .mode-label { display: none; } }
+/* ---------- Layer picker (radio, SDR, repeaters, navigation, OSINT) ---------- */
+.mode-picker { position: relative; flex-shrink: 0; margin-left: 4px; }
+.mode-current { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-accent); background: var(--accent-soft); color: var(--accent); font: 700 10px var(--mono); letter-spacing: .06em; white-space: nowrap; }
+.mode-current:hover { border-color: var(--accent); }
+#modeIcon { font-size: 14px; }
+.mode-caret { font-size: 9px; opacity: .7; }
+/* Nested inside the blurred title bar, where a second backdrop blur has no effect: use a solid panel. */
+.mode-menu { left: 0; right: auto; width: 270px; max-height: min(72dvh, 620px); overflow-y: auto; background: color-mix(in srgb, var(--panel-solid) 97%, transparent); }
+.mode-menu .dir-sub:first-child { margin-top: 2px; }
+.mode-icon { flex-shrink: 0; width: 30px; text-align: center; font-size: 17px; }
+/* Live loads in the side panel */
+.live-box { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.live-btn { justify-content: center; font-size: 10.5px; padding: 8px 10px; }
+.live-status { color: var(--text-dim); }
 /* Search tabs in SDR mode carry the colour of their receiver type. */
 .search-tab[style*="--type-color"]::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--type-color); vertical-align: 1px; }
 .dir-badge { color: var(--type-color); background: color-mix(in srgb, var(--type-color) 14%, transparent); }
@@ -346,8 +350,10 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 @media (max-width: 640px) {
     .top-header { top: max(10px, env(safe-area-inset-top)); left: 8px; right: 8px; gap: 8px; }
     .brand-pill { width: 100%; justify-content: center; gap: 9px; padding: 7px 10px; }
-    /* Five mode icons and the title share one row on phones. */
-    .brand-title { letter-spacing: .5px; white-space: nowrap; } .mode-switch { margin-left: 0; } .mode-tab { font-size: 12px; padding: 3px 5px; }
+    /* The title and the layer button share one row on phones. */
+    .brand-title { letter-spacing: .5px; white-space: nowrap; } .mode-picker { margin-left: 0; } .mode-current { padding: 5px 8px; }
+    /* The layer menu spans the title bar (its containing block once the picker is static). */
+    .mode-picker { position: static; } .mode-menu { left: 0; right: 0; width: auto; top: calc(100% + 6px); max-height: 68dvh; }
     .brand-title { font-size: 12.5px; } .brand-stats { font-size: 9.5px; }
     .search-wrapper { width: 100%; margin-top: 34px; }
     /* Up to six tabs (repeater modes): they scroll sideways instead of squeezing. */

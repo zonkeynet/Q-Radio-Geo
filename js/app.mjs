@@ -8,8 +8,10 @@ import { SDR } from './sdr.mjs';
 import { REPEATERS } from './repeaters.mjs';
 import { AVIATION } from './aviation.mjs';
 import { MARITIME } from './maritime.mjs';
+import { EMBASSIES, SECURITY, FIRES, CONFLICT, INTERNET } from './osint.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card).
-const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME };
+const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
+    embassies: EMBASSIES, security: SECURITY, fires: FIRES, conflict: CONFLICT, internet: INTERNET };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };
@@ -268,7 +270,71 @@ function renderDirSidebar() {
             box.appendChild(button);
         }
     }
+    if (d.live) box.appendChild(liveBox(d));
     $('dirCredit').textContent = d.credit;
+}
+/** Live loads (OpenStreetMap for the area in view, IODA outages): only on request, with a privacy note. */
+let liveRun = null;
+function liveBox(d) {
+    const wrap = node('div', 'live-box'), button = node('button', 'hud-btn live-btn', d.live.label), status = node('p', 'dir-note live-status', state().liveStatus || '');
+    wrap.append(button, node('p', 'dir-note', d.live.note), status);
+    button.onclick = async () => {
+        let bounds = null;
+        if (d.live.needsView !== false) {
+            bounds = globe?.viewBounds();
+            // Keep requests small and polite: a city or a region (about 4°×4°), not a continent.
+            if (!bounds || (bounds.n - bounds.s) * (bounds.e - bounds.w) > 20) { status.textContent = 'Zoom in to a city or a region first.'; return; }
+        }
+        liveRun?.abort(); liveRun = new AbortController();
+        const run = liveRun, st = state(), def = d;
+        button.disabled = true; status.textContent = 'Loading…';
+        try {
+            st.items = await def.live.load(bounds, st.base, run.signal);
+            const added = st.items.length - st.base.length;
+            st.liveStatus = def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC.` : `${added.toLocaleString('en')} loaded for the area in view.`;
+            if (dir() === def) { renderDirSidebar(); explorer.use(def, st.items, st.values); explorer.open(); globe?.setLayer(dirLayer()); }
+        } catch (e) {
+            if (e.name !== 'AbortError') status.textContent = `Not loaded: ${e.message}`;
+        } finally { button.disabled = false; }
+    };
+    return wrap;
+}
+const MODE_GROUPS = ['Listen', 'Navigate', 'Safety & OSINT'];
+const RADIO_MODE = { id: 'radio', icon: '📻', label: 'RADIO', group: 'Listen', sidebarTitle: 'Radio stations' };
+/** The grouped layer menu next to the title. */
+function initModeMenu() {
+    const menu = $('modeMenu'), button = $('btnMode');
+    const close = () => { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); };
+    menu.replaceChildren();
+    for (const group of MODE_GROUPS) {
+        menu.appendChild(node('p', 'dir-sub', group));
+        for (const m of [RADIO_MODE, ...Object.values(DIRECTORIES)].filter(m => m.group === group)) {
+            const item = node('button', 'theme-option mode-option');
+            item.dataset.mode = m.id;
+            item.setAttribute('role', 'menuitemradio');
+            const text = node('span', 'theme-text');
+            text.append(node('b', '', m.label), node('small', '', m.sidebarTitle));
+            item.append(node('span', 'mode-icon', m.icon), text);
+            item.onclick = () => { close(); setMode(m.id); button.focus(); };
+            menu.appendChild(item);
+        }
+    }
+    button.onclick = () => {
+        menu.hidden = !menu.hidden;
+        button.setAttribute('aria-expanded', String(!menu.hidden));
+        if (!menu.hidden) menu.querySelector('[aria-checked="true"]')?.focus();
+    };
+    document.addEventListener('click', e => { if (!e.target.closest?.('.mode-picker')) close(); });
+    menu.addEventListener('keydown', e => {
+        const items = [...menu.querySelectorAll('.mode-option')], i = items.indexOf(document.activeElement);
+        if (e.key === 'Escape') { close(); button.focus(); }
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
+    });
+}
+function markMode() {
+    const m = DIRECTORIES[mode] || RADIO_MODE;
+    $('modeIcon').textContent = m.icon; $('modeName').textContent = m.label;
+    for (const item of $('modeMenu').querySelectorAll('.mode-option')) item.setAttribute('aria-checked', String(item.dataset.mode === mode));
 }
 function setFilter(key, value) {
     state().values[key] = value;
@@ -285,13 +351,13 @@ function selectDir(it) {
 async function setMode(next) {
     const def = DIRECTORIES[next];
     if (def && !dirState[next]) {
-        try { dirState[next] = { items: await loadDirectory(def), values: initialValues(def) }; }
+        try { const items = await loadDirectory(def); dirState[next] = { base: items, items, values: initialValues(def) }; }
         catch { $('globeNotice').textContent = `${def.sidebarTitle} list unavailable. Check ${def.dataUrl} and reload.`; $('globeNotice').hidden = false; return; }
     }
     mode = def ? next : 'radio';
     document.documentElement.dataset.mode = mode;
     try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
-    for (const t of document.querySelectorAll('.mode-tab')) t.setAttribute('aria-selected', String(t.dataset.mode === mode));
+    markMode();
     hideSearch(); $('searchInput').value = '';
     $('searchInput').placeholder = def ? def.placeholder : 'Search country, city or station…';
     $('btnRandom').title = def ? def.randomTitle : 'Listen to a random station somewhere in the world';
@@ -417,7 +483,7 @@ async function start() {
             for (const id of ['btnZoomIn','btnZoomOut','btnResetView']) $(id).disabled = true;
         }
         $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
-        for (const t of document.querySelectorAll('.mode-tab')) t.onclick = () => setMode(t.dataset.mode);
+        initModeMenu(); markMode();
         let savedMode = null;
         try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
         if (DIRECTORIES[savedMode]) await setMode(savedMode);

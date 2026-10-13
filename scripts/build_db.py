@@ -7,9 +7,11 @@ Tables: sources (licence of each source), metadata, radio_places, radio_stations
 sdr_receivers, repeaters, nav_radio_beacons (aviation + maritime radio aids),
 maritime_lights, airports, airport_frequencies. Every table has a (lat, lon) index.
 
-Usage: python scripts/build_db.py [--data data] [--out db/qp1ng.sqlite]
+Usage: python scripts/build_db.py [--data data] [--out db/qp1ng.sqlite]   (also writes <out>.gz, the published copy)
 """
 import argparse
+import gzip
+import shutil
 import datetime as dt
 import json
 import sqlite3
@@ -55,6 +57,17 @@ CREATE TABLE airports (id TEXT PRIMARY KEY, ident TEXT, iata TEXT, name TEXT, ty
     lat REAL, lon REAL, elevation_m REAL, source TEXT);
 CREATE TABLE airport_frequencies (airport_id TEXT REFERENCES airports(id), type TEXT, description TEXT,
     frequency_mhz REAL);
+CREATE TABLE safe_havens (id TEXT PRIMARY KEY, name TEXT, type TEXT,   -- embassy | consulate | mission
+    represents TEXT, host_country TEXT, city TEXT, lat REAL, lon REAL, phone TEXT, website TEXT, source TEXT);
+CREATE TABLE security_sites (id TEXT PRIMARY KEY, name TEXT, type TEXT, -- prison | military base | naval base | military airfield
+    operator TEXT, detail TEXT, access TEXT, host_country TEXT, lat REAL, lon REAL, source TEXT);
+CREATE TABLE thermal_anomalies (timestamp TEXT, lat REAL, lon REAL, brightness REAL, frp_mw REAL,
+    confidence TEXT, daynight TEXT, satellite TEXT, country TEXT, source TEXT);
+CREATE TABLE conflict_events (id TEXT PRIMARY KEY, date TEXT, date_end TEXT, event_type TEXT, conflict TEXT,
+    side_a TEXT, side_b TEXT, fatalities INTEGER, civilian_deaths INTEGER, location TEXT, region TEXT, country TEXT,
+    lat REAL, lon REAL, location_precision INTEGER, source TEXT);
+CREATE TABLE network_interference (country TEXT, country_name TEXT, test TEXT, measurements INTEGER,
+    anomalies INTEGER, confirmed INTEGER, failures INTEGER, period_start TEXT, period_end TEXT, level TEXT, source TEXT);
 """
 INDEXES = """
 CREATE INDEX idx_places_geo ON radio_places(lat, lon);
@@ -67,6 +80,12 @@ CREATE INDEX idx_nav_type ON nav_radio_beacons(sub_type);
 CREATE INDEX idx_lights_geo ON maritime_lights(lat, lon);
 CREATE INDEX idx_airports_geo ON airports(lat, lon);
 CREATE INDEX idx_airport_freq ON airport_frequencies(airport_id);
+CREATE INDEX idx_havens_geo ON safe_havens(lat, lon);
+CREATE INDEX idx_security_geo ON security_sites(lat, lon);
+CREATE INDEX idx_thermal_geo ON thermal_anomalies(lat, lon);
+CREATE INDEX idx_conflict_geo ON conflict_events(lat, lon);
+CREATE INDEX idx_conflict_date ON conflict_events(date);
+CREATE INDEX idx_interference_country ON network_interference(country);
 """
 SOURCES = [
     ("radio-browser", "Radio Browser", "https://www.radio-browser.info", "community database, see site", "radio stations and direct stream links"),
@@ -81,6 +100,10 @@ SOURCES = [
     ("ourairports", "OurAirports", "https://ourairports.com/data/", "public domain", "navaids, airports, airport frequencies"),
     ("nga", "NGA List of Lights, Pubs 110-116", "https://msi.nga.mil", "US Government work, public domain",
      "lights, RACONs, radiobeacons, DGPS; US waters excluded"),
+    ("osm", "OpenStreetMap", "https://www.openstreetmap.org/copyright", "ODbL 1.0", "embassies, consulates, prisons, military sites"),
+    ("firms", "NASA FIRMS VIIRS 375 m", "https://firms.modaps.eosdis.nasa.gov", "free and open, cite NASA FIRMS", "thermal anomalies, last 24 h at build time"),
+    ("ucdp", "UCDP Georeferenced Event Dataset and candidate events", "https://ucdp.uu.se", "CC BY 4.0", "conflict events"),
+    ("ooni", "OONI", "https://ooni.org", "CC BY 4.0", "network interference per country, 30 days"),
 ]
 
 
@@ -136,6 +159,19 @@ def main():
     insert("maritime_lights", ((m["id"], m["name"], m["lat"], m["lng"], m.get("char"), first_number(m.get("range")), m.get("range"),
                                 m.get("height"), m.get("structure"), m["cc"], m.get("region"), m.get("remarks"), m["vol"], "nga")
                                for m in maritime if m["kind"] == "LIGHT"))
+    for e in load("embassies.json")["items"]:
+        insert("safe_havens", [(e["id"], e["name"], e["kind"].lower(), e.get("from"), e.get("host"), e.get("city"), e["lat"], e["lng"],
+                                e.get("phone"), e.get("web"), "osm")])
+    insert("security_sites", ((s["id"], s["name"], s["kind"].lower(), s.get("operator"), s.get("detail"), s.get("access"), s.get("host"),
+                               s["lat"], s["lng"], "osm") for s in load("security.json")["items"]))
+    insert("thermal_anomalies", ((f["t"], f["lat"], f["lng"], f["bt"], f["frp"], "high" if f["c"] == "h" else "nominal",
+                                  "day" if f["dn"] == "D" else "night", "NOAA-20" if f["s"] == "J" else "Suomi NPP", f.get("host"), "firms")
+                                 for f in load("fires.json")["items"]))
+    insert("conflict_events", ((c["id"], c["d"], c.get("d2"), c["kind"], c["conflict"], c["a"], c["b"], c["best"], c.get("civ"),
+                                c.get("place"), c.get("adm"), c["cc"], c["lat"], c["lng"], c["prec"], "ucdp") for c in load("conflict.json")["items"]))
+    net = load("internet.json")
+    insert("network_interference", ((n["cc"], n["name"], test, t["m"], t["a"], t["c"], t["f"], net["since"], net["until"], n["level"], "ooni")
+                                    for n in net["items"] for test, t in n["tests"].items()))
     insert("metadata", [("generated_at", dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")),
                         ("schema_version", "1"), ("counts", json.dumps(counts))])
     db.executescript(INDEXES)
@@ -143,7 +179,10 @@ def main():
     db.execute("VACUUM")
     db.close()
     tmp.replace(out)
-    print(json.dumps({"out": str(out), "bytes": out.stat().st_size, "rows": counts}, indent=1))
+    # The published copy is gzipped (the raw file is over GitHub's 50 MB warning size).
+    with open(out, "rb") as src, gzip.open(f"{out}.gz", "wb", compresslevel=9) as dst:
+        shutil.copyfileobj(src, dst)
+    print(json.dumps({"out": f"{out}.gz", "bytes": out.stat().st_size, "gzip_bytes": Path(f"{out}.gz").stat().st_size, "rows": counts}, indent=1))
 
 
 if __name__ == "__main__":

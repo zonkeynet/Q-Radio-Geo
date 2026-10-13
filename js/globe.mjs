@@ -232,8 +232,20 @@ export function createGlobe(container, onSelect, onManualInput) {
                 .hexPolygonUseDots(Boolean(theme.landDots)).hexPolygonMargin(theme.landDots ? .45 : .22);
         });
     }
+    /** Lat/lng box of the area in view, or null when the view shows sky or crosses the antimeridian. */
+    function viewBounds() {
+        const rect = renderer.domElement.getBoundingClientRect(), points = [];
+        for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+            const c = world.toGlobeCoords(rect.width * i / 4, rect.height * j / 4);
+            if (!c) return null;
+            points.push(c);
+        }
+        const lats = points.map(p => p.lat), lngs = points.map(p => p.lng);
+        const w = Math.min(...lngs), e = Math.max(...lngs);
+        return e - w > 180 ? null : { s: Math.min(...lats), n: Math.max(...lats), w, e };
+    }
     return {
-        world, navigation, setTheme, setLayer,
+        world, navigation, setTheme, setLayer, viewBounds,
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });

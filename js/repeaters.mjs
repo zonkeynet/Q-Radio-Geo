@@ -20,7 +20,7 @@ function network(r) {
 }
 
 export const REPEATERS = {
-    id: 'repeaters', icon: '📶', noun: 'repeaters', dataUrl: 'data/repeaters.json',
+    id: 'repeaters', icon: '📶', label: 'REPEATERS', group: 'Listen', noun: 'repeaters', dataUrl: 'data/repeaters.json',
     sidebarTitle: 'Repeaters', placeholder: 'Search callsign, city or frequency…', randomTitle: 'Show a random repeater',
     prepare: json => json.repeaters || [],
     searchText: r => `${r.call} ${r.city || ''} ${r.modes.join(' ')} ${r.group || ''} ${r.node || ''} ${r.freq} ${r.band}`,

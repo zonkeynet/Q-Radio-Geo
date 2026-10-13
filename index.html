@@ -40,12 +40,11 @@
                 <div class="brand-title">Q-P1NG <span>RADIO GLOBE</span></div>
                 <div class="brand-stats" id="statsDisplay">Loading catalog…</div>
             </div>
-            <div class="mode-switch" role="tablist" aria-label="What to explore">
-                <button role="tab" class="mode-tab" data-mode="radio" aria-selected="true" title="Radio stations">📻<span class="mode-label"> RADIO</span></button>
-                <button role="tab" class="mode-tab" data-mode="sdr" aria-selected="false" title="Public web SDR receivers">📡<span class="mode-label"> SDR</span></button>
-                <button role="tab" class="mode-tab" data-mode="repeaters" aria-selected="false" title="Amateur radio repeaters">📶<span class="mode-label"> REPEATERS</span></button>
-                <button role="tab" class="mode-tab" data-mode="aviation" aria-selected="false" title="Aviation navaids and airport frequencies">✈️<span class="mode-label"> AVIATION</span></button>
-                <button role="tab" class="mode-tab" data-mode="maritime" aria-selected="false" title="Maritime lights, RACONs, radiobeacons and DGPS">⚓<span class="mode-label"> MARITIME</span></button>
+            <div class="mode-picker">
+                <button class="mode-current" id="btnMode" aria-haspopup="menu" aria-expanded="false" aria-controls="modeMenu" title="Choose what the globe shows">
+                    <span id="modeIcon" aria-hidden="true">📻</span><span id="modeName">RADIO</span><span class="mode-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="theme-menu mode-menu" id="modeMenu" role="menu" aria-label="Layers" hidden></div>
             </div>
         </div>
 

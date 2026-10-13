@@ -11,7 +11,7 @@ const feetToM = ft => ft === undefined ? null : `${Math.round(ft * .3048).toLoca
 const USAGE = { HI: 'High altitude', LO: 'Low altitude', BOTH: 'High and low altitude', TERMINAL: 'Terminal', RNAV: 'RNAV' };
 
 export const AVIATION = {
-    id: 'aviation', icon: '✈️', noun: 'navaids & airports', dataUrl: 'data/aviation.json',
+    id: 'aviation', icon: '✈️', label: 'AVIATION', group: 'Navigate', noun: 'navaids & airports', dataUrl: 'data/aviation.json',
     sidebarTitle: 'Aviation radio', placeholder: 'Search ident, name, ICAO or frequency…', randomTitle: 'Show a random navaid or airport',
     prepare: json => json.items || [],
     searchText: it => `${it.ident} ${it.iata || ''} ${it.name} ${it.kind} ${it.city || ''} ${country(it.cc)} ${it.khz ? it.khz / 1000 : ''} ${(it.freqs || []).map(f => f[2]).join(' ')}`,
@@ -50,7 +50,7 @@ export const AVIATION = {
     stats: items => `${items.length.toLocaleString('en')} NAVAIDS & AIRPORTS`,
     links: [
         ['Aeronautical data', [
-            ['OurAirports — open data (public domain)', 'https://ourairports.com/data/'],
+            ['OurAirports — open data (public domain)', 'https://github.com/davidmegginson/ourairports-data'],
             ['SkyVector — aeronautical charts', 'https://skyvector.com/'],
             ['OpenAIP — airspace and navaids (CC BY-NC)', 'https://www.openaip.net/']
         ]],
