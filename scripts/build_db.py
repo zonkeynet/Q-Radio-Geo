@@ -7,7 +7,8 @@ warning size and an app can skip the large one:
 db/qp1ng.sqlite: sources (licence of each source), metadata, radio_places, radio_stations,
   sdr_receivers, repeaters, nav_radio_beacons (aviation + maritime radio aids), maritime_lights,
   airports, airport_frequencies, safe_havens (with refugee sites), security_sites (with border
-  controls), migrant_incidents, thermal_anomalies, conflict_events, network_interference.
+  controls), migrant_incidents, thermal_anomalies, conflict_events, network_interference,
+  tor_relays, wifi_hotspots.
 db/qp1ng-surveillance.sqlite: sources, metadata, police_stations, surveillance_nodes (cameras).
 Every table with positions has a (lat, lon) index.
 
@@ -74,6 +75,12 @@ CREATE TABLE thermal_anomalies (timestamp TEXT, lat REAL, lon REAL, brightness R
 CREATE TABLE conflict_events (id TEXT PRIMARY KEY, date TEXT, date_end TEXT, event_type TEXT, conflict TEXT,
     side_a TEXT, side_b TEXT, fatalities INTEGER, civilian_deaths INTEGER, location TEXT, region TEXT, country TEXT,
     lat REAL, lon REAL, location_precision INTEGER, source TEXT);
+CREATE TABLE tor_relays (fingerprint TEXT PRIMARY KEY, nickname TEXT, role TEXT, flags TEXT, ip TEXT, exit_ip TEXT,
+    country TEXT, as_number TEXT, as_name TEXT, advertised_bandwidth INTEGER, consensus_weight_fraction REAL,
+    guard_probability REAL, middle_probability REAL, exit_probability REAL, first_seen TEXT, platform TEXT,
+    lat REAL, lon REAL, source TEXT);                    -- lat/lon: the country's label point (Onionoo has no coordinates)
+CREATE TABLE wifi_hotspots (id TEXT PRIMARY KEY, name TEXT, place_type TEXT, access_fee TEXT, -- fee: no | customers | donation
+    ssid TEXT, operator TEXT, opening_hours TEXT, city TEXT, country TEXT, lat REAL, lon REAL, source TEXT);
 CREATE TABLE network_interference (country TEXT, country_name TEXT, test TEXT, measurements INTEGER,
     anomalies INTEGER, confirmed INTEGER, failures INTEGER, period_start TEXT, period_end TEXT, level TEXT, source TEXT);
 """
@@ -96,6 +103,9 @@ CREATE INDEX idx_thermal_geo ON thermal_anomalies(lat, lon);
 CREATE INDEX idx_conflict_geo ON conflict_events(lat, lon);
 CREATE INDEX idx_conflict_date ON conflict_events(date);
 CREATE INDEX idx_interference_country ON network_interference(country);
+CREATE INDEX idx_tor_country ON tor_relays(country);
+CREATE INDEX idx_tor_as ON tor_relays(as_number);
+CREATE INDEX idx_wifi_geo ON wifi_hotspots(lat, lon);
 """
 SURVEILLANCE_SCHEMA = """
 CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT);
@@ -121,7 +131,8 @@ SOURCES = [
     ("ourairports", "OurAirports", "https://ourairports.com/data/", "public domain", "navaids, airports, airport frequencies"),
     ("nga", "NGA List of Lights, Pubs 110-116", "https://msi.nga.mil", "US Government work, public domain",
      "lights, RACONs, radiobeacons, DGPS; US waters excluded"),
-    ("osm", "OpenStreetMap", "https://www.openstreetmap.org/copyright", "ODbL 1.0", "embassies, consulates, refugee sites, prisons, military sites, border controls, police stations, surveillance cameras"),
+    ("osm", "OpenStreetMap", "https://www.openstreetmap.org/copyright", "ODbL 1.0", "embassies, consulates, refugee sites, prisons, military sites, border controls, police stations, surveillance cameras, places with public Wi-Fi"),
+    ("tor-metrics", "Tor Metrics, Onionoo", "https://metrics.torproject.org", "CC0 1.0", "running Tor relays (bridges excluded), positioned by country"),
     ("iom-mmp", "IOM Missing Migrants Project", "https://missingmigrants.iom.int", "CC BY 4.0",
      "deaths and disappearances of people on the move since 2014; locations often approximate"),
     ("firms", "NASA FIRMS VIIRS 375 m", "https://firms.modaps.eosdis.nasa.gov", "free and open, cite NASA FIRMS", "thermal anomalies, last 24 h at build time"),
@@ -216,6 +227,15 @@ def main():
     net = load("internet.json")
     insert("network_interference", ((n["cc"], n["name"], test, t["m"], t["a"], t["c"], t["f"], net["since"], net["until"], n["level"], "ooni")
                                     for n in net["items"] for test, t in n["tests"].items()))
+    tor = load("tor.json")
+    ipv4 = lambda addrs: next((a.rsplit(":", 1)[0] for a in addrs or [] if a.count(".") == 3), None)
+    role = lambda f: "exit" if "Exit" in f and "BadExit" not in f else "guard" if "Guard" in f else "middle"
+    insert("tor_relays", ((r["fingerprint"], r.get("nickname"), role(r.get("flags", [])), ",".join(r.get("flags", [])), ipv4(r.get("or_addresses")),
+                           next(iter(r.get("exit_addresses") or []), None), r["country"], r.get("as"), r.get("as_name"), r.get("advertised_bandwidth"),
+                           r.get("consensus_weight_fraction"), r.get("guard_probability"), r.get("middle_probability"), r.get("exit_probability"),
+                           r.get("first_seen"), r.get("platform"), *tor["points"][r["country"]], "tor-metrics") for r in tor["relays"]))
+    insert("wifi_hotspots", ((w["id"], w["name"] or None, w.get("kind"), w["fee"], w.get("ssid"), w.get("op"), w.get("hours"), w.get("city"), w.get("cc"),
+                              w["lat"], w["lng"], "osm") for w in load("wifi.json")["items"]))
     report = [main_db.finish(INDEXES)]
 
     # Police stations and cameras come as tiles (scripts/build_surveillance.mjs); rows are compact arrays.

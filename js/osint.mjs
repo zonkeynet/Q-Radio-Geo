@@ -247,7 +247,7 @@ const NET_COLORS = { severe: '--red', notable: '--approx', some: '--accent-2', '
 const TEST_NAMES = { web_connectivity: 'Websites', tor: 'Tor', signal: 'Signal', whatsapp: 'WhatsApp', telegram: 'Telegram', facebook_messenger: 'Messenger', psiphon: 'Psiphon' };
 const pct = (n, m) => m ? `${(100 * n / m).toFixed(n / m < .1 ? 1 : 0)}%` : '–';
 export const INTERNET = {
-    id: 'internet', icon: '🌐', label: 'INTERNET', group: 'Safety & OSINT', noun: 'countries', dataUrl: 'data/internet.json',
+    id: 'internet', icon: '🌐', label: 'INTERNET', group: 'Connectivity', noun: 'countries', dataUrl: 'data/internet.json',
     sidebarTitle: 'Network interference', placeholder: 'Search country…', randomTitle: 'Show a random country',
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${it.cc} ${it.level}`,

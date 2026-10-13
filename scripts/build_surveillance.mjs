@@ -10,65 +10,30 @@
  */
 import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { request } from 'node:https';
 import { tmpdir } from 'node:os';
+import { overpassElements } from './lib/overpass.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []));
 const OUT = resolve(args.out || 'data/surveillance'), CACHE = resolve(args.cache || join(tmpdir(), 'q-radio-geo-osint'));
-const UA = 'Q-Radio-Geo/1.0 (+https://github.com/zonkeynet/Q-Radio-Geo)';
-const SERVERS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
 const ROOT_DEG = 10, MAX_PER_TILE = 6000, MIN_DEG = ROOT_DEG / 16;
 const FIELDS = {
     c: ['node id', 'lat', 'lng', 'surveillance:type', 'camera:type', 'surveillance:zone', 'surveillance', 'direction', 'operator', 'name'],
     p: ['osm id (n/w/r + number)', 'lat', 'lng', 'name', 'operator', 'phone']
 };
 mkdirSync(OUT, { recursive: true }); mkdirSync(CACHE, { recursive: true });
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const clean = (v, max = 60) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 const round = v => Math.round(v * 1e5) / 1e5; // about 1 m
 const valid = (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat || lng);
 /** Drops empty trailing fields, so most rows stay short. */
 const trim = row => { while (row.length > 3 && row[row.length - 1] === '') row.pop(); return row; };
 
-// ---------- download: one worldwide query per kind ----------
-// A tag-only query uses Overpass's tag index; adding a bounding box makes it scan every node in the box, which
-// times out for wide areas. A worldwide query can run for minutes before any data arrives, longer than fetch()
-// waits in Node, hence plain https with a 20-minute limit.
-function post(url, body) {
-    return new Promise((resolve, reject) => {
-        const req = request(url, { method: 'POST', headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' } }, res => {
-            const chunks = [];
-            res.on('data', c => chunks.push(c));
-            res.on('end', () => resolve({ status: res.statusCode, text: Buffer.concat(chunks).toString('utf8') }));
-            res.on('error', reject);
-        });
-        req.on('error', reject);
-        req.setTimeout(20 * 60000, () => req.destroy(new Error('no answer in 20 minutes')));
-        req.end(new URLSearchParams({ data: body }).toString());
-    });
-}
-/** Waits for a busy server (429, 504, timeouts), longer each time, alternating servers. */
+// ---------- download: one worldwide query per kind (cached for a week) ----------
 async function world(kind, filter) {
     const file = join(CACHE, `surv_${kind}.json`);
     if (existsSync(file) && Date.now() - statSync(file).mtimeMs < 7 * 864e5) return JSON.parse(readFileSync(file, 'utf8'));
-    for (let attempt = 1; attempt <= 10; attempt++) {
-        const url = SERVERS[(attempt - 1) % SERVERS.length], started = Date.now();
-        console.log(`download ${kind} from ${new URL(url).host}`);
-        try {
-            const res = await post(url, `[out:json][timeout:900];${filter};out center tags qt;`);
-            if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
-            const json = JSON.parse(res.text);
-            if (json.remark) throw new Error(json.remark.slice(0, 120));
-            console.log(`  ${json.elements.length.toLocaleString('en')} elements in ${Math.round((Date.now() - started) / 1000)} s`);
-            writeFileSync(file, JSON.stringify(json.elements));
-            return json.elements;
-        } catch (e) {
-            const wait = Math.min(60 * 2 ** Math.floor((attempt - 1) / SERVERS.length), 600);
-            console.log(`  failed after ${Math.round((Date.now() - started) / 1000)} s: ${e.message}; next try in ${wait} s`);
-            await sleep(wait * 1000);
-        }
-    }
-    throw new Error('Overpass servers unavailable: run the script again later');
+    const elements = await overpassElements(`[out:json][timeout:900];${filter};out center tags qt;`, kind);
+    writeFileSync(file, JSON.stringify(elements));
+    return elements;
 }
 const point = el => el.type === 'node' ? [el.lat, el.lon] : el.center ? [el.center.lat, el.center.lon] : [NaN, NaN];
 

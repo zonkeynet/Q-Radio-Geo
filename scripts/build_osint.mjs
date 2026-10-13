@@ -4,6 +4,8 @@
  *   data/embassies.json  embassies, consulates, missions and refugee sites   OpenStreetMap (ODbL)
  *   data/security.json   prisons, military sites and border controls        OpenStreetMap (ODbL)
  *   data/migration.json  migrant deaths and disappearances since 2014        IOM Missing Migrants Project (CC BY 4.0)
+ *   data/tor.json        running Tor relays, positioned by country           Tor Metrics Onionoo (CC0)
+ *   data/wifi.json       places offering free or customer Wi-Fi             OpenStreetMap (ODbL)
  *   data/fires.json      thermal anomalies, last 24 h          NASA FIRMS VIIRS (free, cite "NASA FIRMS")
  *   data/conflict.json   georeferenced conflict events         UCDP GED + candidate events (CC BY 4.0)
  *   data/internet.json   network interference per country     OONI, last 30 days (CC BY 4.0)
@@ -12,10 +14,11 @@
  *
  * Usage: node scripts/build_osint.mjs [--out data] [--cache <dir>] [--since 2024]
  */
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { inflateRawSync } from 'node:zlib';
+import { overpassElements } from './lib/overpass.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []));
 const OUT = resolve(args.out || 'data'), CACHE = resolve(args.cache || join(tmpdir(), 'q-radio-geo-osint'));
@@ -90,12 +93,13 @@ function hostOf(lat, lng) {
     return null;
 }
 
-// ---------- OpenStreetMap via Overpass (three global queries, cached) ----------
+// ---------- OpenStreetMap via Overpass (worldwide queries, cached for a week) ----------
 async function overpass(name, body) {
-    const buf = await cached(`osm_${name}.json`, 'https://overpass-api.de/api/interpreter',
-        { method: 'POST', body: new URLSearchParams({ data: body }), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }, 24 * 7);
-    await sleep(3000);
-    return JSON.parse(buf.toString('utf8')).elements || [];
+    const file = join(CACHE, `osm_${name}.json`);
+    if (existsSync(file) && Date.now() - statSync(file).mtimeMs < 7 * 864e5) return JSON.parse(readFileSync(file, 'utf8')).elements || [];
+    const elements = await overpassElements(body, name);
+    writeFileSync(file, JSON.stringify({ elements }));
+    return elements;
 }
 const osmPoint = el => el.type === 'node' ? [el.lat, el.lon] : el.center ? [el.center.lat, el.center.lon] : [NaN, NaN];
 const osmId = el => `${el.type[0]}${el.id}`;
@@ -233,6 +237,35 @@ for (const [cc, tests] of byCountry) {
 }
 stats.internet_countries = internet.length;
 
+// ---------- Tor relays (Onionoo, Tor Metrics, CC0) ----------
+// Onionoo publishes no coordinates, only country and AS: the page puts each relay on its country's label point.
+// Fields keep Onionoo's names so the page can refresh them from the same API. Bridges are left out on purpose.
+const ONIONOO_FIELDS = 'nickname,fingerprint,or_addresses,exit_addresses,country,as,as_name,flags,advertised_bandwidth,consensus_weight_fraction,guard_probability,middle_probability,exit_probability,first_seen,platform';
+const onionoo = JSON.parse((await cached('onionoo_details.json', `https://onionoo.torproject.org/details?running=true&type=relay&fields=${ONIONOO_FIELDS}`, {}, 6)).toString('utf8'));
+const torPoints = Object.fromEntries(countries.filter(c => c.iso && valid(+c.label[0], +c.label[1])).map(c => [c.iso.toLowerCase(), [round(+c.label[0], 2), round(+c.label[1], 2)]]));
+const torRelays = (onionoo.relays || []).filter(r => torPoints[r.country]);
+stats.tor_relays = torRelays.length;
+stats.tor_without_country = (onionoo.relays || []).length - torRelays.length;
+
+// ---------- Wi-Fi offered to the public: free, for customers or for a donation (OpenStreetMap) ----------
+const wifiEls = await overpass('wifi', '[out:json][timeout:900];nwr["internet_access"~"^(wlan|yes|public)$"]["internet_access:fee"~"^(no|customers|donation)$"];out center tags;');
+const PLACE_KEYS = ['amenity', 'shop', 'tourism', 'leisure', 'office', 'public_transport', 'railway', 'aeroway', 'building'];
+const wifi = [];
+for (const el of wifiEls) {
+    const [lat, lng] = osmPoint(el), t = el.tags || {};
+    if (!valid(lat, lng)) continue;
+    const key = PLACE_KEYS.find(k => t[k] && t[k] !== 'yes');
+    const it = { id: osmId(el), name: osmName(t), lat: round(lat), lng: round(lng), fee: t['internet_access:fee'] };
+    if (key) it.kind = clean(t[key], 30);
+    const host = hostOf(lat, lng); if (host?.iso) it.cc = host.iso;
+    if (clean(t['addr:city'])) it.city = clean(t['addr:city'], 50);
+    if (clean(t['internet_access:ssid'])) it.ssid = clean(t['internet_access:ssid'], 40);
+    if (clean(t['internet_access:operator'] || t.operator)) it.op = clean(t['internet_access:operator'] || t.operator, 50);
+    if (clean(t.opening_hours)) it.hours = clean(t.opening_hours, 60);
+    wifi.push(it);
+}
+stats.wifi = wifi.length;
+
 // ---------- IOM Missing Migrants Project: deaths and disappearances on migration routes ----------
 // Corridors group the project's routes; an incident without a route takes the corridor of its region.
 const CORRIDORS = [
@@ -277,5 +310,8 @@ write('security.json', security, { osm: '© OpenStreetMap contributors, ODbL —
 write('fires.json', fires, { firms: 'NASA FIRMS, VIIRS 375 m active fire product (Suomi NPP, NOAA-20), last 24 hours — https://firms.modaps.eosdis.nasa.gov' });
 write('conflict.json', conflict, { ucdp: `UCDP Georeferenced Event Dataset 26.1 and candidate events, ${SINCE}– (CC BY 4.0) — https://ucdp.uu.se` }, { since: SINCE });
 write('migration.json', migration, { iom: "IOM's Missing Migrants Project (CC BY 4.0), locations often approximate — https://missingmigrants.iom.int" });
+writeFileSync(join(OUT, 'tor.json'), JSON.stringify({ generated_at, published: onionoo.relays_published, fields: ONIONOO_FIELDS,
+    sources: { tor: 'Tor Metrics, Onionoo (CC0) — https://metrics.torproject.org' }, points: torPoints, relays: torRelays }));
+write('wifi.json', wifi, { osm: '© OpenStreetMap contributors, ODbL — https://www.openstreetmap.org/copyright' });
 write('internet.json', internet, { ooni: 'OONI measurements, aggregated per country (CC BY 4.0) — https://ooni.org' }, { since: day(since), until: day(until), tests: TESTS });
 console.log(JSON.stringify({ stats }, null, 1));

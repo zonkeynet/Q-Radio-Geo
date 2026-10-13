@@ -10,9 +10,10 @@ import { AVIATION } from './aviation.mjs';
 import { MARITIME } from './maritime.mjs';
 import { EMBASSIES, SECURITY, FIRES, CONFLICT, INTERNET } from './osint.mjs';
 import { MIGRATION } from './migration.mjs';
+import { TOR, WIFI } from './connectivity.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card).
 const DIRECTORIES = { sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
-    embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET };
+    embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const LOC_LABEL = { r: 'region', n: 'country-wide' };
@@ -375,7 +376,7 @@ function watchLive() {
         if (b && prev && Math.abs(b.s - prev.s) + Math.abs(b.n - prev.n) + Math.abs(b.w - prev.w) + Math.abs(b.e - prev.e) < 1e-3) liveIfWanted();
     }, 1000);
 }
-const MODE_GROUPS = ['Listen', 'Navigate', 'Safety & OSINT'];
+const MODE_GROUPS = ['Listen', 'Navigate', 'Safety & OSINT', 'Connectivity'];
 const RADIO_MODE = { id: 'radio', icon: '📻', label: 'RADIO', group: 'Listen', sidebarTitle: 'Radio stations' };
 /** The grouped layer menu next to the title. */
 function initModeMenu() {
