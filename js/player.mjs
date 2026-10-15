@@ -1,4 +1,5 @@
 import { stationURL } from './core.mjs';
+import { APP_MODE, requestNativeMedia } from './native-app.mjs';
 const ERRORS = {
     1: 'Playback aborted.',
     2: 'Stream unreachable or blocked by the browser / station server.',
@@ -58,6 +59,11 @@ export class RadioPlayer {
         let url;
         try { url = stationURL(this.station, this.config, this.base); }
         catch (e) { this.emit('error', e.message); return; }
+        if (APP_MODE) {
+            requestNativeMedia({ url, name: this.station.title, kind: 'radio', hls: this.station.hls === 1 });
+            this.emit('ready', 'Playback and connection controls are in Q-P1NG.');
+            return;
+        }
         const audio = this.makeAudio(); this.audio = audio;
         this.listeners = new AbortController();
         const active = () => this.generation === generation && this.audio === audio;

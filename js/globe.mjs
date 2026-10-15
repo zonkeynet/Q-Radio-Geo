@@ -21,7 +21,7 @@ const DOT_ALTITUDE = .004;
 const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#ffffff';
 
 /** onSelect(item) receives an item of the current layer. */
-export function createGlobe(container, onSelect, onManualInput) {
+export function createGlobe(container, onSelect, onManualInput, { lite = false } = {}) {
     if (typeof globalThis.Globe !== 'function') throw new Error('3D library not loaded');
     // layer: { items, groupOf(item), sizeOf(item) in CSS px, describe(item) for the tooltip, colors: { group: '--css-var' },
     //         pulses?: [{ lat, lng, color: '--css-var' }] rings that keep pulsing (fresh events) }
@@ -40,7 +40,7 @@ export function createGlobe(container, onSelect, onManualInput) {
     world.controls().autoRotate = false; world.controls().autoRotateSpeed = .5;
     const navigation = QRadioNavigation.create(world, container, { onUserInput: onManualInput, minAltitude: .06 });
     const renderer = world.renderer();
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, lite ? 1 : 1.5);
     renderer.setPixelRatio(pixelRatio);
     const resize = () => { world.width(container.clientWidth).height(container.clientHeight); renderer.setPixelRatio(pixelRatio); };
     const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(container); resize();
@@ -223,6 +223,8 @@ export function createGlobe(container, onSelect, onManualInput) {
     }
     /** Call after the page colours have switched (applyThemeCss): dot colours are read from them. */
     function setTheme(id, theme) {
+        // Solid globe with land geometry avoids textures, bump maps and remote imagery in lite mode.
+        if (lite) theme = { ...theme, tiles: null, image: null, bump: null, land: theme.land || '#1b5360', landDots: false };
         const token = ++themeToken; themeId = id; current = theme;
         world.atmosphereColor(theme.atmosphere).atmosphereAltitude(theme.atmosphereAltitude).bumpImageUrl(theme.bump || null);
         applyDotColors();

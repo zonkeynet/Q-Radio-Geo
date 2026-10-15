@@ -1,4 +1,5 @@
 import { Catalog, loadJSON } from './catalog.mjs';
+import { APP_MODE, LITE_MODE } from './native-app.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
@@ -26,6 +27,7 @@ const RADIO_TABS = [{ id: 'all', label: 'ALL' }, { id: 'country', label: 'COUNTR
 const DOT_SIZES = [5, 6, 7.5, 9];
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
+let radioCatalogReady = !APP_MODE, radioCatalogPending = null, placeSelection = 0;
 let mode = 'radio', explorer = null, tv = null, guide = null;
 const dirState = {}; // mode -> { items, values } once loaded
 const dir = () => DIRECTORIES[mode], state = () => dirState[mode];
@@ -119,8 +121,22 @@ function renderChips() {
     drawer.appendChild(chips);
     draw();
 }
-function selectPlace(place, stationId = null, { fly = true } = {}) {
+async function ensureRadioCatalog() {
+    if (radioCatalogReady) return;
+    radioCatalogPending ??= loadJSON('data/stations.json').then(async stations => {
+        if (!Array.isArray(stations)) throw new Error('Invalid radio catalog');
+        const next = new Catalog(catalog.places, stations, catalog.countries, catalog.summary);
+        catalog.destroy(); catalog = next;
+        await catalog.initializeSearch();
+        radioCatalogReady = true; updateStats();
+    }).catch(error => { radioCatalogPending = null; throw error; });
+    return radioCatalogPending;
+}
+async function selectPlace(place, stationId = null, { fly = true } = {}) {
     if (!ready || !place) return;
+    const selection = ++placeSelection;
+    try { await ensureRadioCatalog(); } catch { toast('Radio catalog unavailable. Try again.'); return; }
+    if (selection !== placeSelection || mode !== 'radio') return;
     currentPlace = catalog.byId.get(place.id);
     if (!currentPlace) return;
     const altitude = currentPlace.loc === 'n' ? 1.4 : currentPlace.loc === 'r' ? .9 : .48;
@@ -217,7 +233,7 @@ function triggerSearch() {
     if (!ready || query.length < 2) { $('searchResults').style.display = 'none'; return; }
     if (mode !== 'radio') { renderDirSearch(searchDirectory(dir(), state().items, state().values, query)); return; }
     searchTimer = setTimeout(async () => {
-        try { const result = await catalog.search(query, searchType); if (sequence === searchSequence) renderSearch(result); }
+        try { if (searchType === 'station' || searchType === 'all') await ensureRadioCatalog(); const result = await catalog.search(query, searchType); if (sequence === searchSequence) renderSearch(result); }
         catch (e) { if (e.name !== 'AbortError' && sequence === searchSequence) { $('searchResults').replaceChildren(node('p','player-detail search-empty','Search unavailable. Please try again.')); $('searchResults').style.display = 'block'; } }
     },120);
 }
@@ -569,6 +585,7 @@ async function applyLink(p) {
     const hasView = view.length === 3 && view.every(Number.isFinite);
     if (hasView) globe?.navigation.flyTo({ lat: view[0], lng: view[1], altitude: view[2] }, 0); // before the filters: live tabs load this area
     if (mode === 'radio') {
+        if (p.get('station')) await ensureRadioCatalog();
         const s = p.get('station') && catalog.stations.find(x => x.id === p.get('station'));
         if (s) selectPlace(catalog.byId.get(s.place_id), s.id, { fly: !hasView });
         return;
@@ -778,6 +795,7 @@ async function start() {
     $('btnRevokeAudio').onclick = () => { player.setConsent(false); $('audioConsent').hidden = false; $('btnRevokeAudio').hidden = true; };
     $('volumeSlider').oninput = e => player.setVolume(e.target.value);
     $('btnPlayPause').onclick = () => {
+        if (APP_MODE) { player.setConsent(true); player.start(); return; }
         if (player.allowed) { player.toggle(); return; }
         playerMini = false; applyPlayerSize(); // the consent bar is in the full player
         $('audioConsent').hidden = false; $('btnAcceptAudio').focus();
@@ -786,12 +804,13 @@ async function start() {
     $('btnShareStation').onclick = () => { if (player.station) shareLink(new URLSearchParams({ layer: 'radio', station: player.station.id }), `${player.station.title} · Q-P1NG Globe`); };
     $('btnNextStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex+1)%cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnPrevStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex-1+cityStations.length)%cityStations.length; tune(cityStations[currentIndex]); } };
-    $('btnRandom').onclick = () => {
+    $('btnRandom').onclick = async () => {
         if (mode !== 'radio') {
             const pool = dirShown();
             if (pool.length) selectDir(pool[Math.floor(Math.random() * pool.length)]);
             return;
         }
+        try { await ensureRadioCatalog(); } catch { toast('Radio catalog unavailable. Try again.'); return; }
         if (!catalog?.stations.length) return;
         const station = catalog.stations[Math.floor(Math.random()*catalog.stations.length)];
         selectPlace(catalog.byId.get(station.place_id), station.id);
@@ -807,7 +826,7 @@ async function start() {
     renderTabs();
     document.addEventListener('click', e => { if (!e.target.closest?.('.search-wrapper')) hideSearch(); });
     try {
-        const [places, stations, countries, summary, runtimeConfig] = await Promise.all(['data/places.json','data/stations.json','data/countries.json','data/summary.json','app-config.json'].map(p => loadJSON(p)));
+        const [places, stations, countries, summary, runtimeConfig] = await Promise.all(['data/places.json','data/stations.json','data/countries.json','data/summary.json','app-config.json'].map(p => APP_MODE && p === 'data/stations.json' ? Promise.resolve([]) : loadJSON(p)));
         if (![places,stations,countries].every(Array.isArray) || !['direct','proxy'].includes(runtimeConfig.streamMode)) throw new Error('Invalid catalog or configuration');
         config = runtimeConfig;
         catalog = new Catalog(places,stations,countries,summary);
@@ -815,7 +834,7 @@ async function start() {
         ready = true; $('btnRandom').disabled = false; initShortcuts();
         await catalog.initializeSearch();
         try {
-            globe = createGlobe($('globeViz'), item => mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false));
+            globe = createGlobe($('globeViz'), item => mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false), { lite: LITE_MODE });
             globe.setLayer(radioLayer());
             setTheme(theme.id);
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
@@ -831,6 +850,7 @@ async function start() {
             document.querySelector('.reticle-container').hidden = true;
             for (const id of ['btnZoomIn','btnZoomOut','btnResetView']) $(id).disabled = true;
         }
+        if (APP_MODE) { $('audioConsent').hidden = true; $('btnRevokeAudio').hidden = true; }
         $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
         initModeMenu(); markMode(); watchLive();
         tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });

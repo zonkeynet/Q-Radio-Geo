@@ -1,6 +1,7 @@
 // 📺 Live TV: official live news channels (data/tv.json, from scripts/build_tv.mjs) played in the page through hls.js,
 // one screen or a wall of four. Nothing loads until the viewer presses play; each broadcaster then sees their IP.
 import { loadHls, useHlsJs } from './player.mjs';
+import { APP_MODE, createNativeTv } from './native-app.mjs';
 
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const button = (className, text, label) => Object.assign(node('button', className, text), { type: 'button', title: label, ariaLabel: label });
@@ -13,6 +14,7 @@ const write = s => { try { localStorage.setItem(STORE, JSON.stringify(s)); } cat
 
 /** toggle: the header button; onSound(): called when the TV starts making sound (the radio stops). */
 export function createTv({ toggle, onSound }) {
+    if (APP_MODE) return createNativeTv({ toggle });
     const saved = read();
     const st = { layout: saved.layout === 4 ? 4 : 1, slots: Array.isArray(saved.slots) ? saved.slots : [], focus: 0, muted: true, lang: saved.lang || 'all',
         consent: saved.consent === true, small: false };

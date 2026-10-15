@@ -1,0 +1,32 @@
+/* Scoped to ?app=1. Keep layer selection and search; remove duplicate branding and web-only actions. */
+.app-mode .brand-dot,
+.app-mode .brand-title,
+.app-mode .brand-stats,
+.app-mode #btnShareStation,
+.app-mode #btnExternal,
+.app-mode #volumeSlider,
+.app-mode #btnRevokeAudio { display: none !important; }
+.app-mode .top-header { top: 8px; gap: 8px; }
+.app-mode .brand-pill { padding: 6px 10px; }
+.app-mode .native-tv {
+    pointer-events: auto;
+    position: fixed; z-index: 100; inset: 65px 10px 12px; max-width: 640px; margin-inline: auto;
+    display: flex; flex-direction: column; gap: 12px; padding: 16px;
+    background: var(--panel-solid, #0a101b); border: 1px solid var(--accent, #54e7df); border-radius: 16px;
+}
+.app-mode .native-tv[hidden] { display: none; }
+.native-tv header { display: flex; align-items: center; justify-content: space-between; }
+.native-tv header button { min-width: 44px; min-height: 44px; background: transparent; color: inherit; border: 0; font-size: 24px; }
+.native-tv input { padding: 12px; background: #05070b; color: #fff; border: 1px solid #344351; border-radius: 8px; font: inherit; }
+.native-tv .tv-channels { overflow: auto; flex: 1; align-content: start; max-height: none; min-height: 0; }
+.native-tv .tv-chan { min-height: 44px; white-space: normal; }
+.native-tv p { font: 13px/1.5 system-ui, sans-serif; }
+.lite-mode .reticle-container { display: none; }
+@media (max-width: 600px) {
+    .app-mode .top-header { display: grid; grid-template-columns: auto 1fr; align-items: center; }
+    .app-mode .brand-pill { width: auto; min-width: 0; padding: 2px 6px; }
+    .app-mode .mode-current { padding: 8px 4px; font-size: 12px; }
+    .app-mode .search-wrapper { grid-column: 1 / -1; margin-top: 0; }
+    .app-mode .action-btns { position: static; grid-row: 1; grid-column: 2; gap: 2px; justify-content: flex-end; }
+    .app-mode .hud-btn { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; font-size: 14px; }
+}
