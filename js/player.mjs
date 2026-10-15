@@ -49,7 +49,11 @@ export class RadioPlayer {
     }
     select(station, config) {
         this.release(); this.station = station; this.config = config;
-        if (!this.allowed) { this.emit('ready', 'Press ENABLE AUDIO to listen to this station.'); return Promise.resolve(); }
+        if (!this.allowed) {
+            // The app has no consent bar: its own dialog asks before connecting.
+            this.emit('ready', APP_MODE ? 'Press ▶ to play this station in Q‑P1NG.' : 'Press ENABLE AUDIO to listen to this station.');
+            return Promise.resolve();
+        }
         return this.start();
     }
     async start() {
