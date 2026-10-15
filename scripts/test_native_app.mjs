@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mediaLink, mediaWallLink } from '../js/native-app.mjs';
+import { mediaLink, mediaWallLink, nativeShareLink } from '../js/native-app.mjs';
 
 test('native links retain signed URLs and separate user text from parameters', () => {
     const source = 'https://radio.example.com/live.m3u8?token=a%2Bb&expires=123';
@@ -20,6 +20,21 @@ test('native links reject executable/local schemes and credentials', () => {
         assert.throws(() => mediaLink({ url, kind: 'radio' }));
     }
     assert.throws(() => mediaLink({ url: 'https://example.com/', kind: 'call' }));
+});
+test('share links name only the public globe address, never other sites or app parameters', () => {
+    const globe = 'https://globe.qp1ng.com/#layer=fires&id=x1&view=1.000,2.000,0.50';
+    const link = new URL(nativeShareLink({ url: globe, title: 'Fire\nnear Rome' }));
+    assert.equal(link.hostname, 'share');
+    assert.deepEqual([...link.searchParams.keys()], ['v', 'url', 'title']);
+    assert.equal(link.searchParams.get('url'), globe);
+    assert.equal(link.searchParams.get('title'), 'Firenear Rome');
+    for (const url of ['https://globe.qp1ng.com/?app=1#x', 'https://evil.example/#x', 'http://globe.qp1ng.com/#x', 'javascript:alert(1)']) {
+        assert.throws(() => nativeShareLink({ url, title: 't' }), url);
+    }
+    const station = new URL(mediaLink({ url: 'https://r.example.com/live', name: 'R', kind: 'radio', share: 'https://globe.qp1ng.com/#layer=radio&station=s1' }));
+    assert.equal(station.searchParams.get('share'), 'https://globe.qp1ng.com/#layer=radio&station=s1');
+    const local = new URL(mediaLink({ url: 'https://r.example.com/live', name: 'R', kind: 'radio', share: 'http://127.0.0.1:8765/#layer=radio' }));
+    assert.equal(local.searchParams.get('share'), null, 'a non-globe address is left out, playback still works');
 });
 test('wall links carry two to four ordered channels and nothing else', () => {
     const items = ['a', 'b', 'c', 'd'].map(n => ({ url: `https://tv.example.com/${n}.m3u8?t=1&x=${n}`, name: `TV ${n} & u1=x` }));

@@ -1,5 +1,5 @@
 import { Catalog, loadJSON } from './catalog.mjs';
-import { APP_MODE, LITE_MODE } from './native-app.mjs';
+import { APP_MODE, LITE_MODE, requestNativeShare } from './native-app.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
@@ -85,7 +85,7 @@ function tune(station) {
     $('btnPlayPause').disabled = false;
     $('bottomPlayer').dataset.station = '1'; // the app shows the player only once a station is chosen
     const where = currentPlace ? [currentPlace.city, currentPlace.country].filter(Boolean).join(', ') : '';
-    player.select(station, config, [where, tech].filter(Boolean).join(' · '));
+    player.select(station, config, [where, tech].filter(Boolean).join(' · '), linkUrl(new URLSearchParams({ layer: 'radio', station: station.id })));
     markActiveChip();
 }
 /** Station chips for the selected place; large places get a filter and are rendered in pages. */
@@ -611,6 +611,8 @@ function toast(text) {
 /** Phones open their share sheet; elsewhere the link goes to the clipboard. */
 async function shareLink(p, title) {
     const url = linkUrl(p);
+    // In Q-P1NG the app asks where to share: its encrypted chat or another app.
+    if (APP_MODE) { if (!requestNativeShare({ url, title })) toast('Sharing is available from the globe address only.'); return; }
     try {
         if (phone.matches && navigator.share) await navigator.share({ title, url });
         else { await navigator.clipboard.writeText(url); toast('Link copied'); }

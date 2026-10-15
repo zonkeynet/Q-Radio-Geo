@@ -11,14 +11,27 @@ function streamUrl(url) {
     return target.href;
 }
 const cleanName = name => String(name || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 120);
+const GLOBE = 'https://globe.qp1ng.com/';
+/** The public globe address of a place, station or event (view in the fragment); anything else is not shared. */
+function globeLink(url) {
+    try {
+        const u = new URL(url);
+        return u.origin + u.pathname === GLOBE && !u.search && !u.username && u.href.length <= 2048 ? u.href : '';
+    } catch { return ''; }
+}
 
-/** info (optional): place and format for the app's player, e.g. "Rome, Italy · MP3 · 128 kbps". */
-export function mediaLink({ url, name, kind, hls = false, info = '' }) {
+/**
+ * info (optional): place and format for the app's player, e.g. "Rome, Italy · MP3 · 128 kbps".
+ * share (optional): the globe link of the station, offered by the app's share button.
+ */
+export function mediaLink({ url, name, kind, hls = false, info = '', share = '' }) {
     if (!['radio', 'tv'].includes(kind)) throw new Error('Unsupported media link');
     const query = new URLSearchParams({ v: '1', u: streamUrl(url), name: cleanName(name), kind });
     if (hls) query.set('hls', '1');
     const details = String(info || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 160);
     if (details) query.set('info', details);
+    const link = globeLink(share);
+    if (link) query.set('share', link);
     return `qp1ng-media://play?${query}`;
 }
 
@@ -44,6 +57,19 @@ export function requestNativeMedia(item) {
 export function requestNativeWall(items) {
     if (!APP_MODE || !userGesture()) return false;
     globalThis.location.href = mediaWallLink(items);
+    return true;
+}
+
+/** The app asks where to share (Q-P1NG's encrypted chat or another app); the page shares nothing by itself. */
+export function nativeShareLink({ url, title }) {
+    const link = globeLink(url);
+    if (!link) throw new Error('Only globe links can be shared');
+    return `qp1ng-media://share?${new URLSearchParams({ v: '1', url: link, title: cleanName(title) })}`;
+}
+
+export function requestNativeShare(item) {
+    if (!APP_MODE || !userGesture()) return false;
+    try { globalThis.location.href = nativeShareLink(item); } catch { return false; }
     return true;
 }
 
@@ -147,6 +173,9 @@ export function createNativeTv({ toggle, defaults = [] }) {
     };
     const hide = () => { dock.hidden = true; toggle.setAttribute('aria-pressed', 'false'); };
     close.onclick = hide; filter.oninput = render;
+    // Once the app plays TV the list steps aside: a shrunk video then floats over the globe, not over the list.
+    new MutationObserver(() => { if (document.documentElement.dataset.nativePlayback === 'tv') hide(); })
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['data-native-playback'] });
     one.onclick = () => { st.layout = 1; keep(); render(); };
     four.onclick = () => { st.layout = 4; keep(); render(); };
     go.onclick = () => {

@@ -47,9 +47,9 @@ export class RadioPlayer {
         this.allowed = Boolean(value);
         if (!this.allowed) { this.release(); this.emit('ready', 'Audio disabled: no connection is made to station servers.'); }
     }
-    /** info: place and format, shown by the app's player ("Rome, Italy · MP3 · 128 kbps"). */
-    select(station, config, info = '') {
-        this.release(); this.station = station; this.config = config; this.info = info;
+    /** info: place and format, shown by the app's player ("Rome, Italy · MP3 · 128 kbps"); share: its globe link. */
+    select(station, config, info = '', share = '') {
+        this.release(); this.station = station; this.config = config; this.info = info; this.share = share;
         if (!this.allowed) {
             // The app has no consent bar: its own dialog asks before connecting.
             this.emit('ready', APP_MODE ? 'Press ▶ to play this station in Q‑P1NG.' : 'Press ENABLE AUDIO to listen to this station.');
@@ -65,7 +65,7 @@ export class RadioPlayer {
         try { url = stationURL(this.station, this.config, this.base); }
         catch (e) { this.emit('error', e.message); return; }
         if (APP_MODE) {
-            requestNativeMedia({ url, name: this.station.title, kind: 'radio', hls: this.station.hls === 1, info: this.info });
+            requestNativeMedia({ url, name: this.station.title, kind: 'radio', hls: this.station.hls === 1, info: this.info, share: this.share });
             this.emit('ready', 'Playback and connection controls are in Q-P1NG.');
             return;
         }
