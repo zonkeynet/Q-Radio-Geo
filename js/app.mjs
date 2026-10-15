@@ -80,9 +80,12 @@ function markActiveChip() {
 function tune(station) {
     if (!station) return;
     $('playerTitle').textContent = station.title; $('playerTitle').title = station.title;
-    $('playerTech').textContent = [station.codec, station.bitrate && `${station.bitrate} kbps`, station.hls && 'HLS'].filter(Boolean).join(' · ');
+    const tech = [station.codec, station.bitrate && `${station.bitrate} kbps`, station.hls && 'HLS'].filter(Boolean).join(' · ');
+    $('playerTech').textContent = tech;
     $('btnPlayPause').disabled = false;
-    player.select(station, config);
+    $('bottomPlayer').dataset.station = '1'; // the app shows the player only once a station is chosen
+    const where = currentPlace ? [currentPlace.city, currentPlace.country].filter(Boolean).join(', ') : '';
+    player.select(station, config, [where, tech].filter(Boolean).join(' · '));
     markActiveChip();
 }
 /** Station chips for the selected place; large places get a filter and are rendered in pages. */
@@ -90,6 +93,7 @@ function renderChips() {
     const drawer = $('cityStationsDrawer');
     drawer.replaceChildren();
     drawer.hidden = cityStations.length < 2;
+    $('bottomPlayer').dataset.chips = drawer.hidden ? '0' : '1';
     if (drawer.hidden) return;
     let filter = null;
     const chips = node('div', 'station-chips');
@@ -788,6 +792,8 @@ async function start() {
     // Overlays above the player follow its real height (it grows with the consent bar and station chips).
     new ResizeObserver(() => document.documentElement.style.setProperty('--player-h', `${$('bottomPlayer').offsetHeight}px`)).observe($('bottomPlayer'));
     player = new RadioPlayer({ holder: $('audioHolder'), onState: markState });
+    // In the app, tapping a station hands it over at once: the app's own dialog asks before any connection.
+    if (APP_MODE) player.setConsent(true);
     $('btnAcceptAudio').onclick = () => {
         player.setConsent(true); $('audioConsent').hidden = true; $('btnRevokeAudio').hidden = false;
         if (player.station) player.start();

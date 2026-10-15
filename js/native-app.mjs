@@ -12,10 +12,13 @@ function streamUrl(url) {
 }
 const cleanName = name => String(name || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 120);
 
-export function mediaLink({ url, name, kind, hls = false }) {
+/** info (optional): place and format for the app's player, e.g. "Rome, Italy · MP3 · 128 kbps". */
+export function mediaLink({ url, name, kind, hls = false, info = '' }) {
     if (!['radio', 'tv'].includes(kind)) throw new Error('Unsupported media link');
     const query = new URLSearchParams({ v: '1', u: streamUrl(url), name: cleanName(name), kind });
     if (hls) query.set('hls', '1');
+    const details = String(info || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 160);
+    if (details) query.set('info', details);
     return `qp1ng-media://play?${query}`;
 }
 

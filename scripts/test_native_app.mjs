@@ -11,6 +11,9 @@ test('native links retain signed URLs and separate user text from parameters', (
     assert.equal(link.searchParams.get('u'), source);
     assert.equal(link.searchParams.get('kind'), 'tv');
     assert.equal(link.searchParams.get('name'), 'News & kind=call');
+    assert.equal(link.searchParams.get('info'), null, 'no empty info parameter');
+    const radio = new URL(mediaLink({ url: source, name: 'R', kind: 'radio', info: 'Rome, Italy\n · MP3 · 128 kbps' }));
+    assert.equal(radio.searchParams.get('info'), 'Rome, Italy · MP3 · 128 kbps');
 });
 test('native links reject executable/local schemes and credentials', () => {
     for (const url of ['javascript:alert(1)', 'file:///etc/passwd', 'intent://x', 'https://user:secret@example.com/', 'https://example.com/#x']) {

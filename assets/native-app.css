@@ -114,4 +114,15 @@
 .native-tv .tv-wall-go svg { width: 18px; height: 18px; }
 .native-tv p { font: 12px/1.5 system-ui, sans-serif; color: var(--text-dim); }
 
+/* Radio: the app's player shows title, place, format and the controls. The page keeps a compact card to start a
+   station (▶, name, place) and, while the app plays, only the names of the place's other stations. */
+.app-mode .bottom-player:not([data-station]) { display: none !important; }
+.app-mode :is(#btnPrevStation, #btnNextStation, #playerStatus, .right-tools, .player-detail, .audio-consent) { display: none !important; }
+.app-mode .bottom-player { padding: 8px 10px; gap: 8px; }
+.app-mode .bottom-player .player-row { gap: 10px; }
+.app-mode .bottom-player .btn-play { width: 40px; height: 40px; flex: none; }
+.app-mode[data-native-playback] .bottom-player .player-row { display: none; }
+.app-mode[data-native-playback] .bottom-player:not([data-chips="1"]) { display: none !important; }
+.app-mode[data-native-playback] .bottom-player .stations-drawer { border-top: 0; padding-top: 0; }
+
 .lite-mode .reticle-container { display: none; }
