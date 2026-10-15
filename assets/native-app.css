@@ -123,6 +123,15 @@
 .app-mode .bottom-player .btn-play { width: 40px; height: 40px; flex: none; }
 .app-mode[data-native-playback] .bottom-player .player-row { display: none; }
 .app-mode[data-native-playback] .bottom-player:not([data-chips="1"]) { display: none !important; }
+/* While the app plays, only the station pills float above its player: no panel frame around them. */
+.app-mode[data-native-playback] .bottom-player {
+    padding: 0 8px; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
 .app-mode[data-native-playback] .bottom-player .stations-drawer { border-top: 0; padding-top: 0; }
+.app-mode[data-native-playback] .bottom-player :is(.station-tag, .station-filter) {
+    background: color-mix(in srgb, var(--panel-solid) 92%, transparent); border-color: var(--line-accent);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .45); color: var(--text);
+}
+.app-mode[data-native-playback] .bottom-player .station-tag.active { color: var(--accent); border-color: var(--accent); }
 
 .lite-mode .reticle-container { display: none; }
