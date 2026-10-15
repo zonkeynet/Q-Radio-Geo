@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mediaLink } from '../js/native-app.mjs';
+import { mediaLink, mediaWallLink } from '../js/native-app.mjs';
 
 test('native links retain signed URLs and separate user text from parameters', () => {
     const source = 'https://radio.example.com/live.m3u8?token=a%2Bb&expires=123';
@@ -17,6 +17,20 @@ test('native links reject executable/local schemes and credentials', () => {
         assert.throws(() => mediaLink({ url, kind: 'radio' }));
     }
     assert.throws(() => mediaLink({ url: 'https://example.com/', kind: 'call' }));
+});
+test('wall links carry two to four ordered channels and nothing else', () => {
+    const items = ['a', 'b', 'c', 'd'].map(n => ({ url: `https://tv.example.com/${n}.m3u8?t=1&x=${n}`, name: `TV ${n} & u1=x` }));
+    const link = new URL(mediaWallLink(items));
+    assert.equal(link.protocol, 'qp1ng-media:');
+    assert.equal(link.hostname, 'wall');
+    assert.deepEqual([...link.searchParams.keys()], ['v', 'u0', 't0', 'u1', 't1', 'u2', 't2', 'u3', 't3']);
+    assert.equal(link.searchParams.get('u2'), items[2].url);
+    assert.equal(link.searchParams.get('t1'), 'TV b & u1=x');
+    assert.throws(() => mediaWallLink(items.slice(0, 1)));
+    assert.throws(() => mediaWallLink([...items, items[0]]));
+    assert.throws(() => mediaWallLink([items[0], { url: 'javascript:alert(1)', name: 'x' }]));
+    const long = 'https://tv.example.com/' + 'x'.repeat(4000);
+    assert.throws(() => mediaWallLink([long, long, long, long].map(url => ({ url, name: 'x' }))));
 });
 test('native mode never creates a web audio player', async () => {
     globalThis.location = { search: '?app=1', href: '' };

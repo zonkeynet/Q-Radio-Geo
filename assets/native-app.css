@@ -1,4 +1,5 @@
-/* Scoped to ?app=1. Keep layer selection and search; remove duplicate branding and web-only actions. */
+/* Scoped to ?app=1, the Q-P1NG Android viewer. The app draws its own title bar, so the page keeps the layer
+   picker, search and globe tools in one touch-sized header that adapts from 320 px phones to tablets. */
 .app-mode .brand-dot,
 .app-mode .brand-title,
 .app-mode .brand-stats,
@@ -6,27 +7,111 @@
 .app-mode #btnExternal,
 .app-mode #volumeSlider,
 .app-mode #btnRevokeAudio { display: none !important; }
-.app-mode .top-header { top: 8px; gap: 8px; }
-.app-mode .brand-pill { padding: 6px 10px; }
+
+.app-mode { --tool: clamp(34px, 9.6vw, 40px); }
+.app-mode .top-header {
+    top: max(8px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right));
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "layer . tools" "search search search";
+    align-items: center; gap: 8px;
+}
+@media (min-width: 720px) {
+    /* Landscape phones and tablets: one row, the search in the middle. */
+    .app-mode .top-header { grid-template-areas: "layer search tools"; align-items: start; }
+    .app-mode .top-header .search-wrapper { justify-self: center; width: 100%; max-width: 520px; }
+}
+/* The layer button is the only content of the title pill: no second frame around it. */
+.app-mode .brand-pill {
+    grid-area: layer; width: auto; min-width: 0; padding: 0; gap: 0; justify-content: flex-start;
+    background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.app-mode .mode-picker { position: static; margin: 0; }
+.app-mode .mode-current {
+    height: var(--tool); padding: 0 12px; gap: 7px; border-radius: 12px; font-size: 11px;
+    background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+}
+.app-mode #modeIcon { font-size: 16px; line-height: 1; }
+.app-mode .search-wrapper { grid-area: search; width: auto; margin: 0; }
+.app-mode .search-tab { min-height: 30px; }
+
+/* Globe tools: same size, same frame, centred line icons. */
+.app-mode .action-btns { grid-area: tools; position: static; display: flex; justify-content: flex-end; gap: 6px; }
+.app-mode .hud-btn, .app-mode .guide-btn {
+    width: var(--tool); min-width: var(--tool); height: var(--tool); padding: 0; justify-content: center;
+    border-radius: 12px; color: var(--text); font: inherit;
+}
+.app-mode .hud-btn svg { width: 20px; height: 20px; flex: none; }
+.app-mode .hud-btn[aria-pressed="true"], .app-mode .hud-btn[aria-expanded="true"], .app-mode .hud-btn.active {
+    color: var(--accent); border-color: var(--accent); background: var(--accent-soft);
+}
+.app-mode .guide-btn.pulse { animation: none; border-color: var(--line-accent); color: var(--text); }
+
+/* Layer menu: a sheet as wide as the screen allows, in columns, every label readable. */
+.app-mode .mode-menu {
+    position: absolute; top: calc(100% + 8px); left: 0; right: auto;
+    width: min(600px, calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    max-height: calc(100dvh - var(--tool) - 28px); padding: 8px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(158px, 100%), 1fr)); gap: 4px; align-content: start;
+    overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+}
+.app-mode .mode-menu::-webkit-scrollbar { display: none; }
+.app-mode .mode-menu .dir-sub { grid-column: 1 / -1; margin: 6px 4px 0; }
+.app-mode .mode-menu .dir-sub:first-child { margin-top: 0; }
+.app-mode .mode-option { min-height: 50px; padding: 6px 8px; gap: 8px; }
+.app-mode .mode-option .mode-icon { width: 26px; font-size: 18px; }
+.app-mode .mode-option .theme-text b { font-size: 12px; letter-spacing: .02em; }
+.app-mode .mode-option .theme-text small {
+    white-space: normal; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.app-mode .theme-menu:not(.mode-menu) {
+    width: min(var(--rail-w), calc(100vw - 16px)); max-height: calc(100dvh - var(--tool) - 28px); overflow-y: auto; scrollbar-width: none;
+}
+
+/* Live TV: the page only lists channels; playback and the four-channel wall open in Q-P1NG. */
 .app-mode .native-tv {
-    pointer-events: auto;
-    position: fixed; z-index: 100; inset: 65px 10px 12px; max-width: 640px; margin-inline: auto;
-    display: flex; flex-direction: column; gap: 12px; padding: 16px;
-    background: var(--panel-solid, #0a101b); border: 1px solid var(--accent, #54e7df); border-radius: 16px;
+    pointer-events: auto; position: fixed; z-index: 100;
+    inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px;
+    background: var(--panel-solid, #0a101b); border: 1px solid var(--line-accent); border-radius: 18px; box-shadow: var(--shadow);
 }
 .app-mode .native-tv[hidden] { display: none; }
-.native-tv header { display: flex; align-items: center; justify-content: space-between; }
-.native-tv header button { min-width: 44px; min-height: 44px; background: transparent; color: inherit; border: 0; font-size: 24px; }
-.native-tv input { padding: 12px; background: #05070b; color: #fff; border: 1px solid #344351; border-radius: 8px; font: inherit; }
-.native-tv .tv-channels { overflow: auto; flex: 1; align-content: start; max-height: none; min-height: 0; }
-.native-tv .tv-chan { min-height: 44px; white-space: normal; }
-.native-tv p { font: 13px/1.5 system-ui, sans-serif; }
-.lite-mode .reticle-container { display: none; }
-@media (max-width: 600px) {
-    .app-mode .top-header { display: grid; grid-template-columns: auto 1fr; align-items: center; }
-    .app-mode .brand-pill { width: auto; min-width: 0; padding: 2px 6px; }
-    .app-mode .mode-current { padding: 8px 4px; font-size: 12px; }
-    .app-mode .search-wrapper { grid-column: 1 / -1; margin-top: 0; }
-    .app-mode .action-btns { position: static; grid-row: 1; grid-column: 2; gap: 2px; justify-content: flex-end; }
-    .app-mode .hud-btn { width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; font-size: 14px; }
+.native-tv header { display: flex; align-items: center; gap: 10px; }
+.native-tv header b { flex: 1; font: 800 13px var(--mono); letter-spacing: .08em; }
+.native-tv .tv-layout { display: flex; padding: 3px; gap: 3px; border-radius: 12px; border: 1px solid var(--line); }
+.native-tv .tv-layout button {
+    display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border: 0; border-radius: 9px;
+    background: none; color: var(--text-dim); font: 700 11px var(--mono);
 }
+.native-tv .tv-layout button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.native-tv .tv-layout svg, .native-tv .tv-close svg { width: 18px; height: 18px; }
+.native-tv .tv-close {
+    width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px;
+    background: none; color: var(--text);
+}
+.native-tv input {
+    padding: 11px 12px; background: var(--bg, #05070b); color: var(--text); border: 1px solid var(--line-accent);
+    border-radius: 12px; font: inherit; user-select: text;
+}
+.native-tv .tv-channels {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 6px;
+    flex: 1; min-height: 0; max-height: none; overflow-y: auto; align-content: start; scrollbar-width: none;
+}
+.native-tv .tv-channels::-webkit-scrollbar { display: none; }
+.native-tv .tv-chan {
+    position: relative; min-height: 52px; padding: 7px 10px; gap: 2px; border-radius: 12px; text-align: left; white-space: normal;
+    background: color-mix(in srgb, var(--panel-solid) 70%, transparent); color: var(--text);
+}
+.native-tv .tv-chan b { font-size: 12.5px; font-weight: 650; line-height: 1.25; padding-right: 22px; overflow-wrap: anywhere; }
+.native-tv .tv-chan[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.native-tv .tv-slot {
+    position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%;
+    background: var(--accent); color: var(--on-accent, #000); font: 800 11px var(--mono);
+}
+.native-tv .tv-wall-go {
+    display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border: 0; border-radius: 14px;
+    background: var(--accent); color: var(--on-accent, #000); font: 800 12px var(--mono); letter-spacing: .06em;
+}
+.native-tv .tv-wall-go:disabled { background: var(--line); color: var(--text-dim); }
+.native-tv .tv-wall-go svg { width: 18px; height: 18px; }
+.native-tv p { font: 12px/1.5 system-ui, sans-serif; color: var(--text-dim); }
+
+.lite-mode .reticle-container { display: none; }

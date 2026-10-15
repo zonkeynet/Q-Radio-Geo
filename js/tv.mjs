@@ -14,7 +14,7 @@ const write = s => { try { localStorage.setItem(STORE, JSON.stringify(s)); } cat
 
 /** toggle: the header button; onSound(): called when the TV starts making sound (the radio stops). */
 export function createTv({ toggle, onSound }) {
-    if (APP_MODE) return createNativeTv({ toggle });
+    if (APP_MODE) return createNativeTv({ toggle, defaults: DEFAULT_SLOTS });
     const saved = read();
     const st = { layout: saved.layout === 4 ? 4 : 1, slots: Array.isArray(saved.slots) ? saved.slots : [], focus: 0, muted: true, lang: saved.lang || 'all',
         consent: saved.consent === true, small: false };
