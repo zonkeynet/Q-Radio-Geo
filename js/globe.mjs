@@ -38,11 +38,40 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         .hexPolygonResolution(3).hexPolygonAltitude(.001).hexPolygonsTransitionDuration(0);
     world.pointOfView({ lat: 41.9, lng: 12.5, altitude: 2.2 }, 0);
     world.controls().autoRotate = false; world.controls().autoRotateSpeed = .5;
+
+    // ---------- Battery: draw only while something changes ----------
+    // Globe.gl redraws the whole scene every frame, about 60 times a second, even when nothing moves. After a few
+    // quiet seconds the loop stops; any view change, touch, wheel, rotation, layer, theme, selection, texture, tile
+    // or size change starts it again. Pulsing rings keep a slow frame rate instead of a full stop.
+    const IDLE_MS = 4000, RING_FRAME_MS = 125;
+    const resume = world.resumeAnimation.bind(world), pause = world.pauseAnimation.bind(world);
+    let sleeping = false, idleTimer = null, ringTimer = null;
+    const ringing = () => (world.ringsData() || []).length > 0;
+    function wake() {
+        clearTimeout(idleTimer);
+        if (sleeping) { sleeping = false; clearInterval(ringTimer); ringTimer = null; resume(); }
+        idleTimer = setTimeout(rest, IDLE_MS);
+    }
+    function rest() {
+        if (world.controls().autoRotate || pointers.size || navigation.getSnapshot().mode !== 'idle') { idleTimer = setTimeout(rest, 1000); return; }
+        sleeping = true; pause();
+        // resume() draws one frame at once; pausing right after cancels the next: exactly one frame per tick.
+        if (ringing()) ringTimer = setInterval(() => { resume(); pause(); }, RING_FRAME_MS);
+    }
+    // The page's own pause (hidden tab) and resume go through the same bookkeeping.
+    world.pauseAnimation = () => { clearTimeout(idleTimer); clearInterval(ringTimer); ringTimer = null; sleeping = true; pause(); return world; };
+    world.resumeAnimation = () => { wake(); return world; };
+    const setView = world.pointOfView.bind(world);
+    world.pointOfView = (...args) => { if (args.length) wake(); return setView(...args); };
+    const controls = world.controls();
+    let autoRotate = controls.autoRotate;
+    Object.defineProperty(controls, 'autoRotate', { get: () => autoRotate, set: value => { autoRotate = value; if (value) wake(); }, configurable: true });
+
     const navigation = QRadioNavigation.create(world, container, { onUserInput: onManualInput, minAltitude: .06 });
     const renderer = world.renderer();
     const pixelRatio = Math.min(window.devicePixelRatio || 1, lite ? 1 : 1.5);
     renderer.setPixelRatio(pixelRatio);
-    const resize = () => { world.width(container.clientWidth).height(container.clientHeight); renderer.setPixelRatio(pixelRatio); };
+    const resize = () => { world.width(container.clientWidth).height(container.clientHeight); renderer.setPixelRatio(pixelRatio); wake?.(); };
     const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(container); resize();
 
     // Square GL points become round dots with a dark rim, readable on bright city lights and on
@@ -65,6 +94,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
                     'vec4 diffuseColor = vec4( diffuse, opacity );\n\tfloat dotDist = length( gl_PointCoord - vec2( 0.5 ) );\n\tif ( dotDist > 0.5 ) discard;\n\tdiffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * 0.12, smoothstep( 0.3, 0.4, dotDist ) );\n\tdiffuseColor.a *= 1.0 - smoothstep( 0.44, 0.5, dotDist );');
             };
             m.needsUpdate = true;
+            wake();
         }
         // Objects are built on the layer's next update: retry until every set has one.
         if (missing && retries) setTimeout(() => roundDots(retries - 1), 100);
@@ -79,6 +109,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
     function drawRings() {
         const pulses = (layer.pulses || []).map(p => ({ lat: p.lat, lng: p.lng, radius: 1.4, speed: .9, period: 1900, alpha: .75, rgb: rgb(cssColor(p.color)) }));
         world.ringsData(selected ? [...pulses, { ...selected, speed: 2, period: 850, alpha: 1, rgb: rgb(cssColor('--accent')) }] : pulses);
+        wake();
     }
     /** Rings the chosen point; radius in degrees. */
     function select(lat, lng, radius) { selected = { lat, lng, radius }; drawRings(); }
@@ -95,6 +126,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         dotSets = [...sets.values()];
         selected = null;
         world.particlesData(dotSets);
+        wake();
         tooltip.hidden = true;
         applyDotColors();
         roundDots();
@@ -120,12 +152,14 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         return best;
     }
     function pointerDown(e) {
+        wake();
         pointers.add(e.pointerId);
         if (pointers.size === 1) down = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
         else if (down) down.moved = true;
         tooltip.hidden = true;
     }
     function pointerMove(e) {
+        if (pointers.size) wake();
         if (down && Math.hypot(e.clientX-down.x, e.clientY-down.y) > 7) down.moved = true;
         if (pointers.size || e.pointerType !== 'mouse' || navigation.getSnapshot().mode !== 'idle' || world.controls().autoRotate) { tooltip.hidden = true; return; }
         hoveredEvent = { x: e.clientX, y: e.clientY };
@@ -158,6 +192,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
     document.addEventListener('pointercancel', clearPointers, { signal });
     window.addEventListener('blur', clearPointers, { signal });
     container.addEventListener('pointerleave', leave, { signal });
+    container.addEventListener('wheel', wake, { signal, passive: true, capture: true });
     renderer.domElement.addEventListener('webglcontextlost', e => {
         e.preventDefault(); navigation.cancel(); world.pauseAnimation();
         const notice = document.getElementById('globeNotice'); notice.textContent = 'Graphics context lost. The catalog is still available; reload to restore the globe.'; notice.hidden = false;
@@ -181,6 +216,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         // Until its imagery arrives a textured theme shows a dark sphere, not a white one.
         material.color = new Color(texture ? current.tint || '#ffffff' : current.base || '#0a0f18');
         material.needsUpdate = true;
+        wake();
     }
     function loadTexture(path) {
         if (textures.has(path) || loading.has(path)) return;
@@ -198,10 +234,14 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
     function tintTiles(hex) {
         clearInterval(tintTimer);
         const color = new Color(hex);
-        const apply = () => findGlobeGroup()?.traverse(o => {
-            const m = o.material;
-            if (o.isMesh && m?.map && !(m.color && m.color.equals(color))) m.color = color.clone();
-        });
+        const apply = () => {
+            let fresh = false;
+            findGlobeGroup()?.traverse(o => {
+                const m = o.material;
+                if (o.isMesh && m?.map && !(m.color && m.color.equals(color))) { m.color = color.clone(); fresh = true; }
+            });
+            if (fresh) wake(); // a tile arrived: show it
+        };
         apply(); tintTimer = setInterval(apply, 250);
     }
     function useTiles(tiles, tint) {
@@ -227,6 +267,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         if (lite) theme = { ...theme, tiles: null, image: null, bump: null, land: theme.land || '#1b5360', landDots: false };
         const token = ++themeToken; themeId = id; current = theme;
         world.atmosphereColor(theme.atmosphere).atmosphereAltitude(theme.atmosphereAltitude).bumpImageUrl(theme.bump || null);
+        wake();
         applyDotColors();
         roundDots();
         if (!theme.tiles) useGlobeTexture(theme);
@@ -242,6 +283,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
             if (token !== themeToken) return;
             world.hexPolygonsData(features).hexPolygonColor(() => theme.land)
                 .hexPolygonUseDots(Boolean(theme.landDots)).hexPolygonMargin(theme.landDots ? .45 : .22);
+            wake();
         });
     }
     /** Lat/lng box of the area in view, or null when the view shows sky or crosses the antimeridian. */
@@ -263,6 +305,8 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });
             return { ...navigation.getSnapshot(), points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
         },
-        destroy() { abort.abort(); clearTimeout(hoverTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); }
+        destroy() { abort.abort(); clearTimeout(hoverTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); },
+        /** Frames drawn so far (diagnostics and tests of the idle loop). */
+        frames: () => renderer.info?.render?.frame ?? 0
     };
 }
