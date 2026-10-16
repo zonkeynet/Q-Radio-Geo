@@ -132,6 +132,8 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .reticle-crosshair.h { width: 100px; height: 1px; }
 .reticle-crosshair.v { width: 1px; height: 100px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 40%, transparent), transparent); }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* Battery: decorative loops pause while the globe rests (js/globe.mjs sets .globe-idle). */
+.globe-idle :is(.reticle-ring, .brand-dot) { animation-play-state: paused; }
 @keyframes pulse { 50% { transform: scale(1.35); opacity: .55; } }
 
 /* ---------- Shared HUD ---------- */

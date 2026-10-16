@@ -47,19 +47,21 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
     const resume = world.resumeAnimation.bind(world), pause = world.pauseAnimation.bind(world);
     let sleeping = false, idleTimer = null, ringTimer = null;
     const ringing = () => (world.ringsData() || []).length > 0;
+    // Decorative CSS loops (reticle, brand dot) rest with the globe: even a slow spin keeps the compositor at 60 fps.
+    const idleClass = on => document.documentElement.classList.toggle('globe-idle', on);
     function wake() {
         clearTimeout(idleTimer);
-        if (sleeping) { sleeping = false; clearInterval(ringTimer); ringTimer = null; resume(); }
+        if (sleeping) { sleeping = false; clearInterval(ringTimer); ringTimer = null; idleClass(false); resume(); }
         idleTimer = setTimeout(rest, IDLE_MS);
     }
     function rest() {
         if (world.controls().autoRotate || pointers.size || navigation.getSnapshot().mode !== 'idle') { idleTimer = setTimeout(rest, 1000); return; }
-        sleeping = true; pause();
+        sleeping = true; pause(); idleClass(true);
         // resume() draws one frame at once; pausing right after cancels the next: exactly one frame per tick.
         if (ringing()) ringTimer = setInterval(() => { resume(); pause(); }, RING_FRAME_MS);
     }
     // The page's own pause (hidden tab) and resume go through the same bookkeeping.
-    world.pauseAnimation = () => { clearTimeout(idleTimer); clearInterval(ringTimer); ringTimer = null; sleeping = true; pause(); return world; };
+    world.pauseAnimation = () => { clearTimeout(idleTimer); clearInterval(ringTimer); ringTimer = null; sleeping = true; pause(); idleClass(true); return world; };
     world.resumeAnimation = () => { wake(); return world; };
     const setView = world.pointOfView.bind(world);
     world.pointOfView = (...args) => { if (args.length) wake(); return setView(...args); };
