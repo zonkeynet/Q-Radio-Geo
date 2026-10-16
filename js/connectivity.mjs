@@ -34,7 +34,7 @@ function torItems(relays) {
 const share = a => `${a.relays.toLocaleString('en')} relays, ${a.exits.toLocaleString('en')} exits; ${pct(a.cw)} of the network, ${pct(a.pe)} of exit and ${pct(a.pg)} of guard traffic`;
 
 export const TOR = {
-    id: 'tor', icon: '🧅', label: 'TOR', group: 'Connectivity', noun: 'relays', dataUrl: 'data/tor.json',
+    id: 'tor', label: 'TOR', group: 'Connectivity', noun: 'relays', dataUrl: 'data/tor.json',
     sidebarTitle: 'Tor relays', placeholder: 'Search nickname, fingerprint, IP, AS or country…', randomTitle: 'Show a random relay',
     prepare: json => { torPoints = json.points || {}; return torItems(json.relays || []); },
     searchText: it => `${it.name} ${it.id} ${it.ip || ''} ${it.exitIp || ''} ${it.as} ${it.asName} ${country(it.cc)} ${it.platform}`,
@@ -102,7 +102,7 @@ const placeOf = it => (PLACES.find(([, , re]) => re.test(it.kind || '')) || ['ot
 const fee = it => FEE[it.fee] || FEE.customers;
 
 export const WIFI = {
-    id: 'wifi', icon: '🛜', label: 'WI-FI', group: 'Connectivity', noun: 'places', dataUrl: 'data/wifi.json',
+    id: 'wifi', label: 'WI-FI', group: 'Connectivity', noun: 'places', dataUrl: 'data/wifi.json',
     sidebarTitle: 'Wi-Fi for the public', placeholder: 'Search place, city, network name or country…', randomTitle: 'Show a random place',
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${it.kind || ''} ${it.city || ''} ${country(it.cc)} ${it.ssid || ''} ${it.op || ''}`,

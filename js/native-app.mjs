@@ -1,3 +1,5 @@
+import { icon } from './icons.mjs';
+
 // Versioned, one-way links. The Android viewer validates origin, gesture and every parameter.
 export const APP_MODE = new URLSearchParams(globalThis.location?.search || '').get('app') === '1';
 export const LITE_MODE = new URLSearchParams(globalThis.location?.search || '').get('lite') === '1';
@@ -73,40 +75,25 @@ export function requestNativeShare(item) {
     return true;
 }
 
-// Line icons (24 px grid, drawn with the current text colour) for the touch-sized app header.
-const ICONS = {
-    btnRandom: '<path d="M3 7h3.5c4.5 0 6.5 10 11 10H21"/><path d="M3 17h3.5c1.6 0 2.8-1.3 3.9-3"/><path d="M14 10c1-1.7 2.2-3 3.5-3H21"/><path d="m18 4 3 3-3 3"/><path d="m18 14 3 3-3 3"/>',
-    btnAutoRotate: '<circle cx="12" cy="12" r="6.5"/><path d="M5.5 12h13"/><path d="M12 5.5c2.2 2 2.2 11 0 13"/><path d="M12 5.5c-2.2 2-2.2 11 0 13"/><path d="M20.6 8.2A9.5 9.5 0 0 0 9 2.8"/><path d="m21 4.5-.4 3.7-3.6-.6"/>',
-    btnTv: '<rect x="3" y="6.5" width="18" height="12.5" rx="2.5"/><path d="m8.5 2.5 3.5 4 3.5-4"/><path d="M9 22h6"/>',
-    btnTheme: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/>',
-    btnGuide: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/>',
-    single: '<rect x="4" y="5" width="16" height="14" rx="2.5"/>',
-    wall: '<rect x="3.5" y="4.5" width="7.5" height="6.5" rx="1.6"/><rect x="13" y="4.5" width="7.5" height="6.5" rx="1.6"/><rect x="3.5" y="13" width="7.5" height="6.5" rx="1.6"/><rect x="13" y="13" width="7.5" height="6.5" rx="1.6"/>',
-    close: '<path d="m6 6 12 12"/><path d="M18 6 6 18"/>',
-    play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>'
-};
-function icon(name) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
-    for (const [k, v] of Object.entries({ fill: 'none', stroke: 'currentColor', 'stroke-width': '1.9', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) svg.setAttribute(k, v);
-    svg.innerHTML = ICONS[name]; // static markup above, never page or catalog data
-    return svg;
-}
-
 if (APP_MODE && globalThis.document) {
     document.documentElement.classList.add('app-mode');
     document.documentElement.dataset.nativeMediaVersion = '2';
     if (LITE_MODE) document.documentElement.classList.add('lite-mode');
-    const compactControls = () => {
-        for (const id of ['btnRandom', 'btnAutoRotate', 'btnTv', 'btnTheme', 'btnGuide']) {
+}
+// Globe tools: line icons in the theme colour. The web keeps the label next to the icon; the app's touch-sized
+// header shows the icon alone, named by its title.
+if (globalThis.document) {
+    const controls = () => {
+        for (const id of ['btnRandom', 'btnAutoRotate', 'btnTv', 'btnTheme', ...(APP_MODE ? ['btnGuide'] : [])]) {
             const button = document.getElementById(id);
             if (!button) continue;
-            button.setAttribute('aria-label', button.getAttribute('aria-label') || button.title);
-            button.replaceChildren(icon(id));
+            const label = button.textContent.trim();
+            if (APP_MODE) button.setAttribute('aria-label', button.getAttribute('aria-label') || button.title);
+            button.replaceChildren(icon(id), ...(APP_MODE ? [] : [label]));
         }
     };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', compactControls, { once: true });
-    else compactControls();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', controls, { once: true });
+    else controls();
 }
 
 /** Native TV mode: no video elements, HLS loaders, autoplay or broadcaster requests in the page. */

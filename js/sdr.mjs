@@ -7,7 +7,7 @@ const TYPE_NOTE = { KiwiSDR: '0–30 MHz HF receiver, up to 4–8 listeners', Op
 const SHORT = { KiwiSDR: 'KIWI', OpenWebRX: 'OWRX', WebSDR: 'WEB' };
 
 export const SDR = {
-    id: 'sdr', icon: '📡', label: 'SDR', group: 'Listen', noun: 'receivers', dataUrl: 'data/sdr.json',
+    id: 'sdr', label: 'SDR', group: 'Listen', noun: 'receivers', dataUrl: 'data/sdr.json',
     sidebarTitle: 'SDR networks', placeholder: 'Search receiver, place or antenna…', randomTitle: 'Show a random SDR receiver',
     prepare: json => (json.receivers || []).map(r => ({ ...r, url: safeLinkURL(r.url) })).filter(r => r.url),
     searchText: r => `${r.name} ${r.place || ''} ${r.type} ${r.antenna || ''}`,

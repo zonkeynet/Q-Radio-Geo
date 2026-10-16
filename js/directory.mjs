@@ -1,6 +1,7 @@
 // Directory modes (SDR receivers, repeaters, …): loading, filters, search and the explorer drawer.
 // A mode is a plain definition object (see sdr.mjs, repeaters.mjs); everything here is shared.
 import { loadJSON } from './catalog.mjs';
+import { icon } from './icons.mjs';
 import { normalize } from './core.mjs';
 import { COUNTRY_ALIASES } from './aliases.mjs';
 
@@ -102,7 +103,7 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
         const center = getCenter(), list_ = shown();
         // Nearest to the view first, unless the mode orders its list itself (news: newest first).
         const sorted = [...list_].sort(def.listOrder || ((a, b) => (def.featured?.(b) ? 1 : 0) - (def.featured?.(a) ? 1 : 0) || km(center, a) - km(center, b)));
-        title.textContent = `${def.icon} ${def.titleOf(values)}`;
+        title.replaceChildren(icon(def.id, 'icon title-icon'), def.titleOf(values));
         meta.textContent = `${list_.length.toLocaleString('en')} ${def.noun} · ${def.listOrder ? 'newest first' : 'nearest to the view first'}`;
         drawer.hidden = false;
         list.replaceChildren(); list.scrollTop = 0;

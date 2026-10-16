@@ -1,5 +1,6 @@
 // The ⓘ guide: how to use the globe, what every layer shows, the keyboard shortcuts, privacy, and every source with
 // its licence. A native <dialog>, so focus, Esc and screen readers behave as expected.
+import { icon } from './icons.mjs';
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 const link = (text, href) => Object.assign(node('a', '', text), { href, target: '_blank', rel: 'noopener noreferrer' });
 const SEEN = 'qradio.guideSeen';
@@ -69,7 +70,7 @@ function list(items) {
     return ul;
 }
 
-/** button: opens the guide; layers: [{ id, icon, label, group, sidebarTitle }]; groups: layer menu order; onLayer(id). */
+/** button: opens the guide; layers: [{ id, label, group, sidebarTitle }]; groups: layer menu order; onLayer(id). */
 export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
     const dialog = node('dialog', 'guide');
     dialog.setAttribute('aria-labelledby', 'guideTitle');
@@ -90,7 +91,8 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
             const b = Object.assign(node('button', 'guide-layer'), { type: 'button', title: `Open ${l.label}` });
             const text = node('span');
             text.append(node('b', '', l.label), node('small', '', ABOUT[l.id] || l.sidebarTitle));
-            b.append(node('span', 'guide-layer-icon', l.icon), text);
+            const glyph = node('span', 'guide-layer-icon'); glyph.append(icon(l.id));
+            b.append(glyph, text);
             b.onclick = () => { dialog.close(); onLayer(l.id); };
             layerList.appendChild(b);
         }
@@ -115,7 +117,7 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
     const pages = [
         ['Start', section('What it is', node('p', '', 'Q-P1NG Globe puts the world\'s radio, signals, news and open-source intelligence on one 3D globe: tens of thousands of radio stations, SDR receivers, repeaters, aviation and maritime aids, live news and TV, conflict, migration, censorship, Tor and public Wi-Fi. No account, no ads, no trackers.')),
             section('Move around', list([['Drag', 'to turn the globe; scroll or pinch to zoom.'], ['+ − ◎', 'zoom, and ◎ goes back to the world view.'], ['ROTATE', 'spins the globe slowly.']])),
-            section('Find and choose', list([['The button next to the logo', '(📻 RADIO ▾) opens the layer menu: news, radio, signals, safety and connectivity.'],
+            section('Find and choose', list([['The button next to the logo', '(RADIO ▾) opens the layer menu: news, radio, signals, safety and connectivity.'],
                 ['The search box', 'finds countries, cities, stations, places and stories; Italian country names work too. The tabs above it narrow the search.'],
                 ['The list panel', 'shows what is around the view, nearest first (news: newest first). Pick an item, or a dot on the globe, to open its card.'],
                 ['Filters', 'sit in the right panel; on phones and tablets they are the compact menus at the top of the list.'],

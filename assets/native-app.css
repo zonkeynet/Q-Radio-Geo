@@ -29,7 +29,7 @@
     height: var(--tool); padding: 0 12px; gap: 7px; border-radius: 12px; font-size: 11px;
     background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
 }
-.app-mode #modeIcon { font-size: 16px; line-height: 1; }
+.app-mode #modeIcon svg { width: 18px; height: 18px; }
 .app-mode .search-wrapper { grid-area: search; width: auto; margin: 0; }
 .app-mode .search-tab { min-height: 30px; }
 
@@ -37,13 +37,13 @@
 .app-mode .action-btns { grid-area: tools; position: static; display: flex; justify-content: flex-end; gap: 6px; }
 .app-mode .hud-btn, .app-mode .guide-btn {
     width: var(--tool); min-width: var(--tool); height: var(--tool); padding: 0; justify-content: center;
-    border-radius: 12px; color: var(--text); font: inherit;
+    border-radius: 12px; color: var(--accent); font: inherit;
 }
 .app-mode .hud-btn svg { width: 20px; height: 20px; flex: none; }
 .app-mode .hud-btn[aria-pressed="true"], .app-mode .hud-btn[aria-expanded="true"], .app-mode .hud-btn.active {
     color: var(--accent); border-color: var(--accent); background: var(--accent-soft);
 }
-.app-mode .guide-btn.pulse { animation: none; border-color: var(--line-accent); color: var(--text); }
+.app-mode .guide-btn.pulse { animation: none; border-color: var(--line-accent); color: var(--accent); }
 
 /* Layer menu: a sheet as wide as the screen allows, in columns, every label readable. */
 .app-mode .mode-menu {
@@ -57,7 +57,8 @@
 .app-mode .mode-menu .dir-sub { grid-column: 1 / -1; margin: 6px 4px 0; }
 .app-mode .mode-menu .dir-sub:first-child { margin-top: 0; }
 .app-mode .mode-option { min-height: 50px; padding: 6px 8px; gap: 8px; }
-.app-mode .mode-option .mode-icon { width: 26px; font-size: 18px; }
+.app-mode .mode-option .mode-icon { width: 26px; }
+.app-mode .mode-option .mode-icon svg { width: 22px; height: 22px; }
 .app-mode .mode-option .theme-text b { font-size: 12px; letter-spacing: .02em; }
 .app-mode .mode-option .theme-text small {
     white-space: normal; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;

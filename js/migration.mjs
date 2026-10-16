@@ -16,7 +16,7 @@ const causeOf = it => (CAUSES.find(([, re]) => re.test(it.cause || '')) || ['oth
 const corridor = it => CORRIDOR[it.g] || CORRIDOR.OTHER;
 
 export const MIGRATION = {
-    id: 'migration', icon: '🧭', label: 'MIGRATION', group: 'Safety & OSINT', noun: 'incidents', dataUrl: 'data/migration.json',
+    id: 'migration', label: 'MIGRATION', group: 'Safety & OSINT', noun: 'incidents', dataUrl: 'data/migration.json',
     sidebarTitle: 'Migration routes', placeholder: 'Search route, place, country or origin…', randomTitle: 'Show a random incident',
     prepare: json => json.items || [],
     searchText: it => `${it.route || ''} ${corridor(it)[0]} ${it.place || ''} ${it.cc || ''} ${it.origin || ''} ${it.cause || ''} ${it.d}`,

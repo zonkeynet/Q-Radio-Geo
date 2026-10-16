@@ -1,5 +1,6 @@
 import { Catalog, loadJSON } from './catalog.mjs';
 import { APP_MODE, LITE_MODE, requestNativeShare } from './native-app.mjs';
+import { icon } from './icons.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
@@ -244,7 +245,9 @@ function setTheme(id) {
     theme = themeById(id);
     applyThemeCss(theme);
     for (const item of $('themeMenu').children) item.setAttribute('aria-checked', String(item.dataset.id === theme.id));
-    globe?.setTheme(theme.id, theme.globe);
+    // The app sets its theme colour on the page (--accent); the default HUD theme then glows in that colour too.
+    const appAccent = APP_MODE && theme.id === 'tactical' && document.documentElement.style.getPropertyValue('--accent').trim();
+    globe?.setTheme(theme.id, appAccent ? { ...theme.globe, atmosphere: appAccent } : theme.globe);
 }
 
 // ---------- Modes: radio, or a directory (SDR receivers, repeaters) ----------
@@ -433,7 +436,7 @@ function watchLive() {
     }, 1000);
 }
 const MODE_GROUPS = ['Live', 'Listen', 'Navigate', 'Safety & OSINT', 'Connectivity'];
-const RADIO_MODE = { id: 'radio', icon: '📻', label: 'RADIO', group: 'Listen', sidebarTitle: 'Radio stations' };
+const RADIO_MODE = { id: 'radio', label: 'RADIO', group: 'Listen', sidebarTitle: 'Radio stations' };
 /** The grouped layer menu next to the title. */
 function initModeMenu() {
     const menu = $('modeMenu'), button = $('btnMode');
@@ -447,7 +450,8 @@ function initModeMenu() {
             item.setAttribute('role', 'menuitemradio');
             const text = node('span', 'theme-text');
             text.append(node('b', '', m.label), node('small', '', m.sidebarTitle));
-            item.append(node('span', 'mode-icon', m.icon), text);
+            const glyph = node('span', 'mode-icon'); glyph.append(icon(m.id));
+            item.append(glyph, text);
             item.onclick = () => { close(); setMode(m.id); button.focus(); };
             menu.appendChild(item);
         }
@@ -466,7 +470,7 @@ function initModeMenu() {
 }
 function markMode() {
     const m = DIRECTORIES[mode] || RADIO_MODE;
-    $('modeIcon').textContent = m.icon; $('modeName').textContent = m.label;
+    $('modeIcon').replaceChildren(icon(m.id)); $('modeName').textContent = m.label;
     for (const item of $('modeMenu').querySelectorAll('.mode-option')) item.setAttribute('aria-checked', String(item.dataset.mode === mode));
 }
 /** The news ticker: the latest stories of a mode that has one, scrolling above the player. */
@@ -517,7 +521,7 @@ async function setMode(next) {
     markMode();
     pendingPick = null;
     playerMini = null; applyPlayerSize();
-    if (!player?.station) $('playerTitle').textContent = def ? 'Radio · pick a station in the 📻 RADIO layer' : 'Select a point on the map';
+    if (!player?.station) $('playerTitle').textContent = def ? 'Radio · pick a station in the RADIO layer' : 'Select a point on the map';
     hideSearch(); $('searchInput').value = '';
     $('searchInput').placeholder = def ? def.placeholder : 'Search country, city or station…';
     $('btnRandom').title = def ? def.randomTitle : 'Listen to a random station somewhere in the world';

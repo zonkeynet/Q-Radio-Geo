@@ -47,7 +47,7 @@ const EMB_LABEL = { EMBASSY: 'Embassy', CONSULATE: 'Consulate', MISSION: 'Missio
 const EMB_PLURAL = { EMBASSY: 'Embassies', CONSULATE: 'Consulates', MISSION: 'Missions & delegations', REFUGE: 'Refugee sites', HOSPITAL: 'Hospitals' };
 const DIPLOMATIC = new Set(['EMBASSY', 'CONSULATE', 'MISSION']);
 export const EMBASSIES = {
-    id: 'embassies', icon: '🏛️', label: 'EMBASSIES', group: 'Safety & OSINT', noun: 'places', dataUrl: 'data/embassies.json',
+    id: 'embassies', label: 'EMBASSIES', group: 'Safety & OSINT', noun: 'places', dataUrl: 'data/embassies.json',
     sidebarTitle: 'Embassies & havens', placeholder: 'Search country represented, city or name…', randomTitle: 'Show a random mission',
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${country(it.from)} ${it.from || ''} ${it.host || ''} ${it.city || ''} ${EMB_LABEL[it.kind]} ${it.detail || ''} ${it.operator || ''}`,
@@ -122,7 +122,7 @@ async function loadSurveillance(b, base, signal) {
 }
 const secGroup = it => /MILITARY|NAVAL/.test(it.kind) ? 'MILITARY' : /BORDER/.test(it.kind) ? 'BORDER' : it.kind;
 export const SECURITY = {
-    id: 'security', icon: '🚨', label: 'SECURITY', group: 'Safety & OSINT', noun: 'sites', dataUrl: 'data/security.json',
+    id: 'security', label: 'SECURITY', group: 'Safety & OSINT', noun: 'sites', dataUrl: 'data/security.json',
     sidebarTitle: 'Security & surveillance', placeholder: 'Search prison, base, border, operator or country…', randomTitle: 'Show a random site',
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${it.kind} ${it.operator || ''} ${it.host || ''} ${it.detail || ''}`,
@@ -165,7 +165,7 @@ export const SECURITY = {
 const FIRE_COLORS = { big: '--red', mid: '--approx', small: '--accent-2' };
 const fireBand = it => it.frp >= 100 ? 'big' : it.frp >= 10 ? 'mid' : 'small';
 export const FIRES = {
-    id: 'fires', icon: '🔥', label: 'FIRES', group: 'Safety & OSINT', noun: 'hotspots', dataUrl: 'data/fires.json',
+    id: 'fires', label: 'FIRES', group: 'Safety & OSINT', noun: 'hotspots', dataUrl: 'data/fires.json',
     sidebarTitle: 'Thermal anomalies · 24 h', placeholder: 'Search country, date or hour (UTC)…', randomTitle: 'Show a random hotspot',
     prepare: json => json.items || [],
     searchText: it => `${it.host || ''} ${it.t}`,
@@ -203,7 +203,7 @@ export const FIRES = {
 const WAR_COLORS = { 'State-based': '--red', 'Non-state': '--approx', 'One-sided': '--accent-2' };
 const PRECISION = { 1: 'exact location', 2: 'within 25 km', 3: 'district', 4: 'region / province', 5: 'approximate', 6: 'country only', 7: 'sea or airspace' };
 export const CONFLICT = {
-    id: 'conflict', icon: '💥', label: 'CONFLICT', group: 'Safety & OSINT', noun: 'events', dataUrl: 'data/conflict.json',
+    id: 'conflict', label: 'CONFLICT', group: 'Safety & OSINT', noun: 'events', dataUrl: 'data/conflict.json',
     sidebarTitle: 'Conflict events', placeholder: 'Search conflict, actor, place or country…', randomTitle: 'Show a random event',
     prepare: json => json.items || [],
     searchText: it => `${it.conflict} ${it.a} ${it.b} ${it.place || ''} ${it.adm || ''} ${it.cc} ${it.d}`,
@@ -247,7 +247,7 @@ const NET_COLORS = { severe: '--red', notable: '--approx', some: '--accent-2', '
 const TEST_NAMES = { web_connectivity: 'Websites', tor: 'Tor', signal: 'Signal', whatsapp: 'WhatsApp', telegram: 'Telegram', facebook_messenger: 'Messenger', psiphon: 'Psiphon' };
 const pct = (n, m) => m ? `${(100 * n / m).toFixed(n / m < .1 ? 1 : 0)}%` : '–';
 export const INTERNET = {
-    id: 'internet', icon: '🌐', label: 'INTERNET', group: 'Connectivity', noun: 'countries', dataUrl: 'data/internet.json',
+    id: 'internet', label: 'INTERNET', group: 'Connectivity', noun: 'countries', dataUrl: 'data/internet.json',
     sidebarTitle: 'Network interference', placeholder: 'Search country…', randomTitle: 'Show a random country',
     prepare: json => json.items || [],
     searchText: it => `${it.name} ${it.cc} ${it.level}`,

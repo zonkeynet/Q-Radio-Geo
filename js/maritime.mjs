@@ -8,7 +8,7 @@ const rangeNm = it => { const n = String(it.range || '').match(/\d+(\.\d+)?/g); 
 const freq = it => it.khz ? `${it.khz} kHz${it.emission ? ` · ${it.emission}` : ''}` : null;
 
 export const MARITIME = {
-    id: 'maritime', icon: '⚓', label: 'MARITIME', group: 'Navigate', noun: 'aids', dataUrl: 'data/maritime.json',
+    id: 'maritime', label: 'MARITIME', group: 'Navigate', noun: 'aids', dataUrl: 'data/maritime.json',
     sidebarTitle: 'Maritime aids', placeholder: 'Search light, beacon, port or country…', randomTitle: 'Show a random maritime aid',
     prepare: json => (json.items || []).map(it => ({ ...it, nm: rangeNm(it) })),
     searchText: it => `${it.name} ${it.ident || ''} ${it.region || ''} ${it.cc} ${LABEL[it.kind]} ${it.khz || ''}`,

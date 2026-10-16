@@ -43,7 +43,7 @@ async function getJSON(url, signal) {
 }
 
 export const NEWS = {
-    id: 'news', icon: '📰', label: 'NEWS', group: 'Live', noun: 'items', dataUrl: 'data/news.json',
+    id: 'news', label: 'NEWS', group: 'Live', noun: 'items', dataUrl: 'data/news.json',
     sidebarTitle: 'World now', placeholder: 'Search headlines, places, outlets…', randomTitle: 'Show a random story',
     prepare: headlines,
     searchText: it => `${it.name} ${it.source} ${it.place || ''} ${TOPIC[it.topic] || ''} ${it.summary || ''} ${it.type || ''} ${it.category || ''}`,
