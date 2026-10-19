@@ -16,8 +16,11 @@ import { TOR, WIFI } from './connectivity.mjs';
 import { NEWS } from './news.mjs';
 import { createTv } from './tv.mjs';
 import { createGuide } from './guide.mjs';
-// Modes besides radio: each is a directory definition (data, filters, card).
-const DIRECTORIES = { news: NEWS, sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
+import { QCAST } from './qcast.mjs';
+import { webEndpoints } from './qcast-protocol.mjs';
+// Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) only on the web:
+// the app has its own screen for it, and its viewer opens no WebSockets.
+const DIRECTORIES = { news: NEWS, ...(APP_MODE ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
@@ -41,8 +44,9 @@ const radioLayer = () => ({
     describe: p => `${p.city}, ${p.country}\n${p.count} station${p.count === 1 ? '' : 's'}${p.loc ? ' · approximate location' : ''}`,
     colors: { city: '--accent', approx: '--approx' }
 });
+const placed = it => Number.isFinite(it.lat) && Number.isFinite(it.lng);
 const dirLayer = () => ({
-    items: dirShown(),
+    items: dirShown().filter(placed), // listed items without a place (user radio) stay off the globe
     groupOf: dir().colorOf, // the theme variable is the group
     sizeOf: dir().sizeOf,
     describe: dir().describe,
@@ -64,7 +68,7 @@ function markState({ state, detail, station }) {
     const homepage = safeLinkURL(station?.homepage);
     $('btnExternal').hidden = !homepage;
     if (homepage) $('btnExternal').href = homepage;
-    $('btnShareStation').hidden = !station;
+    $('btnShareStation').hidden = !station || station.layer === 'qcast'; // its link is for catalog stations
 }
 function updateRotate(enabled) {
     $('btnAutoRotate').setAttribute('aria-pressed', String(enabled));
@@ -505,6 +509,7 @@ function selectDir(it, { fly = true } = {}) {
     unfoldDrawer();
     explorer.select(it);
     // Closer, never further: items that load with their area (cameras) stay loaded, and a link keeps that zoom.
+    if (!placed(it)) return; // listed without a place: nothing to show on the globe
     if (fly) globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, .5) }, 600);
     globe?.select(it.lat, it.lng, .8);
 }
@@ -783,6 +788,20 @@ async function start() {
     // Overlays above the player follow its real height (it grows with the consent bar and station chips).
     new ResizeObserver(() => document.documentElement.style.setProperty('--player-h', `${$('bottomPlayer').offsetHeight}px`)).observe($('bottomPlayer'));
     player = new RadioPlayer({ holder: $('audioHolder'), onState: markState });
+    // User radio: a station's card plays it in this player, behind the same audio consent.
+    QCAST.listen = s => {
+        const ogg = webEndpoints(s)[0]?.replace(/\/live\.qcs$/, '/live.opus');
+        const station = { id: `qc-${s.session}`, layer: 'qcast', title: s.title, codec: 'OPUS', bitrate: Math.round(s.bitrate / 1000),
+            stream_url: s.external ? s.listenUrl : ogg, qcast: s.external ? null : s };
+        currentPlace = null; cityStations = []; currentIndex = 0; renderChips();
+        $('playerTitle').textContent = station.title; $('playerTitle').title = station.title;
+        $('playerTech').textContent = `Opus · ${station.bitrate} kbps`;
+        $('playerCity').textContent = s.place || 'User radio'; $('playerCity').classList.remove('approx'); $('playerCity').title = '';
+        $('playerCountry').textContent = '· Q-Cast';
+        $('btnPlayPause').disabled = false;
+        $('bottomPlayer').dataset.station = '1';
+        player.select(station, config, '', '');
+    };
     // In the app, tapping a station hands it over at once: the app's own dialog asks before any connection.
     if (APP_MODE) player.setConsent(true);
     $('btnAcceptAudio').onclick = () => {

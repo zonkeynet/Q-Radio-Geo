@@ -1,0 +1,319 @@
+{
+  "forged": {
+    "sig": "8ff5b277d88824136fd1d76c4ac1f4f9b3df90e0f5264ab61cb0788bec087a97cb40a9ab6e3d37db472631744da0f5dc75811a5170b84dda7caaaa8577988ecf",
+    "kind": 30311,
+    "created_at": 1800000000,
+    "id": "8ca8831ba6642f82f37bc582c7d73238d151607372dc3d482ceec20932835640",
+    "content": "",
+    "pubkey": "2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5",
+    "tags": [
+      [
+        "d",
+        "030a11181f262d343b424950575e656c"
+      ],
+      [
+        "title",
+        "Altro titolo"
+      ],
+      [
+        "summary",
+        "Notizie e musica"
+      ],
+      [
+        "status",
+        "live"
+      ],
+      [
+        "starts",
+        "1799999400"
+      ],
+      [
+        "streaming",
+        "https://relay.example.org/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.opus"
+      ],
+      [
+        "t",
+        "qp1ng-radio"
+      ],
+      [
+        "g",
+        "u0"
+      ],
+      [
+        "g",
+        "u0n"
+      ],
+      [
+        "g",
+        "u0nd"
+      ],
+      [
+        "location",
+        "Milano"
+      ],
+      [
+        "qcast",
+        "1",
+        "e8d3f65b1c85ff1b60db0fa71b2dfc1e39e6d7a1c9624fab1e8f7aa9d65db289",
+        "opus",
+        "1",
+        "32000",
+        "tor+web"
+      ],
+      [
+        "qcast-endpoint",
+        "https://relay.example.org/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "qcast-endpoint",
+        "http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.onion/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "expiration",
+        "1800000900"
+      ],
+      [
+        "alt",
+        "Q-Cast live radio: Radio Vettori «àè» \"prova\""
+      ]
+    ]
+  },
+  "web": {
+    "sig": "8ff5b277d88824136fd1d76c4ac1f4f9b3df90e0f5264ab61cb0788bec087a97cb40a9ab6e3d37db472631744da0f5dc75811a5170b84dda7caaaa8577988ecf",
+    "kind": 30311,
+    "created_at": 1800000000,
+    "id": "8ca8831ba6642f82f37bc582c7d73238d151607372dc3d482ceec20932835640",
+    "content": "",
+    "pubkey": "2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5",
+    "tags": [
+      [
+        "d",
+        "030a11181f262d343b424950575e656c"
+      ],
+      [
+        "title",
+        "Radio Vettori «àè» \"prova\""
+      ],
+      [
+        "summary",
+        "Notizie e musica"
+      ],
+      [
+        "status",
+        "live"
+      ],
+      [
+        "starts",
+        "1799999400"
+      ],
+      [
+        "streaming",
+        "https://relay.example.org/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.opus"
+      ],
+      [
+        "t",
+        "qp1ng-radio"
+      ],
+      [
+        "g",
+        "u0"
+      ],
+      [
+        "g",
+        "u0n"
+      ],
+      [
+        "g",
+        "u0nd"
+      ],
+      [
+        "location",
+        "Milano"
+      ],
+      [
+        "qcast",
+        "1",
+        "e8d3f65b1c85ff1b60db0fa71b2dfc1e39e6d7a1c9624fab1e8f7aa9d65db289",
+        "opus",
+        "1",
+        "32000",
+        "tor+web"
+      ],
+      [
+        "qcast-endpoint",
+        "https://relay.example.org/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "qcast-endpoint",
+        "http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.onion/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "expiration",
+        "1800000900"
+      ],
+      [
+        "alt",
+        "Q-Cast live radio: Radio Vettori «àè» \"prova\""
+      ]
+    ]
+  },
+  "tor": {
+    "sig": "2b13d8b421de5e2d522277e0d9679b4f62ca44aa1ba6bf61f5435dbc2165e1853b0651c85f234b1ba535212bd6ded2d1b117668a9e4f9d1cf624379b4e531abd",
+    "kind": 30311,
+    "created_at": 1800000000,
+    "id": "313912f7b72603e752a50042772312af5871ce1f85365e40330dca1ce76dd057",
+    "content": "",
+    "pubkey": "2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5",
+    "tags": [
+      [
+        "d",
+        "030a11181f262d343b424950575e656c"
+      ],
+      [
+        "title",
+        "Radio Vettori «àè» \"prova\""
+      ],
+      [
+        "summary",
+        "Notizie e musica"
+      ],
+      [
+        "status",
+        "live"
+      ],
+      [
+        "starts",
+        "1799999400"
+      ],
+      [
+        "streaming",
+        "http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.onion/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.opus"
+      ],
+      [
+        "t",
+        "qp1ng-radio"
+      ],
+      [
+        "g",
+        "u0"
+      ],
+      [
+        "g",
+        "u0n"
+      ],
+      [
+        "g",
+        "u0nd"
+      ],
+      [
+        "location",
+        "Milano"
+      ],
+      [
+        "qcast",
+        "1",
+        "e8d3f65b1c85ff1b60db0fa71b2dfc1e39e6d7a1c9624fab1e8f7aa9d65db289",
+        "opus",
+        "1",
+        "32000",
+        "tor"
+      ],
+      [
+        "qcast-endpoint",
+        "http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.onion/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "expiration",
+        "1800000900"
+      ],
+      [
+        "alt",
+        "Q-Cast live radio: Radio Vettori «àè» \"prova\""
+      ]
+    ]
+  },
+  "now": 1800000000,
+  "ended": {
+    "sig": "3960d8dc9aaa9222013630e44f1cd8083696ae9a09c7364b98da9b3006f36ac8f7e2a449652525b13ebf204557367873a352d90120344689057f3c3e819dd668",
+    "kind": 30311,
+    "created_at": 1800000000,
+    "id": "4872501f8b997e7ec70b3e7db62f1f0c4132e21d4e527b31bec83a2fbef8725a",
+    "content": "",
+    "pubkey": "2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5",
+    "tags": [
+      [
+        "d",
+        "030a11181f262d343b424950575e656c"
+      ],
+      [
+        "title",
+        "Radio Vettori «àè» \"prova\""
+      ],
+      [
+        "summary",
+        "Notizie e musica"
+      ],
+      [
+        "status",
+        "ended"
+      ],
+      [
+        "starts",
+        "1799999400"
+      ],
+      [
+        "ends",
+        "1800000000"
+      ],
+      [
+        "streaming",
+        "https://relay.example.org/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.opus"
+      ],
+      [
+        "t",
+        "qp1ng-radio"
+      ],
+      [
+        "g",
+        "u0"
+      ],
+      [
+        "g",
+        "u0n"
+      ],
+      [
+        "g",
+        "u0nd"
+      ],
+      [
+        "location",
+        "Milano"
+      ],
+      [
+        "qcast",
+        "1",
+        "e8d3f65b1c85ff1b60db0fa71b2dfc1e39e6d7a1c9624fab1e8f7aa9d65db289",
+        "opus",
+        "1",
+        "32000",
+        "tor+web"
+      ],
+      [
+        "qcast-endpoint",
+        "https://relay.example.org/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "qcast-endpoint",
+        "http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.onion/v1/s/2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5/030a11181f262d343b424950575e656c/live.qcs"
+      ],
+      [
+        "expiration",
+        "1800003600"
+      ],
+      [
+        "alt",
+        "Q-Cast live radio: Radio Vettori «àè» \"prova\""
+      ]
+    ]
+  }
+}

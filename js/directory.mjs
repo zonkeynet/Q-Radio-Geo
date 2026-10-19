@@ -76,7 +76,14 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
         const facts = node('dl', 'dir-facts');
         for (const [k, v] of def.facts(it)) if (v) facts.append(node('dt', '', k), node('dd', '', v));
         if (facts.children.length) box.append(facts);
-        for (const a of def.actions(it)) box.append(link(a.label, a.href, a.secondary ? 'dir-open secondary' : 'dir-open'));
+        for (const a of def.actions(it)) {
+            const className = a.secondary ? 'dir-open secondary' : 'dir-open';
+            if (a.onClick) { // an action on this page (user radio: play in the bottom player)
+                const b = Object.assign(node('button', className, a.label), { type: 'button' });
+                b.onclick = a.onClick;
+                box.append(b);
+            } else box.append(link(a.label, a.href, className));
+        }
         if (onShare) {
             const share = Object.assign(node('button', 'dir-open secondary dir-share', '🔗 SHARE LINK'), { type: 'button', title: 'Copy a link that opens this card' });
             share.onclick = () => onShare(it);

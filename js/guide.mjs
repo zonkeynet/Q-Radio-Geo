@@ -9,6 +9,7 @@ const SEEN = 'qradio.guideSeen';
 const ABOUT = {
     news: 'Headlines from 40+ outlets placed where they happen (renewed every 10 minutes), with live earthquakes, disaster alerts and natural events. A ticker runs above the player; the layer refreshes every 2 minutes.',
     radio: '38,000+ radio stations with direct streams. Pick a city dot, then a station; the shortcuts on the right jump to big cities.',
+    qcast: 'People on air from the QP1NG app, found live on Nostr. Stations that allow it play here with every second checked against their signature; Tor-only ones show how to reach them.',
     sdr: 'Public web SDR receivers (KiwiSDR, OpenWebRX, WebSDR): listen to the radio spectrum from someone else\'s antenna.',
     repeaters: 'Amateur radio repeaters with frequency, offset, tone and mode (FM, DMR, D-STAR, C4FM).',
     aviation: 'Radio navigation aids (VOR, DME, TACAN, NDB) and airports with their frequencies.',
@@ -25,6 +26,7 @@ const ABOUT = {
 
 const SOURCES = [
     ['Radio Browser', 'radio stations and stream links', 'community database', 'https://www.radio-browser.info'],
+    ['Nostr relays (damus, primal, snort)', 'user radio announcements (live)', 'public relays', 'https://github.com/nostr-protocol/nips/blob/master/53.md'],
     ['GeoNames', 'city positions', 'CC BY 4.0', 'https://www.geonames.org'],
     ['Natural Earth', 'countries, regions, places', 'public domain', 'https://www.naturalearthdata.com'],
     ['NASA GIBS (Blue Marble, Black Marble)', 'globe imagery', 'NASA, free use', 'https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api'],

@@ -1,0 +1,37 @@
+{
+  "metas": [
+    {
+      "musicOn": true,
+      "webOff": false,
+      "micOn": true,
+      "nowPlaying": "Brano \u2013 «prova»",
+      "seq": 0
+    },
+    {
+      "musicOn": false,
+      "webOff": true,
+      "micOn": false,
+      "nowPlaying": "",
+      "seq": 1
+    }
+  ],
+  "samplesPerGroup": 48000,
+  "sessionKey": "e8d3f65b1c85ff1b60db0fa71b2dfc1e39e6d7a1c9624fab1e8f7aa9d65db289",
+  "session": "030a11181f262d343b424950575e656c",
+  "webAllowed": true,
+  "groups": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "bitrate": 24000,
+  "title": "Radio Vettori «àè» \"prova\"",
+  "endLastSeq": 3,
+  "framesPerGroup": 50,
+  "channels": 1,
+  "listed": true,
+  "station": "2b78b69fe0830bb6e4c4eb607c60798f5b5778ae8490f636c4db791727271db5",
+  "tamperedFailsAtGroup": 2,
+  "preSkip": 312
+}

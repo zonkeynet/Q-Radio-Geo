@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Q-Cast player test</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; background: #05070b; color: #e6edf3; margin: 0; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  button { font-size: 18px; padding: 12px 20px; border-radius: 10px; border: 0; background: #3fb950; color: #04130a; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin-top: 16px; }
+  dt { color: #8b949e; } dd { margin: 0; word-break: break-all; }
+  .bad { color: #ff7b72; } .ok { color: #3fb950; }
+</style>
+</head><body>
+<h1>Q-Cast player test</h1>
+<p>For a relay on this machine only (<code>?relay=http://127.0.0.1:port</code>). Uses the site's own player and checks.</p>
+<button id="start" type="button">▶ Start</button>
+<dl>
+  <dt>Relay</dt><dd id="relay">–</dd>
+  <dt>Session</dt><dd id="session">–</dd>
+  <dt>Delegation</dt><dd id="delegation">–</dd>
+  <dt>State</dt><dd id="state">idle</dd>
+  <dt>Detail</dt><dd id="detail">–</dd>
+  <dt>Now playing</dt><dd id="meta">–</dd>
+  <dt>Records checked</dt><dd id="records">0</dd>
+  <dt>Groups</dt><dd id="groups">0</dd>
+  <dt>Frames decoded</dt><dd id="frames">0</dd>
+  <dt>Peak</dt><dd id="peak">–</dd>
+</dl>
+<p id="errors" class="bad"></p>
+<script>
+  // Shows load and runtime errors on the page itself (device tests have no console).
+  const report = text => { document.getElementById('errors').textContent += text + '\n'; };
+  addEventListener('error', e => report(`error: ${e.message || e.target?.src || 'resource'}`), true);
+  addEventListener('unhandledrejection', e => report(`rejection: ${e.reason?.message || e.reason}`));
+  const module = document.createElement('script');
+  module.type = 'module';
+  module.src = `./player-test.mjs?v=${Date.now()}`;
+  module.onerror = () => report('the test module did not load');
+  document.body.appendChild(module);
+</script>
+</body></html>

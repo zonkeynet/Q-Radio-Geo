@@ -1,5 +1,6 @@
 import { stationURL } from './core.mjs';
 import { APP_MODE, requestNativeMedia } from './native-app.mjs';
+import { QCastAudio, canVerify } from './qcast-player.mjs';
 const ERRORS = {
     1: 'Playback aborted.',
     2: 'Stream unreachable or blocked by the browser / station server.',
@@ -35,6 +36,7 @@ export class RadioPlayer {
         clearTimeout(this.timer); this.timer = null;
         this.listeners?.abort(); this.listeners = null;
         this.hls?.destroy(); this.hls = null;
+        this.qcast?.stop(); this.qcast = null;
         if (this.audio) {
             this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load(); this.audio.remove(); this.audio = null;
         }
@@ -42,6 +44,7 @@ export class RadioPlayer {
     setVolume(value) {
         this.volume = Math.max(0, Math.min(1, Number(value) || 0));
         if (this.audio) this.audio.volume = this.volume;
+        this.qcast?.setVolume(this.volume);
     }
     setConsent(value) {
         this.allowed = Boolean(value);
@@ -61,6 +64,8 @@ export class RadioPlayer {
         if (!this.station || !this.allowed) return;
         this.release();
         const generation = this.generation;
+        // A user radio station (Q-Cast) that allows browsers: its signed stream, checked here, where the browser can.
+        if (this.station.qcast && !APP_MODE && canVerify()) { this.startQCast(generation); return; }
         let url;
         try { url = stationURL(this.station, this.config, this.base); }
         catch (e) { this.emit('error', e.message); return; }
@@ -113,6 +118,26 @@ export class RadioPlayer {
                 this.release(); this.emit('ready', 'The browser requires an explicit gesture: press Play.');
             } else if (e.name !== 'AbortError') failed('Playback failed: incompatible stream, format or network.');
         }
+    }
+    startQCast(generation) {
+        const STATES = { connecting: 'buffering', buffering: 'buffering', playing: 'playing', ended: 'ended', withdrawn: 'ended', error: 'error' };
+        let nowPlaying = '';
+        const engine = new QCastAudio({
+            station: this.station.qcast, volume: this.volume,
+            onState: (state, detail) => {
+                if (this.generation !== generation) return;
+                if (['ended', 'withdrawn', 'error'].includes(state)) this.release();
+                this.emit(STATES[state] || 'error', state === 'playing' && nowPlaying ? `${nowPlaying} · ${detail}` : detail);
+            },
+            onMeta: meta => {
+                if (this.generation !== generation) return;
+                nowPlaying = meta.nowPlaying ? `Now playing: ${meta.nowPlaying}` : '';
+                if (this.state === 'playing') this.emit('playing', [nowPlaying, 'Every second checked against the station\'s signature.'].filter(Boolean).join(' · '));
+            }
+        });
+        this.qcast = engine;
+        this.emit('buffering', 'Connecting to the station\'s relay…');
+        engine.start();
     }
     pause() { this.release(); this.emit('paused', 'Paused; audio connection closed.'); }
     toggle() { return ['playing', 'buffering'].includes(this.state) ? this.pause() : this.start(); }

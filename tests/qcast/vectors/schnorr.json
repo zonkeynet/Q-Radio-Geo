@@ -1,0 +1,282 @@
+[
+  {
+    "valid": true,
+    "note": "signed by this code #0",
+    "signature": "2ed4ab407dcbb56023ff5e1ab0826465fe9f8ffe833f0f8bae5108651ab3a27a558b9c478b04de0aa14f3b91041115e1841fbfa9cbeadb3a8fff6fdd694a826a",
+    "message": "3bb84e3ac4e2343b8c7701a5c67c28d62e1d160c8106b7ed3d43ec67475137a8",
+    "pubkey": "ac03afcef73c2e4223cc748a44b4340ca94418aa4ba636dea78163a036cacd66"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "2ed4ab407dcbb56023ff5e1ab0826465fe9f8ffe833f0f8bae5108651ab3a27a558b9c478b04de0aa14f3b91041115e1841fbfa9cbeadb3a8fff6fdd694a826a",
+    "message": "3ab84e3ac4e2343b8c7701a5c67c28d62e1d160c8106b7ed3d43ec67475137a8",
+    "pubkey": "ac03afcef73c2e4223cc748a44b4340ca94418aa4ba636dea78163a036cacd66"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "2ed4ab407dcbb56023ff5e1ab0826465fe9f8ffe833f0f8bae5108651ab3a27a558b9c478b04de0aa14f3b91041115e1841fbfa9cbeadb3a8fff6fdd694a826a",
+    "message": "3bb84e3ac4e2343b8c7701a5c67c28d62e1d160c8106b7ed3d43ec67475137a8",
+    "pubkey": "d4360b41ffecfbb37178d25ad6697f69774683c36686e5aefab977924973dee8"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "2ed4ab407dcbb56023ff5e1ab0826465fe9f8ffe833f0f8bae5108651ab3a27a558b9c478b04de0aa14f3b91041115e1841fbfa9cbeadb3a8fff6fdd694a826b",
+    "message": "3bb84e3ac4e2343b8c7701a5c67c28d62e1d160c8106b7ed3d43ec67475137a8",
+    "pubkey": "ac03afcef73c2e4223cc748a44b4340ca94418aa4ba636dea78163a036cacd66"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #1",
+    "signature": "593efb600ddb4c7b40c465637056b54eade22da53b9b33d0672a2993fa35e702b63168420f969fbcae919880d5142750c52fcf5b15b4a955210ca7f38d5fe8e1",
+    "message": "e497be596aecddce4454573a9ec4ccaf3bcf5e0ab46494e360680538a0906b5d",
+    "pubkey": "fcde56824ceafb759ffdcf4d89015e758fc35ee4772ea367ec2549bab42e3ee7"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "593efb600ddb4c7b40c465637056b54eade22da53b9b33d0672a2993fa35e702b63168420f969fbcae919880d5142750c52fcf5b15b4a955210ca7f38d5fe8e1",
+    "message": "e597be596aecddce4454573a9ec4ccaf3bcf5e0ab46494e360680538a0906b5d",
+    "pubkey": "fcde56824ceafb759ffdcf4d89015e758fc35ee4772ea367ec2549bab42e3ee7"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "593efb600ddb4c7b40c465637056b54eade22da53b9b33d0672a2993fa35e702b63168420f969fbcae919880d5142750c52fcf5b15b4a955210ca7f38d5fe8e1",
+    "message": "e497be596aecddce4454573a9ec4ccaf3bcf5e0ab46494e360680538a0906b5d",
+    "pubkey": "2c6bf874a87153e6bd585bad5e78f4443e6297d113763d725dad66eacc7efd71"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "593efb600ddb4c7b40c465637056b54eade22da53b9b33d0672a2993fa35e702b63168420f969fbcae919880d5142750c52fcf5b15b4a955210ca7f38d5fe8e0",
+    "message": "e497be596aecddce4454573a9ec4ccaf3bcf5e0ab46494e360680538a0906b5d",
+    "pubkey": "fcde56824ceafb759ffdcf4d89015e758fc35ee4772ea367ec2549bab42e3ee7"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #2",
+    "signature": "dde2e5776078bd6bc7f200bcdc1a1e0292d5f9356c3a1e5cc10696076cbcf15b52e39dd15a1c8a1de1c496d885c3d33b8652383fcd680645c6ed4568e262f058",
+    "message": "bb59cbd4ac3b25917216c8d4a9d52edac66fdbfa0b4955e6d902a9e877c1716b",
+    "pubkey": "92783b232d126c77132bce9bfbed7499ba67583c42fa64856250095595b822ec"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "dde2e5776078bd6bc7f200bcdc1a1e0292d5f9356c3a1e5cc10696076cbcf15b52e39dd15a1c8a1de1c496d885c3d33b8652383fcd680645c6ed4568e262f058",
+    "message": "ba59cbd4ac3b25917216c8d4a9d52edac66fdbfa0b4955e6d902a9e877c1716b",
+    "pubkey": "92783b232d126c77132bce9bfbed7499ba67583c42fa64856250095595b822ec"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "dde2e5776078bd6bc7f200bcdc1a1e0292d5f9356c3a1e5cc10696076cbcf15b52e39dd15a1c8a1de1c496d885c3d33b8652383fcd680645c6ed4568e262f058",
+    "message": "bb59cbd4ac3b25917216c8d4a9d52edac66fdbfa0b4955e6d902a9e877c1716b",
+    "pubkey": "6b3660e63f12ed07b3cd240cc06628b8c5565bdb12ed886f7b1faaa06632e755"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "dde2e5776078bd6bc7f200bcdc1a1e0292d5f9356c3a1e5cc10696076cbcf15b52e39dd15a1c8a1de1c496d885c3d33b8652383fcd680645c6ed4568e262f059",
+    "message": "bb59cbd4ac3b25917216c8d4a9d52edac66fdbfa0b4955e6d902a9e877c1716b",
+    "pubkey": "92783b232d126c77132bce9bfbed7499ba67583c42fa64856250095595b822ec"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #3",
+    "signature": "c3459c4858ef4ff05d8736c07df5c7a341db6dd3bd9611bdf2ccabc9fa9b7acf0bbb4d8fff09a979845c8bf4ddf0f7d9609aec76e4bf01502c100cf8fe97e9e4",
+    "message": "8136bd64b18db95a36cf6f248fa87cfa0af04f1264f5d9ff16f95e1885d54e34",
+    "pubkey": "6179edc1430a7ee3811ba68a2413864cc9bebcd316b153d478242636905b3d29"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "c3459c4858ef4ff05d8736c07df5c7a341db6dd3bd9611bdf2ccabc9fa9b7acf0bbb4d8fff09a979845c8bf4ddf0f7d9609aec76e4bf01502c100cf8fe97e9e4",
+    "message": "8036bd64b18db95a36cf6f248fa87cfa0af04f1264f5d9ff16f95e1885d54e34",
+    "pubkey": "6179edc1430a7ee3811ba68a2413864cc9bebcd316b153d478242636905b3d29"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "c3459c4858ef4ff05d8736c07df5c7a341db6dd3bd9611bdf2ccabc9fa9b7acf0bbb4d8fff09a979845c8bf4ddf0f7d9609aec76e4bf01502c100cf8fe97e9e4",
+    "message": "8136bd64b18db95a36cf6f248fa87cfa0af04f1264f5d9ff16f95e1885d54e34",
+    "pubkey": "4f1cbfc53755a1582e8077a2f44c335470822c425871e64dac597b557936cefa"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "c3459c4858ef4ff05d8736c07df5c7a341db6dd3bd9611bdf2ccabc9fa9b7acf0bbb4d8fff09a979845c8bf4ddf0f7d9609aec76e4bf01502c100cf8fe97e9e5",
+    "message": "8136bd64b18db95a36cf6f248fa87cfa0af04f1264f5d9ff16f95e1885d54e34",
+    "pubkey": "6179edc1430a7ee3811ba68a2413864cc9bebcd316b153d478242636905b3d29"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #4",
+    "signature": "cdd3f376039ad377b4d009e6e5bbf9b4b0574707db5b34f4492bb7b22fba3da989d05e445236bc6c890c132fe8549f16217029c875ff404384695f34b213e84c",
+    "message": "04c0849f76b08d7f0edbeaa9062bc864119f76bbd410af5bcca9b05e870cc322",
+    "pubkey": "e0bf80c9b4380b74173a107a086acd786ee84f087bb5c422a56f58486661c73e"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "cdd3f376039ad377b4d009e6e5bbf9b4b0574707db5b34f4492bb7b22fba3da989d05e445236bc6c890c132fe8549f16217029c875ff404384695f34b213e84c",
+    "message": "05c0849f76b08d7f0edbeaa9062bc864119f76bbd410af5bcca9b05e870cc322",
+    "pubkey": "e0bf80c9b4380b74173a107a086acd786ee84f087bb5c422a56f58486661c73e"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "cdd3f376039ad377b4d009e6e5bbf9b4b0574707db5b34f4492bb7b22fba3da989d05e445236bc6c890c132fe8549f16217029c875ff404384695f34b213e84c",
+    "message": "04c0849f76b08d7f0edbeaa9062bc864119f76bbd410af5bcca9b05e870cc322",
+    "pubkey": "6af4f78f2489805fb51668cd11b591b57c57e139a24e10ef670673d8b2c3d0b2"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "cdd3f376039ad377b4d009e6e5bbf9b4b0574707db5b34f4492bb7b22fba3da989d05e445236bc6c890c132fe8549f16217029c875ff404384695f34b213e84d",
+    "message": "04c0849f76b08d7f0edbeaa9062bc864119f76bbd410af5bcca9b05e870cc322",
+    "pubkey": "e0bf80c9b4380b74173a107a086acd786ee84f087bb5c422a56f58486661c73e"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #5",
+    "signature": "72f3f467b0f64cf7e3eaa041dab527ce08267fb991b50bb427fd39664822b69a23e51e1c530bf91b296227fb25a3f9f000c6497cc51eaa191429613423cc4fec",
+    "message": "a98f23b2a59b92a860a32340111d02fee0a480ca0cd9704ef245da1d865ecbbf",
+    "pubkey": "cd7cb7364afd3d6ac9ceeeab5bde98f6961bafb511faf0b9c5896f552b6870de"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "72f3f467b0f64cf7e3eaa041dab527ce08267fb991b50bb427fd39664822b69a23e51e1c530bf91b296227fb25a3f9f000c6497cc51eaa191429613423cc4fec",
+    "message": "a88f23b2a59b92a860a32340111d02fee0a480ca0cd9704ef245da1d865ecbbf",
+    "pubkey": "cd7cb7364afd3d6ac9ceeeab5bde98f6961bafb511faf0b9c5896f552b6870de"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "72f3f467b0f64cf7e3eaa041dab527ce08267fb991b50bb427fd39664822b69a23e51e1c530bf91b296227fb25a3f9f000c6497cc51eaa191429613423cc4fec",
+    "message": "a98f23b2a59b92a860a32340111d02fee0a480ca0cd9704ef245da1d865ecbbf",
+    "pubkey": "5515fbf8741cedf09d77319fbf8440ac0a2cfc2b8af2f0a06283ef16b2643550"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "72f3f467b0f64cf7e3eaa041dab527ce08267fb991b50bb427fd39664822b69a23e51e1c530bf91b296227fb25a3f9f000c6497cc51eaa191429613423cc4fed",
+    "message": "a98f23b2a59b92a860a32340111d02fee0a480ca0cd9704ef245da1d865ecbbf",
+    "pubkey": "cd7cb7364afd3d6ac9ceeeab5bde98f6961bafb511faf0b9c5896f552b6870de"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #6",
+    "signature": "bdd957c30d679641fcd0392553cbe74cfc8f4d419f160bcb85e44795068c839c69f11640eb946eda7b02f4b99b2e546db73d7c32202e6cf727ddf785884ebfd0",
+    "message": "1457c83146144b0e93a84942ce046f7262b5b251e6da98f1ef5d3b4ee3c13d97",
+    "pubkey": "e3f1cd343fc3e59aa7593ff83845fd7e0f356f7ef9850cb22fcf2264370cebf0"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "bdd957c30d679641fcd0392553cbe74cfc8f4d419f160bcb85e44795068c839c69f11640eb946eda7b02f4b99b2e546db73d7c32202e6cf727ddf785884ebfd0",
+    "message": "1557c83146144b0e93a84942ce046f7262b5b251e6da98f1ef5d3b4ee3c13d97",
+    "pubkey": "e3f1cd343fc3e59aa7593ff83845fd7e0f356f7ef9850cb22fcf2264370cebf0"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "bdd957c30d679641fcd0392553cbe74cfc8f4d419f160bcb85e44795068c839c69f11640eb946eda7b02f4b99b2e546db73d7c32202e6cf727ddf785884ebfd0",
+    "message": "1457c83146144b0e93a84942ce046f7262b5b251e6da98f1ef5d3b4ee3c13d97",
+    "pubkey": "a6e8fb7a864518a770b4021fa8817114304dd6782866215133fafd16891f2e58"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "bdd957c30d679641fcd0392553cbe74cfc8f4d419f160bcb85e44795068c839c69f11640eb946eda7b02f4b99b2e546db73d7c32202e6cf727ddf785884ebfd1",
+    "message": "1457c83146144b0e93a84942ce046f7262b5b251e6da98f1ef5d3b4ee3c13d97",
+    "pubkey": "e3f1cd343fc3e59aa7593ff83845fd7e0f356f7ef9850cb22fcf2264370cebf0"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #7",
+    "signature": "e2637a03542765601e98c6baa259e4bd444897a8cb95e11ca0a50ac1dabe9b784e0493de7799aa8d74b935870e25f87d6f28c8a375eef730cdd535513fe3ac25",
+    "message": "d03119d4ae3b84213ae30f06446856f7d83990ee0ae732d525bd7ca971456a14",
+    "pubkey": "b7248f4f2e0a98d16e68fb33ba57fec14707006f803614934f4464571af95e3d"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "e2637a03542765601e98c6baa259e4bd444897a8cb95e11ca0a50ac1dabe9b784e0493de7799aa8d74b935870e25f87d6f28c8a375eef730cdd535513fe3ac25",
+    "message": "d13119d4ae3b84213ae30f06446856f7d83990ee0ae732d525bd7ca971456a14",
+    "pubkey": "b7248f4f2e0a98d16e68fb33ba57fec14707006f803614934f4464571af95e3d"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "e2637a03542765601e98c6baa259e4bd444897a8cb95e11ca0a50ac1dabe9b784e0493de7799aa8d74b935870e25f87d6f28c8a375eef730cdd535513fe3ac25",
+    "message": "d03119d4ae3b84213ae30f06446856f7d83990ee0ae732d525bd7ca971456a14",
+    "pubkey": "a06208990022ed268cc4e221d416595fcd9309237cecd58efe9a68a4fe73d2d5"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "e2637a03542765601e98c6baa259e4bd444897a8cb95e11ca0a50ac1dabe9b784e0493de7799aa8d74b935870e25f87d6f28c8a375eef730cdd535513fe3ac24",
+    "message": "d03119d4ae3b84213ae30f06446856f7d83990ee0ae732d525bd7ca971456a14",
+    "pubkey": "b7248f4f2e0a98d16e68fb33ba57fec14707006f803614934f4464571af95e3d"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #8",
+    "signature": "e387422f8b07ad978b061b6842fefdb14a672bc3f5ea663a5d92db3cfeee3234c35cb62c7cc45e2c2cde77d67a7d30d8e496bbb46fd3367251655575f61166b4",
+    "message": "5fe601aa921e67f0906af71e954b601ad268be00b6f61e55f455f299446b53b6",
+    "pubkey": "2e0e7c9f5382962baea755b896696432676c20ec1e7ef1480c0b70e8c1c57893"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "e387422f8b07ad978b061b6842fefdb14a672bc3f5ea663a5d92db3cfeee3234c35cb62c7cc45e2c2cde77d67a7d30d8e496bbb46fd3367251655575f61166b4",
+    "message": "5ee601aa921e67f0906af71e954b601ad268be00b6f61e55f455f299446b53b6",
+    "pubkey": "2e0e7c9f5382962baea755b896696432676c20ec1e7ef1480c0b70e8c1c57893"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "e387422f8b07ad978b061b6842fefdb14a672bc3f5ea663a5d92db3cfeee3234c35cb62c7cc45e2c2cde77d67a7d30d8e496bbb46fd3367251655575f61166b4",
+    "message": "5fe601aa921e67f0906af71e954b601ad268be00b6f61e55f455f299446b53b6",
+    "pubkey": "5a5ea354cf34ed722d826f1d8d130be4def4ffa87679016d3fe69c9ecb7637bf"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "e387422f8b07ad978b061b6842fefdb14a672bc3f5ea663a5d92db3cfeee3234c35cb62c7cc45e2c2cde77d67a7d30d8e496bbb46fd3367251655575f61166b5",
+    "message": "5fe601aa921e67f0906af71e954b601ad268be00b6f61e55f455f299446b53b6",
+    "pubkey": "2e0e7c9f5382962baea755b896696432676c20ec1e7ef1480c0b70e8c1c57893"
+  },
+  {
+    "valid": true,
+    "note": "signed by this code #9",
+    "signature": "4b486d68788eb0f543626126811af9217142767eb95b5260523a36e3fa675e7e67fe105da31311e57cbb4cc8c73d36b0e98df10afe1b3187ba88ddcb997b6d88",
+    "message": "8085cc13f72d13c23bf5850b83ac1dafedce8a719a4616370a586db71b14e196",
+    "pubkey": "4b14c9e39780da8334baa71612dafcb6da3d14d2a03987e7f78f87b61c8f3e56"
+  },
+  {
+    "valid": false,
+    "note": "other message",
+    "signature": "4b486d68788eb0f543626126811af9217142767eb95b5260523a36e3fa675e7e67fe105da31311e57cbb4cc8c73d36b0e98df10afe1b3187ba88ddcb997b6d88",
+    "message": "8185cc13f72d13c23bf5850b83ac1dafedce8a719a4616370a586db71b14e196",
+    "pubkey": "4b14c9e39780da8334baa71612dafcb6da3d14d2a03987e7f78f87b61c8f3e56"
+  },
+  {
+    "valid": false,
+    "note": "other key",
+    "signature": "4b486d68788eb0f543626126811af9217142767eb95b5260523a36e3fa675e7e67fe105da31311e57cbb4cc8c73d36b0e98df10afe1b3187ba88ddcb997b6d88",
+    "message": "8085cc13f72d13c23bf5850b83ac1dafedce8a719a4616370a586db71b14e196",
+    "pubkey": "fa919b4440c3578d933711693e37f08c1c12fb184fb31e4f1b13716e7b2f804e"
+  },
+  {
+    "valid": false,
+    "note": "s changed",
+    "signature": "4b486d68788eb0f543626126811af9217142767eb95b5260523a36e3fa675e7e67fe105da31311e57cbb4cc8c73d36b0e98df10afe1b3187ba88ddcb997b6d89",
+    "message": "8085cc13f72d13c23bf5850b83ac1dafedce8a719a4616370a586db71b14e196",
+    "pubkey": "4b14c9e39780da8334baa71612dafcb6da3d14d2a03987e7f78f87b61c8f3e56"
+  }
+]
