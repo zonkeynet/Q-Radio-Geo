@@ -20,8 +20,13 @@ const tilesReachable = tiles => {
 const DOT_ALTITUDE = .004;
 const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#ffffff';
 
-/** onSelect(item) receives an item of the current layer. */
-export function createGlobe(container, onSelect, onManualInput, { lite = false } = {}) {
+const LONG_PRESS_MS = 450;
+
+/**
+ * onSelect(item) receives an item of the current layer. onPick({ lat, lng }), if given, receives a point chosen by a
+ * long press on the globe, when the finger lifts (so the page acts within that gesture).
+ */
+export function createGlobe(container, onSelect, onManualInput, { lite = false, onPick = null } = {}) {
     if (typeof globalThis.Globe !== 'function') throw new Error('3D library not loaded');
     // layer: { items, groupOf(item), sizeOf(item) in CSS px, describe(item) for the tooltip, colors: { group: '--css-var' },
     //         pulses?: [{ lat, lng, color: '--css-var' }] rings that keep pulsing (fresh events) }
@@ -106,15 +111,21 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         world.particlesColor(s => colors[s.group] || '#ffffff');
         drawRings();
     }
-    // The layer's pulses (slow, faint) plus the selected point's ring (fast, bright); colours follow the theme.
-    let selected = null;
+    // The layer's pulses (slow, faint), the selected point's ring (fast, bright) and a picked point's ring, which
+    // stays when the layer changes; colours follow the theme.
+    let selected = null, picked = null;
     function drawRings() {
         const pulses = (layer.pulses || []).map(p => ({ lat: p.lat, lng: p.lng, radius: 1.4, speed: .9, period: 1900, alpha: .75, rgb: rgb(cssColor(p.color)) }));
-        world.ringsData(selected ? [...pulses, { ...selected, speed: 2, period: 850, alpha: 1, rgb: rgb(cssColor('--accent')) }] : pulses);
+        const accent = rgb(cssColor('--accent'));
+        world.ringsData([...pulses,
+            ...(selected ? [{ ...selected, speed: 2, period: 850, alpha: 1, rgb: accent }] : []),
+            ...(picked ? [{ ...picked, radius: 2.4, speed: 1.6, period: 700, alpha: 1, rgb: accent }] : [])]);
         wake();
     }
     /** Rings the chosen point; radius in degrees. */
     function select(lat, lng, radius) { selected = { lat, lng, radius }; drawRings(); }
+    /** Rings a point picked for the app (it stays when the layer changes). */
+    function markPick(lat, lng) { picked = { lat, lng }; drawRings(); }
     function setLayer(next) {
         layer = next;
         positions = layer.items.map(p => world.getCoords(p.lat, p.lng, 0));
@@ -153,16 +164,31 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         }
         return best;
     }
+    let pressTimer = null;
     function pointerDown(e) {
         wake();
         pointers.add(e.pointerId);
         if (pointers.size === 1) down = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
         else if (down) down.moved = true;
         tooltip.hidden = true;
+        clearTimeout(pressTimer);
+        // A long press without moving picks the point under the finger (sky does not count).
+        if (onPick && pointers.size === 1 && e.target.closest?.('#globeViz')) {
+            const id = e.pointerId, x = e.clientX, y = e.clientY;
+            pressTimer = setTimeout(() => {
+                if (!down || down.id !== id || down.moved) return;
+                const rect = renderer.domElement.getBoundingClientRect();
+                const point = world.toGlobeCoords(x - rect.left, y - rect.top);
+                if (!point) return;
+                down.pick = { lat: point.lat, lng: point.lng };
+                markPick(point.lat, point.lng);
+                try { navigator.vibrate?.(15); } catch { /* no vibration */ }
+            }, LONG_PRESS_MS);
+        }
     }
     function pointerMove(e) {
         if (pointers.size) wake();
-        if (down && Math.hypot(e.clientX-down.x, e.clientY-down.y) > 7) down.moved = true;
+        if (down && Math.hypot(e.clientX-down.x, e.clientY-down.y) > 7) { down.moved = true; clearTimeout(pressTimer); }
         if (pointers.size || e.pointerType !== 'mouse' || navigation.getSnapshot().mode !== 'idle' || world.controls().autoRotate) { tooltip.hidden = true; return; }
         hoveredEvent = { x: e.clientX, y: e.clientY };
         if (hoverTimer !== null) return;
@@ -179,13 +205,20 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         }, 100);
     }
     function pointerUp(e) {
+        clearTimeout(pressTimer);
+        if (down?.id === e.pointerId && down.pick) {
+            const point = down.pick;
+            pointers.delete(e.pointerId); if (!pointers.size) down = null;
+            onPick?.(point);
+            return;
+        }
         if (down?.id === e.pointerId && !down.moved && pointers.size === 1 && e.target.closest?.('#globeViz')) {
             const place = nearest(e.clientX, e.clientY, e.pointerType === 'touch' ? 22 : 14);
             if (place) onSelect(place);
         }
         pointers.delete(e.pointerId); if (!pointers.size) down = null;
     }
-    function clearPointers() { pointers.clear(); down = null; tooltip.hidden = true; }
+    function clearPointers() { clearTimeout(pressTimer); pointers.clear(); down = null; tooltip.hidden = true; }
     function leave() { tooltip.hidden = true; hoveredEvent = null; }
     const abort = new AbortController(), signal = abort.signal;
     container.addEventListener('pointerdown', pointerDown, { signal, passive: true });
@@ -301,13 +334,13 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false }
         return e - w > 180 ? null : { s: Math.min(...lats), n: Math.max(...lats), w, e };
     }
     return {
-        world, navigation, setTheme, setLayer, viewBounds, select,
+        world, navigation, setTheme, setLayer, viewBounds, select, markPick,
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });
             return { ...navigation.getSnapshot(), points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
         },
-        destroy() { abort.abort(); clearTimeout(hoverTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); },
+        destroy() { abort.abort(); clearTimeout(hoverTimer); clearTimeout(pressTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); },
         /** Frames drawn so far (diagnostics and tests of the idle loop). */
         frames: () => renderer.info?.render?.frame ?? 0
     };

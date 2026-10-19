@@ -3,6 +3,8 @@ import { icon } from './icons.mjs';
 // Versioned, one-way links. The Android viewer validates origin, gesture and every parameter.
 export const APP_MODE = new URLSearchParams(globalThis.location?.search || '').get('app') === '1';
 export const LITE_MODE = new URLSearchParams(globalThis.location?.search || '').get('lite') === '1';
+/** The app asks for a point (Q-Cast: "show a point on the globe"): a long press on the globe picks it. */
+export const PICK_MODE = APP_MODE && new URLSearchParams(globalThis.location?.search || '').get('pick') === '1';
 const MAX_LINK = 12000; // the viewer refuses longer links
 
 function streamUrl(url) {
@@ -69,6 +71,28 @@ export function nativeShareLink({ url, title }) {
     return `qp1ng-media://share?${new URLSearchParams({ v: '1', url: link, title: cleanName(title) })}`;
 }
 
+/** The point the app already had (?at=lat,lng), where picking starts; null without a valid one. */
+export function pickStart(search = globalThis.location?.search || '') {
+    const at = new URLSearchParams(search).get('at');
+    const match = at && /^(-?\d{1,2}(?:\.\d{1,6})?),(-?\d{1,3}(?:\.\d{1,6})?)$/.exec(at);
+    if (!match) return null;
+    const lat = Number(match[1]), lng = Number(match[2]);
+    return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
+/** qp1ng-media://pick?v=1&lat=…&lng=…: a point for the app, four decimals (about 10 m); nothing else is sent. */
+export function pickLink(lat, lng) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new Error('Unsupported point');
+    return `qp1ng-media://pick?${new URLSearchParams({ v: '1', lat: lat.toFixed(4), lng: lng.toFixed(4) })}`;
+}
+
+/** Sent when the finger lifts after a long press: a user gesture, as the app requires. */
+export function requestNativePick(lat, lng) {
+    if (!PICK_MODE || !userGesture()) return false;
+    try { globalThis.location.href = pickLink(lat, lng); } catch { return false; }
+    return true;
+}
+
 export function requestNativeShare(item) {
     if (!APP_MODE || !userGesture()) return false;
     try { globalThis.location.href = nativeShareLink(item); } catch { return false; }
@@ -77,6 +101,7 @@ export function requestNativeShare(item) {
 
 if (APP_MODE && globalThis.document) {
     document.documentElement.classList.add('app-mode');
+    if (PICK_MODE) document.documentElement.classList.add('pick-mode');
     document.documentElement.dataset.nativeMediaVersion = '2';
     if (LITE_MODE) document.documentElement.classList.add('lite-mode');
 }

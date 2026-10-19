@@ -1,5 +1,5 @@
 import { Catalog, loadJSON } from './catalog.mjs';
-import { APP_MODE, LITE_MODE, requestNativeShare } from './native-app.mjs';
+import { APP_MODE, LITE_MODE, PICK_MODE, pickStart, requestNativePick, requestNativeShare } from './native-app.mjs';
 import { icon } from './icons.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
@@ -18,9 +18,9 @@ import { createTv } from './tv.mjs';
 import { createGuide } from './guide.mjs';
 import { QCAST } from './qcast.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
-// Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) only on the web:
-// the app has its own screen for it, and its viewer opens no WebSockets.
-const DIRECTORIES = { news: NEWS, ...(APP_MODE ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
+// Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
+// the app only while it asks for a point for a station (its viewer then reads the Q-Cast relays, nothing else).
+const DIRECTORIES = { news: NEWS, ...(APP_MODE && !PICK_MODE ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
@@ -528,7 +528,8 @@ async function setMode(next) {
     if (liveRun && liveRun.def !== def) stopLive();
     mode = def ? next : 'radio';
     document.documentElement.dataset.mode = mode;
-    try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
+    // Picking a point is a moment: the layer used last time stays the one remembered.
+    if (!PICK_MODE) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
     markMode();
     pendingPick = null;
     playerMini = null; applyPlayerSize();
@@ -541,7 +542,7 @@ async function setMode(next) {
     if (!def) renderDirChips();
     liveNoteOpen = false;
     renderTabs(); updateStats();
-    if (def) { renderDirSidebar(); explorer.use(def, state().items, state().values); explorer.open(); }
+    if (def) { renderDirSidebar(); explorer.use(def, state().items, state().values); if (!PICK_MODE) explorer.open(); }
     else $('countryDrawer').hidden = true;
     renderLive();
     globe?.setLayer(def ? dirLayer() : radioLayer());
@@ -856,7 +857,12 @@ async function start() {
         // The search index is built in its worker while the globe is drawn: early searches simply queue behind it.
         catalog.initializeSearch();
         try {
-            globe = createGlobe($('globeViz'), item => mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false), { lite: LITE_MODE });
+            // Choosing a point for the app: tapping a station opens nothing and plays nothing; only a long press counts.
+            globe = createGlobe($('globeViz'), item => PICK_MODE ? null : mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false),
+                { lite: LITE_MODE, onPick: PICK_MODE ? point => requestNativePick(point.lat, point.lng) : null });
+            // Choosing a point for the app: start where the station already is, ringed.
+            const start = PICK_MODE && pickStart();
+            if (start) { globe.markPick(start.lat, start.lng); globe.world.pointOfView({ ...start, altitude: 1.4 }, 0); }
             globe.setLayer(radioLayer());
             setTheme(theme.id);
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
@@ -879,7 +885,9 @@ async function start() {
         let savedMode = null;
         try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
         const link = readLink(); // a shared link wins over the layer used last time
-        if (link) await applyLink(link);
+        // Picking a point for a station: the user radio layer, where the station will appear.
+        if (PICK_MODE) await setMode('qcast');
+        else if (link) await applyLink(link);
         else if (DIRECTORIES[savedMode]) await setMode(savedMode);
         linked = true;
         window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
