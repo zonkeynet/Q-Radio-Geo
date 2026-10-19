@@ -2,7 +2,7 @@
 // Stations that allow browsers are played here with every second checked against the station's signature (relays'
 // HTTPS addresses only); Tor-only stations are listed with how to reach them, and this page never contacts them.
 import { discover, RELAYS } from './qcast-nostr.mjs';
-import { geohashCenter, webEndpoints, isOnion } from './qcast-protocol.mjs';
+import { geohashCenter, webEndpoints, isOnion, isListed } from './qcast-protocol.mjs';
 import { canVerify } from './qcast-player.mjs';
 
 const ACCESS = { web: ['In this browser', '--accent', 'WEB'], tor: ['Tor only', '--accent-2', 'TOR'] };
@@ -69,6 +69,11 @@ export const QCAST = {
             if (!answered) throw new Error('no Nostr relay answered');
             const items = stations.map(toItem);
             return { items, note: answered < asked ? `${answered} of ${asked} relays answered` : '' };
+        },
+        /** When no relay answers, the stations shown still go once their announcement expires or goes stale. */
+        prune: items => {
+            const now = Math.floor(Date.now() / 1000);
+            return items.filter(it => isListed(it, now));
         }
     },
     links: [['Q-Cast', [

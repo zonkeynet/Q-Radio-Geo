@@ -71,6 +71,17 @@ test('announcements parse like the app parses them', async () => {
     assert.ok(Math.abs(c.lat - 45.46) < 0.2 && Math.abs(c.lng - 9.14) < 0.3);
 });
 
+test('stations shown go once their announcement expires or goes stale, even when no relay answers', async () => {
+    const { QCAST: layer } = await import('../../js/qcast.mjs');
+    const web = await parseAnnouncement(vector('announcements.json').web);
+    const now = Math.floor(Date.now() / 1000);
+    const live = { ...web, createdAt: now - 60, expiration: now + 540 };
+    const expired = { ...web, id: 'expired', createdAt: now - 60, expiration: now - 1 };
+    const stale = { ...web, id: 'stale', createdAt: now - 16 * 60, expiration: null };
+    const ended = { ...web, id: 'ended', status: 'ended', createdAt: now - 60, expiration: now + 3600 };
+    assert.deepEqual(layer.live.prune([live, expired, stale, ended]).map(s => s.id), [live.id]);
+});
+
 test('stream addresses: onions inside Tor, public HTTPS hosts, this session only', () => {
     const s = 'a'.repeat(64), d = 'b'.repeat(32), path = `/v1/s/${s}/${d}/live.qcs`;
     assert.ok(isStreamUrl(`https://relay.example.org${path}`, s, d));

@@ -406,6 +406,12 @@ async function loadLive(def) {
             st.liveAt = Date.now(); // the next timed refresh tries again
             st.liveFails = (st.liveFails || 0) + 1; st.liveFailedAt = Date.now();
             st.liveStatus = `Not loaded: ${e.message}${liveTabOn(def) ? ' Trying again shortly.' : ''}`;
+            // Items that carry their own end (user radio) go when it passes, even while no fresh data arrives.
+            const kept = def.live.prune ? def.live.prune(st.items) : st.items;
+            if (kept.length !== st.items.length) {
+                st.items = indexItems(def, kept);
+                if (dir() === def) { renderDirSidebar(); explorer.use(def, st.items, st.values); globe?.setLayer(dirLayer()); renderTicker(); updateStats(); }
+            }
         }
     } finally {
         if (liveRun === run) liveRun = null;
