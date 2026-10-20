@@ -4,6 +4,7 @@
 import { discover, fetchCovers, RELAYS } from './qcast-nostr.mjs';
 import { geohashCenter, webEndpoints, isOnion, isListed } from './qcast-protocol.mjs';
 import { canVerify } from './qcast-player.mjs';
+import { QCAST_IN_APP, requestNativeListen } from './native-app.mjs';
 
 const ACCESS = { web: ['In this browser', '--accent', 'WEB'], tor: ['Tor only', '--accent-2', 'TOR'] };
 const accessOf = s => s.web ? 'web' : 'tor';
@@ -17,6 +18,8 @@ function torPage(s) {
     return onion ? `${new URL(onion).origin}/listen/${s.station}/${s.session}` : null;
 }
 function listening(s) {
+    if (QCAST_IN_APP) return s.external ? 'In this app, through Tor, from the station\'s own server: not signed, so not checked'
+        : 'In this app, through Tor, with every second checked against the station\'s signature';
     if (s.external) return 'Here, from the station\'s own server: not signed, so not checked';
     if (!s.web) return 'Through Tor only: in the QP1NG app, or in Tor Browser at the address below';
     return canVerify() ? 'Here, with every second checked against the station\'s signature'
@@ -71,9 +74,13 @@ export const QCAST = {
     shortBadge: s => ACCESS[accessOf(s)][2],
     describe: s => `${s.title}\n${[s.place, onAir(s)].filter(Boolean).join(' · ')}`,
     facts: s => [['On air', onAir(s)], ['Format', `Opus · ${Math.round(s.bitrate / 1000)} kbps · ${s.channels === 2 ? 'stereo' : 'mono'}`],
-        ['Listening', listening(s)], ['Tor Browser', s.web ? null : torPage(s)], ['Station key', `${s.station.slice(0, 8)}…${s.station.slice(-8)}`]],
-    actions: s => [
+        ['Listening', listening(s)], ['Tor Browser', s.web || QCAST_IN_APP ? null : torPage(s)], ['Station key', `${s.station.slice(0, 8)}…${s.station.slice(-8)}`]],
+    // In the app's globe every station is listened to by the app's own player, through Tor.
+    actions: s => QCAST_IN_APP ? [{ label: '▶ LISTEN IN THE APP · TOR', onClick: () => requestNativeListen(s.event) }] : [
         ...(s.web ? [{ label: s.external || !canVerify() ? '▶ LISTEN HERE (NOT CHECKED)' : '▶ LISTEN HERE · CHECKED', onClick: () => QCAST.listen?.(s) }] : []),
+        // Tor-only: the station's own listening page, opened by the user in Tor Browser (other browsers refuse .onion
+        // addresses without looking them up, so nothing leaks from a tap elsewhere).
+        ...(!s.web && torPage(s) ? [{ label: '▶ LISTEN IN TOR BROWSER', href: torPage(s) }] : []),
         { label: 'BROADCAST OR LISTEN WITH QP1NG ↗', href: 'https://qp1ng.com/', secondary: true }
     ],
     note: 'These are people broadcasting from the QP1NG app, through Tor. Some also let ordinary browsers listen through a relay with a web address; the others can only be reached through Tor, and this page never contacts them.',
@@ -84,7 +91,9 @@ export const QCAST = {
     stats: items => `${items.length.toLocaleString('en')} USER STATIONS ON AIR`,
     live: {
         label: 'Refresh now',
-        note: `Read live from public Nostr relays (${RELAYS.map(r => r.replace('wss://', '')).join(', ')}), which see your IP address. Listening here connects to the station's relay, which sees it too. Updates every minute while this layer is open.`,
+        note: QCAST_IN_APP
+            ? `Read through Tor from public Nostr relays (${RELAYS.map(r => r.replace('wss://', '')).join(', ')}). Listening opens the app's own player, also through Tor. Updates every minute while this layer is open.`
+            : `Read live from public Nostr relays (${RELAYS.map(r => r.replace('wss://', '')).join(', ')}), which see your IP address. Listening here connects to the station's relay, which sees it too. Updates every minute while this layer is open.`,
         needsView: false, every: 60000,
         async load(_area, _base, signal) {
             const { stations, answered, asked } = await discover(signal);

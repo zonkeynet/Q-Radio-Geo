@@ -5,6 +5,11 @@ export const APP_MODE = new URLSearchParams(globalThis.location?.search || '').g
 export const LITE_MODE = new URLSearchParams(globalThis.location?.search || '').get('lite') === '1';
 /** The app asks for a point (Q-Cast: "show a point on the globe"): a long press on the globe picks it. */
 export const PICK_MODE = APP_MODE && new URLSearchParams(globalThis.location?.search || '').get('pick') === '1';
+/**
+ * The app shows the user radio layer in its own globe only while Q-Globe goes through Tor (?qcast=1, set by the app):
+ * the relays are then read through Tor, and listening opens the app's own player instead of playing here.
+ */
+export const QCAST_IN_APP = APP_MODE && !PICK_MODE && new URLSearchParams(globalThis.location?.search || '').get('qcast') === '1';
 const MAX_LINK = 12000; // the viewer refuses longer links
 
 function streamUrl(url) {
@@ -90,6 +95,25 @@ export function pickLink(lat, lng) {
 export function requestNativePick(lat, lng) {
     if (!PICK_MODE || !userGesture()) return false;
     try { globalThis.location.href = pickLink(lat, lng); } catch { return false; }
+    return true;
+}
+
+const base64Url = text => btoa(String.fromCharCode(...new TextEncoder().encode(text))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+/**
+ * qp1ng-media://qcast?v=1&e=…: a station's signed announcement (base64url JSON) for the app's player. The app checks
+ * the signature and that the station is on air before listening, through Tor; nothing else is sent.
+ */
+export function qcastLink(event) {
+    const link = `qp1ng-media://qcast?${new URLSearchParams({ v: '1', e: base64Url(JSON.stringify(event)) })}`;
+    if (link.length > MAX_LINK) throw new Error('Announcement too long');
+    return link;
+}
+
+/** A tap on "listen" in the app's globe: the app's player takes over. */
+export function requestNativeListen(event) {
+    if (!QCAST_IN_APP || !userGesture()) return false;
+    try { globalThis.location.href = qcastLink(event); } catch { return false; }
     return true;
 }
 

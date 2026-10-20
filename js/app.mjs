@@ -1,5 +1,5 @@
 import { Catalog, loadJSON } from './catalog.mjs';
-import { APP_MODE, LITE_MODE, PICK_MODE, pickStart, requestNativePick, requestNativeShare } from './native-app.mjs';
+import { APP_MODE, LITE_MODE, PICK_MODE, QCAST_IN_APP, pickStart, requestNativePick, requestNativeShare } from './native-app.mjs';
 import { icon } from './icons.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
@@ -20,7 +20,7 @@ import { QCAST } from './qcast.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
 // the app only while it asks for a point for a station (its viewer then reads the Q-Cast relays, nothing else).
-const DIRECTORIES = { news: NEWS, ...(APP_MODE && !PICK_MODE ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
+const DIRECTORIES = { news: NEWS, ...(APP_MODE && !PICK_MODE && !QCAST_IN_APP ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
