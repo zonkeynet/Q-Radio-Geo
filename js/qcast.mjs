@@ -1,7 +1,7 @@
 // User radio: stations broadcast from the QP1NG app (Q-Cast), found live on public Nostr relays.
 // Stations that allow browsers are played here with every second checked against the station's signature (relays'
 // HTTPS addresses only); Tor-only stations are listed with how to reach them, and this page never contacts them.
-import { discover, RELAYS } from './qcast-nostr.mjs';
+import { discover, fetchCovers, RELAYS } from './qcast-nostr.mjs';
 import { geohashCenter, webEndpoints, isOnion, isListed } from './qcast-protocol.mjs';
 import { canVerify } from './qcast-player.mjs';
 
@@ -22,6 +22,26 @@ function listening(s) {
     return canVerify() ? 'Here, with every second checked against the station\'s signature'
         : 'Here, but this browser cannot check the signatures (no WebCodecs): the relay is trusted';
 }
+// Station images: fetched once each and kept in memory (by hash) for this page; one not found is asked for again
+// at most once a minute. The list never waits long for them: late ones show at the next refresh.
+const COVER_WAIT_MS = 4000, COVER_RETRY_MS = 60000, MAX_COVERS = 200;
+const covers = new Map(), tried = new Map();
+const dataUrl = bytes => `data:image/webp;base64,${btoa(String.fromCharCode(...bytes))}`;
+async function attachCovers(items, signal) {
+    const now = Date.now();
+    const wanted = new Map(items.filter(s => s.imageHash && !covers.has(s.imageHash) && !(now - (tried.get(s.imageHash) ?? -Infinity) < COVER_RETRY_MS))
+        .map(s => [s.station, s.imageHash]));
+    if (wanted.size) {
+        for (const hash of wanted.values()) tried.set(hash, now);
+        const fetching = fetchCovers(wanted, signal).then(found => {
+            for (const [station, bytes] of found) covers.set(wanted.get(station), dataUrl(bytes));
+            while (covers.size > MAX_COVERS) covers.delete(covers.keys().next().value);
+        }).catch(() => {});
+        await Promise.race([fetching, new Promise(resolve => setTimeout(resolve, COVER_WAIT_MS))]);
+    }
+    for (const it of items) it.cover = it.imageHash ? covers.get(it.imageHash) ?? null : null;
+}
+
 const toItem = a => {
     const c = geohashCenter(a.geohash);
     return { ...a, live: true, lat: c?.lat, lng: c?.lng, web: a.external ? Boolean(a.listenUrl) : webEndpoints(a).length > 0 };
@@ -42,6 +62,8 @@ export const QCAST = {
     colorOf: s => ACCESS[accessOf(s)][1],
     sizeOf: () => 7,
     nameOf: s => s.title,
+    /** The station's own image, when it has one (checked, from memory). */
+    imageOf: s => s.cover || null,
     placeOf: s => s.place,
     subOf: s => [s.place, onAir(s)].filter(Boolean).join(' · '),
     snippetOf: s => s.summary,
@@ -68,6 +90,7 @@ export const QCAST = {
             const { stations, answered, asked } = await discover(signal);
             if (!answered) throw new Error('no Nostr relay answered');
             const items = stations.map(toItem);
+            await attachCovers(items, signal);
             return { items, note: answered < asked ? `${answered} of ${asked} relays answered` : '' };
         },
         /** When no relay answers, the stations shown still go once their announcement expires or goes stale. */

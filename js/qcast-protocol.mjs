@@ -8,6 +8,8 @@ export const QCAST = {
     STALE_SECONDS: 15 * 60, FUTURE_SKEW_SECONDS: 5 * 60, DIRECTORY_WINDOW_SECONDS: 30 * 60
 };
 export const TYPE = { HEADER: 1, GROUP: 2, META: 3, END: 4 };
+/** The station image: a NIP-78 event signed by the station, named by its SHA-256 in the announcements. */
+export const COVER = { KIND: 30078, D: 'qcast-cover', MAX_BYTES: 24000, MIN_SIDE: 16, MAX_SIDE: 256 };
 const MAGIC = [0x51, 0x43, 0x53, 0x31]; // "QCS1"
 const DOMAIN = utf8('qcast/v1/record');
 const SIG = 64, MIN_BODY = 4 + 1 + SIG, MAX_BODY = MIN_BODY + QCAST.MAX_PAYLOAD;
@@ -243,8 +245,46 @@ export async function parseAnnouncement(event) {
         id: `${event.pubkey}:${session}`, event, station: event.pubkey, session, createdAt: event.created_at, title,
         summary: cleanText(single('summary') ?? '', QCAST.MAX_SUMMARY_CHARS * 4), status, startsAt: starts, expiration,
         sessionKey, channels, bitrate, webAllowed, external, endpoints, listenUrl, geohash,
-        place: cleanText(single('location') ?? '', 120)
+        place: cleanText(single('location') ?? '', 120),
+        // A malformed image tag costs the station its image, never its place in the list.
+        imageHash: isHex(single('qcast-image'), 64) ? single('qcast-image') : null
     };
+}
+
+/**
+ * Only the plainest lossy WebP, as the app sends it: a RIFF container holding one `VP8 ` key frame of 16 to 256
+ * pixels a side, every length consistent. No lossless, extended, animated, alpha or metadata chunks.
+ */
+export function isSafeCover(bytes) {
+    if (!(bytes instanceof Uint8Array) || bytes.length < 30 || bytes.length > COVER.MAX_BYTES) return false;
+    const ascii = (at, text) => [...text].every((c, i) => bytes[at + i] === c.charCodeAt(0));
+    const le16 = at => bytes[at] | bytes[at + 1] << 8;
+    const le32 = at => (bytes[at] | bytes[at + 1] << 8 | bytes[at + 2] << 16 | bytes[at + 3] << 24) >>> 0;
+    if (!ascii(0, 'RIFF') || !ascii(8, 'WEBP') || !ascii(12, 'VP8 ') || le32(4) !== bytes.length - 8) return false;
+    const chunk = le32(16);
+    if (chunk < 10 || 20 + chunk + (chunk & 1) !== bytes.length) return false;
+    const tag = bytes[20] | bytes[21] << 8 | bytes[22] << 16;
+    if ((tag & 1) !== 0 || ((tag >> 4) & 1) !== 1 || tag >>> 5 > chunk - 10) return false;
+    if (bytes[23] !== 0x9d || bytes[24] !== 0x01 || bytes[25] !== 0x2a) return false;
+    const width = le16(26), height = le16(28);
+    if (width >> 14 || height >> 14) return false;
+    return width >= COVER.MIN_SIDE && width <= COVER.MAX_SIDE && height >= COVER.MIN_SIDE && height <= COVER.MAX_SIDE;
+}
+
+function base64Bytes(text) {
+    if (typeof text !== 'string' || text.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(text)) return null;
+    try { return Uint8Array.from(atob(text), c => c.charCodeAt(0)); } catch { return null; }
+}
+
+/** The image in a station's signed cover event, only if it has exactly the hash its announcement names; else null. */
+export async function parseCover(event, expectedHash) {
+    if (event?.kind !== COVER.KIND || !isHex(expectedHash, 64)) return null;
+    if (!Array.isArray(event.tags) || event.tags.length > 16 || !event.tags.some(t => t?.[0] === 'd' && t[1] === COVER.D)) return null;
+    if (typeof event.content !== 'string' || event.content.length > Math.ceil(COVER.MAX_BYTES / 3) * 4) return null;
+    if (!await verifyEvent(event)) return null;
+    const bytes = base64Bytes(event.content);
+    if (!bytes || !isSafeCover(bytes) || bytesToHex(await sha256(bytes)) !== expectedHash) return null;
+    return bytes;
 }
 
 /** Shown as live: live, not expired, refreshed recently, not dated in the future, and with somewhere to listen. */

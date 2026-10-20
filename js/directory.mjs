@@ -61,7 +61,10 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
         const text = node('span', 'dir-item-text'), snippet = def.snippetOf?.(it);
         text.append(node('span', 'dir-item-name', `${def.featured?.(it) ? '★ ' : ''}${def.nameOf(it)}`), node('span', 'dir-item-sub', def.subOf(it)));
         if (snippet) text.append(node('span', 'dir-item-snippet', snippet));
-        b.append(node('i', 'dir-dot'), text, node('span', 'dir-badge', def.shortBadge?.(it) || ''));
+        // A mode may give its items an image (user radio: the station's own); otherwise the coloured dot.
+        const image = def.imageOf?.(it);
+        const lead = image ? Object.assign(node('img', 'dir-thumb'), { src: image, alt: '', decoding: 'async', loading: 'lazy' }) : node('i', 'dir-dot');
+        b.append(lead, text, node('span', 'dir-badge', def.shortBadge?.(it) || ''));
         b.onclick = () => onPick(it);
         return b;
     }
@@ -71,7 +74,10 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
         const head = node('div', 'dir-card-head');
         head.append(typeBadge(def.badgeOf(it), def.colorOf(it)));
         if (def.featured?.(it)) head.append(node('span', 'dir-star', '★ featured'));
-        box.append(head, node('h3', 'dir-card-title', def.nameOf(it)));
+        box.append(head);
+        const image = def.imageOf?.(it);
+        if (image) box.append(Object.assign(node('img', 'dir-card-image'), { src: image, alt: `Image of ${def.nameOf(it)}`, decoding: 'async' }));
+        box.append(node('h3', 'dir-card-title', def.nameOf(it)));
         if (def.placeOf(it)) box.append(node('p', 'dir-card-place', `📍 ${def.placeOf(it)}`));
         const facts = node('dl', 'dir-facts');
         for (const [k, v] of def.facts(it)) if (v) facts.append(node('dt', '', k), node('dd', '', v));

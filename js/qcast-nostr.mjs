@@ -1,6 +1,6 @@
 // Live Q-Cast stations from public Nostr relays (NIP-53, kind 30311), read straight from the browser over WebSocket.
 // The same relays as the QP1NG app, chosen because they answer through Tor too. Read only: this page never publishes.
-import { QCAST, parseAnnouncement, selectStations } from './qcast-protocol.mjs';
+import { QCAST, COVER, parseAnnouncement, parseCover, selectStations } from './qcast-protocol.mjs';
 
 export const RELAYS = ['wss://relay.damus.io', 'wss://relay.primal.net', 'wss://relay.snort.social'];
 const READ_TIMEOUT_MS = 15000;
@@ -39,12 +39,8 @@ function readRelay(url, filter, signal, maxEvents) {
     });
 }
 
-/**
- * The stations on air now: every event's signature is checked, and the newest state of each session wins, so an
- * "ended" or expired announcement on one relay hides an older "live" copy on another.
- */
-export async function discover(signal, nowSec = Math.floor(Date.now() / 1000)) {
-    const filter = { kinds: [QCAST.KIND], '#t': [QCAST.TOPIC], since: nowSec - QCAST.DIRECTORY_WINDOW_SECONDS, limit: 200 };
+/** Every relay at once; once one has answered, the others get a little more, and a silent one never holds the rest. */
+async function gather(filter, signal, maxEvents) {
     const local = new AbortController();
     const stop = () => local.abort();
     signal?.addEventListener('abort', stop);
@@ -52,7 +48,7 @@ export async function discover(signal, nowSec = Math.floor(Date.now() / 1000)) {
     await new Promise(resolve => {
         let pending = RELAYS.length, grace = null;
         for (const url of RELAYS) {
-            readRelay(url, filter, local.signal, 200).then(result => {
+            readRelay(url, filter, local.signal, maxEvents).then(result => {
                 results.push(result);
                 if (result.ok && !grace) grace = setTimeout(() => { local.abort(); resolve(); }, LATE_RELAY_GRACE_MS);
                 if (--pending === 0) { clearTimeout(grace); resolve(); }
@@ -61,6 +57,16 @@ export async function discover(signal, nowSec = Math.floor(Date.now() / 1000)) {
     });
     signal?.removeEventListener('abort', stop);
     if (signal?.aborted) throw new DOMException('Replaced by a newer request', 'AbortError');
+    return results;
+}
+
+/**
+ * The stations on air now: every event's signature is checked, and the newest state of each session wins, so an
+ * "ended" or expired announcement on one relay hides an older "live" copy on another.
+ */
+export async function discover(signal, nowSec = Math.floor(Date.now() / 1000)) {
+    const filter = { kinds: [QCAST.KIND], '#t': [QCAST.TOPIC], since: nowSec - QCAST.DIRECTORY_WINDOW_SECONDS, limit: 200 };
+    const results = await gather(filter, signal, 200);
     const seen = new Set(), parsed = [];
     for (const event of results.flatMap(r => r.events)) {
         if (!event || seen.has(event.id)) continue;
@@ -69,4 +75,21 @@ export async function discover(signal, nowSec = Math.floor(Date.now() / 1000)) {
         if (announcement) parsed.push(announcement);
     }
     return { stations: selectStations(parsed, nowSec), answered: results.filter(r => r.ok).length, asked: RELAYS.length };
+}
+
+/**
+ * Station images named by announcements ([wanted]: station key to image hash), in one read: each comes back only if
+ * it is that station's signed image with exactly that hash, in the plain form the app sends.
+ */
+export async function fetchCovers(wanted, signal) {
+    const found = new Map();
+    if (!wanted.size) return found;
+    const limit = Math.min(wanted.size * 2, 100);
+    const results = await gather({ kinds: [COVER.KIND], authors: [...wanted.keys()], '#d': [COVER.D], limit }, signal, limit);
+    for (const event of results.flatMap(r => r.events)) {
+        if (!event || found.has(event.pubkey) || !wanted.has(event.pubkey)) continue;
+        const bytes = await parseCover(event, wanted.get(event.pubkey));
+        if (bytes) found.set(event.pubkey, bytes);
+    }
+    return found;
 }

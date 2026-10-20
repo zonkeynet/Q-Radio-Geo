@@ -506,6 +506,10 @@ body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-
 .country-drawer.wide .dir-item-snippet { -webkit-line-clamp: 2; }
 .country-drawer.wide .dir-item-name { font-size: 12.5px; }
 .dir-item.fresh .dir-dot { animation: tv-pulse 1.6s ease-in-out infinite; }
+.dir-thumb { flex-shrink: 0; width: 40px; height: 40px; border-radius: 9px; object-fit: cover; background: rgba(255, 255, 255, 0.04);
+    border: 1px solid color-mix(in srgb, var(--type-color) 45%, transparent); }
+.dir-card-image { display: block; width: 96px; height: 96px; margin: 8px 0 2px; border-radius: 14px; object-fit: cover;
+    border: 1px solid color-mix(in srgb, var(--type-color) 45%, transparent); }
 .list-top { position: absolute; right: 14px; bottom: 14px; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-accent);
     background: var(--panel-solid); color: var(--accent); font-size: 15px; box-shadow: var(--shadow); }
 .list-top:hover { border-color: var(--accent); }
