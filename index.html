@@ -9,6 +9,7 @@
 <title>Q-P1NG Globe · Global Spectrum &amp; Tactical Awareness</title>
 <meta name="application-name" content="Q-P1NG Globe">
 <link rel="canonical" href="https://globe.qp1ng.com/">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <!-- Link previews: Open Graph (Facebook, LinkedIn, Telegram, Signal, WhatsApp, Discord) and X cards. Absolute URLs, so
      they also work for links to the IPFS mirrors. The image is a 1200 × 630 JPEG under 300 KB, which WhatsApp needs. -->
 <meta property="og:type" content="website">
@@ -28,6 +29,22 @@
 <meta name="twitter:description" content="Global spectrum &amp; tactical awareness on a live 3D globe: news, radio, SDR, Wi-Fi, surveillance and infrastructure. No account, no ads, no trackers.">
 <meta name="twitter:image" content="https://globe.qp1ng.com/assets/og.jpg">
 <meta name="twitter:image:alt" content="Q-P1NG Globe: a glowing 3D Earth with radio waves, satellites and signal icons, and the masked Q-P1NG carrier pigeon">
+<!-- Search engines: what the globe is and who publishes it (a JSON data block, not a script: the policy above still applies). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Q-P1NG Globe",
+  "url": "https://globe.qp1ng.com/",
+  "description": "Global spectrum and tactical awareness on a live 3D globe: news, radio, SDR, Wi-Fi, surveillance and infrastructure. No account, no ads, no trackers.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Any (web browser)",
+  "image": "https://globe.qp1ng.com/assets/og.jpg",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+  "isPartOf": { "@type": "WebSite", "name": "Quantum P1NG", "url": "https://www.qp1ng.com/" },
+  "publisher": { "@type": "Organization", "name": "ZonkeyNet", "url": "https://www.qp1ng.com/" }
+}
+</script>
 <!-- Installable as an app -->
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
@@ -35,6 +52,8 @@
 <link rel="stylesheet" href="./assets/app.css">
 <link rel="stylesheet" href="./assets/native-app.css">
 <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml">
+<!-- PNG fallback for browsers without SVG favicons. -->
+<link rel="icon" href="./assets/icons/icon-192.png" type="image/png" sizes="192x192">
 <!-- globe.gl 2.46.2 (MIT), bundled with the site so it also runs from mirrors; integrity-checked. -->
 <script defer src="./vendor/globe.gl-2.46.2.min.js" integrity="sha384-1uolMBZ25k3zJcNwCLEv49+L+m2dZudqAzsoSAJfQTzDCSBxJzrMuZ2dkp/5JKiT" crossorigin="anonymous"></script>
 <script defer src="./js/navigation.js"></script>
