@@ -70,7 +70,8 @@ const server = await startServer({ root: v1 });
 const browser = await chromium.launch({ headless: true, args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'],
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined) });
 const context = await browser.newContext({ viewport: { width: 412, height: 860 } });
-await context.route(url => !url.href.startsWith(server.origin), route => route.abort());
+// Third parties are unreachable through the resolver rules above; no request routing here, since Playwright's routing
+// turns the HTTP cache off, which the worker's install reads.
 const errors = [];
 const watch = page => { page.on('pageerror', e => errors.push(e.message)); return page; };
 let page = watch(await context.newPage());
@@ -126,7 +127,10 @@ try {
     // Data kept on first use, checked against the manifest.
     assert.deepEqual(JSON.parse((await get('data/sw-test.json')).text), { v: 1 });
     await get('data/sw-removed.json');
-    for (const path of ['data/sw-test.json', 'data/sw-removed.json', 'data/stations.json', 'data/places.json'])
+    // Start-up data the first visit loaded is kept at install (from the browser's cache); the rest when first used.
+    for (const path of ['data/stations.json', 'data/places.json'])
+        assert.ok(await cached(`qglobe-shell-${versions.v1}`, path), `${path} kept at install`);
+    for (const path of ['data/sw-test.json', 'data/sw-removed.json'])
         await page.waitForFunction(async path => Boolean(await caches.match(new URL(path, location.href).href, { cacheName: 'qglobe-data' })), path, { timeout: 15000 });
     mark = server.state.log.length;
     await get('data/sw-test.json');
@@ -135,10 +139,12 @@ try {
 
     // Pass-through: downloads, Range, POST, queries and fresh requests always reach the network and are not kept.
     mark = server.state.log.length;
-    await get('db/sample.sqlite.gz'); await get('db/sample.sqlite.gz');
-    await get('data/sw-test.json', { headers: { Range: 'bytes=0-3' } });
+    // no-store: without the worker these reach the server every time, not the browser's cache (the worker itself
+    // ignores a request's cache mode, so a request it answered would not reach the server either).
+    await get('db/sample.sqlite.gz', { cache: 'no-store' }); await get('db/sample.sqlite.gz', { cache: 'no-store' });
+    await get('data/sw-test.json', { headers: { Range: 'bytes=0-3' }, cache: 'no-store' });
     await get('data/sw-test.json', { method: 'POST', body: 'x' });
-    await get('data/sw-test.json?x=1');
+    await get('data/sw-test.json?x=1', { cache: 'no-store' });
     const passed = logSince(mark).map(r => `${r.method} ${r.path}${r.range ? ' range' : ''}`);
     assert.deepEqual(passed, ['GET /db/sample.sqlite.gz', 'GET /db/sample.sqlite.gz', 'GET /data/sw-test.json range', 'POST /data/sw-test.json', 'GET /data/sw-test.json?x=1']);
     assert.equal(await cached('qglobe-data', 'db/sample.sqlite.gz'), false);
@@ -170,7 +176,7 @@ try {
     s = await until(x => x.version === versions.v2 && x.morse === 2, 'v2 page');
     assert.deepEqual(s.caches.filter(k => k.startsWith('qglobe-shell-')), [`qglobe-shell-${versions.v2}`]);
     assert.deepEqual(JSON.parse((await get('data/sw-test.json')).text), { v: 2 });
-    assert.equal((await get('data/sw-removed.json')).status, 404);
+    assert.equal((await get('data/sw-removed.json', { cache: 'no-store' })).status, 404, 'not in v2: the worker passes it to the server');
     assert.equal(await cached('qglobe-data', 'data/sw-removed.json'), false, 'the removed file left the cache');
     ok('v1 -> v2: changed module and data served new, removed file gone, v1 shell deleted, no mixing while waiting');
 
@@ -181,6 +187,8 @@ try {
     await ready();
     s = await until(x => x.waiting, 'v3 waiting');
     assert.ok(s.version === versions.v2 && s.html === '1' && s.morse === 2, `a v2 page, not v3 HTML with v2 code: ${JSON.stringify(s)}`);
+    // The tab may already have used its swaps for this minute (js/sw-register.js, against reload loops) in the v2 step.
+    await page.evaluate(() => sessionStorage.clear());
     await page.reload();
     s = await until(x => x.version === versions.v3 && x.html === '3' && x.morse === 3 && !x.waiting, 'v3 page after the swap', 45000);
     await ready();

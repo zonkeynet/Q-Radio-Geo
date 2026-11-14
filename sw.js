@@ -83,6 +83,21 @@ async function install() {
         }
         await cache.put(url, await fetchVerified(path, entry));
     });
+    // What the browser already has of the other files (the data and textures the page used before this install):
+    // kept with this version, from the browser's cache only, never the network, so the next start reads them from
+    // here instead of checking and storing them while it starts. Stored in this version's cache, so a page of an
+    // older version never sees them.
+    const inShell = new Set(m.shell);
+    await pool(Object.keys(m.files).filter(p => !inShell.has(p) && !p.startsWith('data/surveillance/') && fits(DATA, m.files[p][1])), 4, async path => {
+        const entry = m.files[path], url = at(path);
+        if (keptHash(await cache.match(url)) === entry[0]) return;
+        try {
+            const response = await fetch(url, { cache: 'only-if-cached', mode: 'same-origin', credentials: 'same-origin' });
+            if (response.status !== 200) return;
+            const body = await response.arrayBuffer();
+            if (body.byteLength === entry[1] && await digest(body) === entry[0] && await room(entry[1])) await cache.put(url, kept(body, response.headers.get('content-type'), entry[0]));
+        } catch { /* not in the browser's cache */ }
+    });
     await cache.put(at('sw-manifest.json'), new Response(text, { headers: { 'content-type': 'application/json' } }));
 }
 self.addEventListener('install', event => {
@@ -155,23 +170,20 @@ const offline = () => new Response('<!doctype html><html lang="en"><meta charset
 /** The page: this publication's kept copy at once; the network only without one; offline without one, a notice. The
  * browser checks sw.js on every start meanwhile, so a newer publication installs now and opens at the next start. */
 async function navigate(event) {
-    const m = await manifest(), want = m?.files['index.html']?.[0];
-    const copy = want ? await (await open(SHELL)).match(at('index.html')) : null;
-    if (keptHash(copy) === want && copy) return copy;
-    return fetch(event.request).catch(offline);
+    const copy = await (await open(SHELL)).match(at('index.html'));
+    return copy || fetch(event.request).catch(offline);
 }
 
 const fits = (name, bytes) => bytes <= LIMITS[name].entry;
 async function room(bytes) {
     try { const { usage, quota } = await navigator.storage.estimate(); return quota - usage > bytes * 3; } catch { return false; }
 }
-/** Stores a file fetched for the page once its hash shows it is this publication's; evicts the least recently used. */
-async function keep(name, url, [hash, size], response) {
+/** Stores a file of this publication (already checked by fetchVerified); evicts the least recently used. */
+async function keep(name, url, size, response) {
     try {
-        const body = await response.arrayBuffer();
-        if (body.byteLength !== size || await digest(body) !== hash || !(await room(size))) return;
+        if (!(await room(size))) return;
         const cache = await caches.open(name);
-        await cache.put(url, kept(body, response.headers.get('content-type'), hash));
+        await cache.put(url, response);
         const table = (await loadMeta())[name] ??= {};
         table[url] = [size, Date.now()];
         const limit = LIMITS[name];
@@ -185,21 +197,28 @@ async function keep(name, url, [hash, size], response) {
         await saveMeta();
     } catch { /* not kept: fetched again next time */ }
 }
+/** A file: the kept copy if there is one, else the network (and kept if it is this publication's and fits). Kept copies
+ * need no check here: the shell cache is this version's (each file checked at install), and the data caches hold only
+ * files checked against this version's manifest (when stored, and again when this version took over). So the
+ * manifest, a 25 kB file to read at every worker start, is read only for files not kept yet. */
 async function respond(event, path) {
-    const m = await manifest(), entry = m?.files[path];
-    if (!entry) return fetch(event.request);
-    // One lookup: the shell's files in the shell, the others in their cache.
-    m.inShell ??= new Set(m.shell);
-    const url = at(path), name = m.inShell.has(path) ? SHELL : path.startsWith('data/surveillance/') ? TILES : DATA;
+    const url = at(path), name = path.startsWith('data/surveillance/') ? TILES : DATA;
+    const shell = await (await open(SHELL)).match(url);
+    if (shell) return shell;
     const copy = await (await open(name)).match(url);
-    if (name === SHELL) return keptHash(copy) === entry[0] ? copy : fetch(event.request);
-    if (keptHash(copy) === entry[0]) {
+    if (copy) {
         loadMeta().then(t => { if (t[name]?.[url]) { t[name][url][1] = Date.now(); saveMetaSoon(); } });
         return copy;
     }
-    const response = await fetch(event.request);
-    if (response.status === 200 && response.type === 'basic' && fits(name, entry[1])) event.waitUntil(keep(name, url, entry, response.clone()));
-    return response;
+    const m = await manifest(), entry = m?.files[path];
+    if (!entry) return fetch(event.request);
+    // Not kept yet: this publication's file. The browser's cache may still hold another publication's copy for a few
+    // minutes after an update: fetchVerified takes the server's then, so a page never gets data of another version.
+    let fresh;
+    try { fresh = await fetchVerified(path, entry); } catch { return fetch(event.request); } // as without the worker
+    m.inShell ??= new Set(m.shell);
+    if (!m.inShell.has(path) && fits(name, entry[1])) event.waitUntil(keep(name, url, entry[1], fresh.clone()));
+    return fresh;
 }
 self.addEventListener('fetch', event => {
     if (!ENABLED) return;
