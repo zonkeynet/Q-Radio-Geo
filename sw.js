@@ -12,19 +12,20 @@
  * Versions: every publication is a new worker (MANIFEST_HASH changes). It installs in the background, copying unchanged
  * files from the previous version and fetching only those whose hash changed, and takes over once no page of the
  * old version is open, or at the start of a reloaded page (js/sw-register.js). A page never mixes two publications:
- * it is served by one worker, from one manifest, and a newer page from the network is used only once its worker runs.
+ * it is served by one worker, from one manifest. The page itself comes from the kept copy at once (stale while
+ * revalidate): at every start the browser fetches sw.js from the network, and a newer publication installs then and
+ * serves the next start. Without a kept copy, the network; offline without one, a short notice.
  *
  * Kill switch: set ENABLED to false and publish. At its next visit every browser that has a Q-Globe worker installs
  * this version, which deletes the Q-Globe caches, unregisters itself and reloads the open pages from the network. */
 'use strict';
 const ENABLED = true;
-const MANIFEST_HASH = '8ed8d066768c09c5'; // scripts/build_sw.mjs
+const MANIFEST_HASH = 'efb7a2e1395c5a21'; // scripts/build_sw.mjs
 
 const PREFIX = 'qglobe-';
 const SHELL = `${PREFIX}shell-${MANIFEST_HASH}`, DATA = `${PREFIX}data`, TILES = `${PREFIX}tiles`, META = `${PREFIX}meta`;
 // Kept data. Cache Storage holds bodies uncompressed: stations and places are about 10 MB, a large layer up to 25 MB.
 const LIMITS = { [DATA]: { bytes: 80e6, entries: 60, entry: 24e6 }, [TILES]: { bytes: 16e6, entries: 200, entry: 2e6 } };
-const NAV_TIMEOUT_MS = 1500; // the page from the network if it arrives within this time, else the kept one
 // Files the worker may keep (the same rule as scripts/build_sw.mjs): not db/, tests, docs or scripts.
 const IN_SCOPE = /^(index\.html|manifest\.webmanifest|app-config\.json|(assets|js|vendor|data)\/.+)$/;
 const SCOPE = new URL(self.registration.scope);
@@ -37,6 +38,8 @@ async function digest(buffer) {
 const kept = (body, type, hash) => new Response(body, { status: 200,
     headers: { 'content-type': type || 'application/octet-stream', 'x-qglobe-hash': hash, 'x-qglobe-size': String(body.byteLength) } });
 const keptHash = response => response?.headers.get('x-qglobe-hash');
+const opened = {};
+const open = name => (opened[name] ??= caches.open(name));
 
 let manifestLoad = null;
 /** This version's manifest, stored with its shell; null if the browser has dropped the cache (everything then passes). */
@@ -49,7 +52,8 @@ function manifest() {
 /** A file of this publication: the browser's copy if it has the right hash, else the server's. */
 async function fetchVerified(path, [hash, size]) {
     for (const cache of ['default', 'no-cache']) {
-        const response = await fetch(at(path), { cache, credentials: 'same-origin' });
+        // Low priority: installing waits behind anything the page asks for.
+        const response = await fetch(at(path), { cache, credentials: 'same-origin', priority: 'low' });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${path}`);
         const body = await response.arrayBuffer();
         if (body.byteLength === size && await digest(body) === hash) return kept(body, response.headers.get('content-type'), hash);
@@ -109,7 +113,8 @@ const saveMeta = () => { clearTimeout(saveTimer); return caches.open(META).then(
 const saveMetaSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveMeta, 2000); };
 
 async function activate() {
-    await self.registration.navigationPreload?.enable().catch(() => {});
+    // The page comes from the kept copy: a preload request at every start would only spend bandwidth (over Tor too).
+    await self.registration.navigationPreload?.disable().catch(() => {});
     for (const key of await caches.keys()) if (key.startsWith(`${PREFIX}shell-`) && key !== SHELL) await caches.delete(key);
     // Kept data of earlier publications: entries whose file changed or is gone are dropped.
     const m = await manifest();
@@ -147,22 +152,13 @@ const offline = () => new Response('<!doctype html><html lang="en"><meta charset
     + '<h1 style="font-size:1.3rem">Q-P1NG Globe is offline</h1><p>The globe opens without a connection once it has been opened online in this browser.</p>'
     + '<p><a href="./" style="color:#00ff88">Try again</a></p></body></html>', { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
-/** The page: from the network if it arrives quickly and is this publication's, else the kept copy, else a notice. */
+/** The page: this publication's kept copy at once; the network only without one; offline without one, a notice. The
+ * browser checks sw.js on every start meanwhile, so a newer publication installs now and opens at the next start. */
 async function navigate(event) {
     const m = await manifest(), want = m?.files['index.html']?.[0];
-    const copy = want ? await caches.match(at('index.html'), { cacheName: SHELL }) : null;
-    const network = (async () => {
-        const response = (await event.preloadResponse) || await fetch(event.request);
-        if (!copy) return response;
-        if (!response.ok) return null;
-        const body = await response.arrayBuffer();
-        // A newer publication's page would run with this version's files: it waits for its own worker, which the
-        // browser is installing now and which takes over at the next start.
-        return await digest(body) === want ? new Response(body, { headers: { 'content-type': response.headers.get('content-type') || 'text/html; charset=utf-8' } }) : null;
-    })();
-    if (!copy) return network.catch(offline);
-    const fresh = await Promise.race([network.catch(() => null), new Promise(resolve => setTimeout(resolve, NAV_TIMEOUT_MS, null))]);
-    return fresh || copy;
+    const copy = want ? await (await open(SHELL)).match(at('index.html')) : null;
+    if (keptHash(copy) === want && copy) return copy;
+    return fetch(event.request).catch(offline);
 }
 
 const fits = (name, bytes) => bytes <= LIMITS[name].entry;
@@ -192,10 +188,11 @@ async function keep(name, url, [hash, size], response) {
 async function respond(event, path) {
     const m = await manifest(), entry = m?.files[path];
     if (!entry) return fetch(event.request);
-    const url = at(path), shell = await caches.match(url, { cacheName: SHELL });
-    if (keptHash(shell) === entry[0]) return shell;
-    const name = path.startsWith('data/surveillance/') ? TILES : DATA;
-    const copy = await caches.match(url, { cacheName: name });
+    // One lookup: the shell's files in the shell, the others in their cache.
+    m.inShell ??= new Set(m.shell);
+    const url = at(path), name = m.inShell.has(path) ? SHELL : path.startsWith('data/surveillance/') ? TILES : DATA;
+    const copy = await (await open(name)).match(url);
+    if (name === SHELL) return keptHash(copy) === entry[0] ? copy : fetch(event.request);
     if (keptHash(copy) === entry[0]) {
         loadMeta().then(t => { if (t[name]?.[url]) { t[name][url][1] = Date.now(); saveMetaSoon(); } });
         return copy;

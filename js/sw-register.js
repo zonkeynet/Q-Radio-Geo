@@ -24,16 +24,18 @@
         waiting.postMessage('qglobe:activate');
     }).catch(() => {});
 
-    // Registered once the globe shows its layer, so installing never competes with the start (or 20 s after load).
+    // Registered once the globe shows its layer and the page is idle, so installing (which takes the files from the
+    // browser's cache where it can, at low priority) never competes with the start; 20 s after load at the latest.
     let started = false;
     const register = () => {
         if (started) return;
         started = true;
         sw.register(new URL('sw.js', document.baseURI), { updateViaCache: 'none' }).catch(() => { /* the site works without it */ });
     };
+    const whenIdle = () => typeof requestIdleCallback === 'function' ? requestIdleCallback(register, { timeout: 5000 }) : setTimeout(register, 2000);
     try {
         new PerformanceObserver((list, observer) => {
-            if (list.getEntriesByName('qglobe:layer-ready').length) { observer.disconnect(); register(); }
+            if (list.getEntriesByName('qglobe:layer-ready').length) { observer.disconnect(); whenIdle(); }
         }).observe({ type: 'mark', buffered: true });
     } catch { /* no observer: the timer below */ }
     addEventListener('load', () => setTimeout(register, 20000), { once: true });

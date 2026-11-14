@@ -112,7 +112,7 @@ try {
     for (const path of shell) assert.ok(await cached(`qglobe-shell-${versions.v1}`, path), `shell: ${path}`);
     ok(`v1 installed: ${shell.length} shell files kept`);
 
-    // A controlled start: the page from the network (one request), everything else from the worker.
+    // A controlled start: the page and everything else from the worker; only data not kept yet from the network.
     let mark = server.state.log.length;
     await page.reload();
     await ready();
@@ -120,7 +120,7 @@ try {
     assert.ok(s.controlled && s.version === versions.v1 && s.html === '1' && s.morse === 1, JSON.stringify(s));
     const fetched = logSince(mark).filter(r => r.path !== '/sw.js').map(r => r.path);
     assert.deepEqual(fetched.filter(p => /^\/(js|vendor|assets)\/|^\/index\.html|app-config|countries|summary/.test(p)), [], `no shell file from the network: ${fetched}`);
-    assert.ok(fetched.filter(p => p === '/').length <= 1, 'the page at most once');
+    assert.equal(fetched.filter(p => p === '/').length, 0, 'the page from the kept copy, at once');
     ok(`controlled start: network requests ${JSON.stringify(fetched)}`);
 
     // Data kept on first use, checked against the manifest.

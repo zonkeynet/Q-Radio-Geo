@@ -114,7 +114,7 @@ function register(href, { serviceWorker = true, secure = true } = {}) {
     const marks = [];
     class PerformanceObserver { constructor(cb) { this.cb = cb; } observe() { marks.push(this); } disconnect() {} }
     const context = vm.createContext({ navigator, window, location, document: { baseURI: href }, URL, PerformanceObserver, sessionStorage: { getItem: () => null, setItem() {} },
-        addEventListener: () => {}, setTimeout: () => {} });
+        addEventListener: () => {}, setTimeout: () => {}, requestIdleCallback: cb => cb() });
     vm.runInContext(read('js/sw-register.js'), context);
     for (const m of marks) m.cb({ getEntriesByName: n => n === 'qglobe:layer-ready' ? [{}] : [] }, m);
     return calls;
