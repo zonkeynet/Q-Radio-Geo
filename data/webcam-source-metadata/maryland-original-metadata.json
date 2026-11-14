@@ -1,0 +1,129 @@
+{
+  "id" : "fasj-dc6a",
+  "name" : "MD iMAP: Maryland Traffic Cameras - Traffic Cameras (CHART)",
+  "assetType" : "href",
+  "attribution" : "ArcGIS Online for Maryland",
+  "attributionLink" : "https://mdgeodata.md.gov/imap/rest/services/Transportation/MD_TrafficCameras/MapServer/0",
+  "averageRating" : 0,
+  "category" : "Transportation",
+  "createdAt" : 1469738310,
+  "description" : "This is a MD iMAP hosted service layer. Find more information at  http://imap.maryland.gov. This dataset provides the locations of Traffic Cameras in Maryland from the Coordinated Highways Action Response Team (CHART). The data also includes a URL to the live camera feeds. Last Updated:  03/2023 Feature Service Layer Link: https://mdgeodata.md.gov/imap/rest/services/Transportation/MD_TrafficCameras/MapServer \n ADDITIONAL LICENSE TERMS: The Spatial Data and the information therein (collectively \"the Data\") is provided \"as is\" without warranty of any kind either expressed implied or statutory. The user assumes the entire risk as to quality and performance of the Data. No guarantee of accuracy is granted nor is any responsibility for reliance thereon assumed. In no event shall the State of Maryland be liable for direct indirect incidental consequential or special damages of any kind. The State of Maryland does not accept liability for any damages or misrepresentation caused by inaccuracies in the Data or as a result to changes to the Data nor is there responsibility assumed to maintain the Data in any manner or form. The Data can be freely distributed as long as the metadata entry is not modified or deleted. Any data derived from the Data must acknowledge the State of Maryland in the metadata.",
+  "diciBackend" : false,
+  "displayType" : "href",
+  "downloadCount" : 0,
+  "hideFromCatalog" : false,
+  "hideFromDataJson" : false,
+  "indexUpdatedAt" : 1469741382,
+  "licenseId" : "PUBLIC_DOMAIN",
+  "locked" : false,
+  "newBackend" : false,
+  "numberOfComments" : 0,
+  "oid" : 22726459,
+  "provenance" : "official",
+  "publicationAppendEnabled" : false,
+  "publicationDate" : 1469738346,
+  "publicationGroup" : 12185634,
+  "publicationStage" : "published",
+  "rowsUpdatedAt" : 1469738310,
+  "tableId" : 12185634,
+  "totalTimesRated" : 0,
+  "viewCount" : 4211,
+  "viewLastModified" : 1746479236,
+  "viewType" : "href",
+  "approvals" : [ {
+    "reviewedAt" : 1469805522,
+    "reviewedAutomatically" : false,
+    "state" : "approved",
+    "submissionId" : 588087,
+    "submissionObject" : "public_audience_request",
+    "submissionOutcome" : "change_audience",
+    "submittedAt" : 1469805522,
+    "targetAudience" : "public",
+    "workflowId" : 1975,
+    "reviewer" : {
+      "id" : "cs6p-bz62",
+      "displayName" : "data.maryland.gov Administration"
+    },
+    "submissionDetails" : {
+      "permissionType" : "READ"
+    },
+    "submissionOutcomeApplication" : {
+      "failureCount" : 0,
+      "status" : "success"
+    },
+    "submitter" : {
+      "id" : "cs6p-bz62",
+      "displayName" : "data.maryland.gov Administration"
+    }
+  } ],
+  "clientContext" : {
+    "clientContextVariables" : [ ],
+    "inheritedVariables" : { }
+  },
+  "columns" : [ ],
+  "grants" : [ {
+    "inherited" : false,
+    "type" : "viewer",
+    "flags" : [ "public" ]
+  } ],
+  "license" : {
+    "name" : "Public Domain"
+  },
+  "metadata" : {
+    "additionalAccessPoints" : [ {
+      "urls" : {
+        "link to md imap" : "http://data.imap.maryland.gov/datasets/21d54438d8f8409d8bc6db8207cfaace_0"
+      },
+      "describedByType" : "Link to MD iMAP"
+    } ],
+    "custom_fields" : {
+      "Jurisdiction" : {
+        "Jurisdiction" : "State of Maryland"
+      },
+      "Agency" : {
+        "State Agency Performing Data Updates" : "Maryland Department of Transportation"
+      },
+      "Supplemental Resources" : {
+        "Dataset Icon Link" : "https://www.arcgis.com/sharing/rest/community/groups/cd81557a119441339bc7f410786089e4/info/iso_category_icons_65-22.png"
+      },
+      "Time Period" : {
+        "Update Frequency" : "All map layers from MD iMAP are in the process of being surveyed to determine this information.",
+        "Time Period of Content" : "Service first issued on 2016-03-23. Service most recently modified on 2023-01-30.",
+        "Date Metadata Written" : "03/14/23"
+      },
+      "GIS Download" : {
+        "Place Keywords" : "Bounding Box: -79.4625 (W) to -75.0681 (W) and 38.0643 (N) to 39.7178 (N)",
+        "Shape File" : "http://data.imap.maryland.gov/datasets/21d54438d8f8409d8bc6db8207cfaace_0.zip",
+        "KML File" : "http://data.imap.maryland.gov/datasets/21d54438d8f8409d8bc6db8207cfaace_0.kml"
+      }
+    },
+    "accessPoints" : {
+      "link to md imap" : "http://data.imap.maryland.gov/datasets/21d54438d8f8409d8bc6db8207cfaace_0"
+    },
+    "rowLabel" : "Row",
+    "availableDisplayTypes" : [ "table", "fatrow", "page" ],
+    "renderTypeConfig" : {
+      "visible" : {
+        "href" : true
+      }
+    }
+  },
+  "owner" : {
+    "id" : "qyns-3jhx",
+    "displayName" : "Open Data Administrator",
+    "screenName" : "Open Data Administrator",
+    "type" : "interactive",
+    "flags" : [ "acceptedEula", "mayBeStoriesCoOwner" ]
+  },
+  "query" : { },
+  "rights" : [ "read" ],
+  "tableAuthor" : {
+    "id" : "qyns-3jhx",
+    "displayName" : "Open Data Administrator",
+    "screenName" : "Open Data Administrator",
+    "type" : "interactive",
+    "flags" : [ "acceptedEula", "mayBeStoriesCoOwner" ]
+  },
+  "tags" : [ "md imap", "maryland", "md", "traffic", "cameras", "chart", "coordinated highways action response team", "mdot", "maryland department of transportation", "wms", "wfs", "kml", "vector", "dynamic" ],
+  "flags" : [ "default", "ownerMayBeContacted" ]
+}

@@ -1,8 +1,9 @@
 import { createIndex, searchIndex } from './core.mjs';
-export async function loadJSON(path, base = document.baseURI) {
+export async function loadJSON(path, base = document.baseURI, { timeout = 0 } = {}) {
     // IPFS gateways can take a minute for a file they have not served yet: mirrors wait longer than the main site.
+    // A layer with big files (webcams, police and cameras) can ask to wait longer, for Tor; never shorter.
     const controller = new AbortController(), main = globalThis.location?.hostname === 'globe.qp1ng.com';
-    const timer = setTimeout(() => controller.abort(), main ? 20000 : 120000);
+    const timer = setTimeout(() => controller.abort(), Math.max(main ? 20000 : 120000, Number(timeout) || 0));
     try {
         const response = await fetch(new URL(path, base), { signal: controller.signal, credentials: 'same-origin' });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${path}`);

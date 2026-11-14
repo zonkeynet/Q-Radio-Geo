@@ -21,7 +21,7 @@ export function indexItems(def, items) {
 }
 /** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. */
 export function loadDirectory(def) {
-    def.loading ??= loadJSON(def.dataUrl).then(json => indexItems(def, def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng))))
+    def.loading ??= loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout }).then(json => indexItems(def, def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng))))
         .catch(e => { def.loading = null; throw e; });
     return def.loading;
 }

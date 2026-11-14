@@ -17,10 +17,11 @@ import { NEWS } from './news.mjs';
 import { createTv } from './tv.mjs';
 import { createGuide } from './guide.mjs';
 import { QCAST } from './qcast.mjs';
+import { WEBCAMS, WEBCAM_DB, closeWebcamPlayer } from './webcams.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
 // the app only while it asks for a point for a station (its viewer then reads the Q-Cast relays, nothing else).
-const DIRECTORIES = { news: NEWS, ...(APP_MODE && !PICK_MODE && !QCAST_IN_APP ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
+const DIRECTORIES = { news: NEWS, webcams: WEBCAMS, ...(APP_MODE && !PICK_MODE && !QCAST_IN_APP ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
@@ -327,8 +328,9 @@ function renderDirChips() {
  * per area the view stops on. Third-party servers see the user's IP address, as each mode's note says. */
 let liveRun = null, lastView = null;
 // Loads start once the view is closer than a continent. A mode can also cap each request to def.live.boxKm around
-// the view center (kilometres, so the cap is the same at every latitude and screen size).
-const LIVE_MAX_VIEW_DEG = 20;
+// the view center (kilometres, so the cap is the same at every latitude and screen size). Wider than that, a mode
+// with def.live.overview (police, cameras) shows its zoomed-out summary instead of nothing.
+const LIVE_MAX_VIEW_DEG = 20, OVERVIEW = 'overview';
 const liveTabOn = d => Boolean(d?.live) && d.filters.some(f => f.options.find(o => o.id === dirState[d.id].values[f.key])?.live);
 const inside = (b, a) => b.s >= a.s && b.n <= a.n && b.w >= a.w && b.e <= a.e;
 /** What to load for the view: `need` is the view, cut to def.live.boxKm around its center if set; `query` the same
@@ -375,24 +377,26 @@ function stopLive() {
 }
 async function loadLive(def) {
     const st = dirState[def.id];
-    let area = null;
+    let area = null, overview = false;
     if (def.live.needsView !== false) {
         area = liveArea(def);
-        if (!area) { setLiveStatus(def, 'Zoom in to a country or a city to load them here.'); return; }
+        if (!area && !def.live.overview) { setLiveStatus(def, 'Zoom in to a country or a city to load them here.'); return; }
+        overview = !area;
     }
     stopLive();
-    const run = liveRun = { def, ctrl: new AbortController(), area: area?.query || true };
+    const run = liveRun = { def, ctrl: new AbortController(), area: overview ? OVERVIEW : area?.query || true };
     st.liveTried = run.area; // a failed area is not retried by itself: the button retries
     setLiveStatus(def, def.live.slow ? 'Loading… public servers can take up to a minute.' : 'Loading…');
     try {
-        const { items: loaded, note, complete = true } = await def.live.load(area?.query, st.base, run.ctrl.signal);
+        const { items: loaded, note, complete = true } = overview ? await def.live.overview(st.base, run.ctrl.signal)
+            : await def.live.load(area?.query, st.base, run.ctrl.signal);
         if (liveRun !== run) return; // replaced by a newer request
         st.liveFails = 0;
         if (!complete) st.liveTried = { ...area.need, partial: true }; // capped: any new view loads again
         const kept = new Map(st.items.filter(it => it.live).map(it => [it.id, it])); // an open card stays open
         st.items = indexItems(def, loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it));
         st.liveAt = Date.now();
-        st.liveStatus = def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC${note ? `; ${note}` : ''}.`
+        st.liveStatus = overview ? note : def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC${note ? `; ${note}` : ''}.`
             : `${(st.items.length - st.base.length).toLocaleString('en')} loaded ${note || (area.cut ? `within ${def.live.boxKm / 2} km of the view center` : 'for the area in view')}${liveTabOn(def) ? '; they follow the view' : ''}.`;
         if (dir() === def) {
             renderDirSidebar(); explorer.use(def, st.items, st.values);
@@ -427,7 +431,8 @@ function liveIfWanted() {
     const st = state(), pending = liveRun?.def === d, tried = pending ? liveRun.area : st.liveTried;
     if (d.live.needsView === false) { if (!pending && (!tried || retryDue(st))) loadLive(d); return; }
     const area = liveArea(d);
-    if (!area) { if (!pending) loadLive(d); return; } // shows "zoom in"
+    // Zoomed out: shows "zoom in", or the mode's summary once (again only when a retry is due).
+    if (!area) { if (!pending && (!d.live.overview || tried !== OVERVIEW || retryDue(st))) loadLive(d); return; }
     const same = (a, b) => Math.abs(a.s - b.s) + Math.abs(a.n - b.n) + Math.abs(a.w - b.w) + Math.abs(a.e - b.e) < 1e-3;
     if (tried && tried !== true && (tried.partial ? same(area.need, tried) : inside(area.need, tried)) && (pending || !retryDue(st))) return;
     loadLive(d); // a view that moved elsewhere replaces a pending request
@@ -512,6 +517,11 @@ function setFilter(key, value) {
 }
 function selectDir(it, { fly = true } = {}) {
     pendingPick = null;
+    // An area summary (police, cameras zoomed out): go closer; its points load once the view settles there.
+    if (it.zoom && placed(it) && globe) {
+        globe.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, it.zoom) }, 800);
+        return;
+    }
     unfoldDrawer();
     explorer.select(it);
     // Closer, never further: items that load with their area (cameras) stay loaded, and a link keeps that zoom.
@@ -520,6 +530,7 @@ function selectDir(it, { fly = true } = {}) {
     globe?.select(it.lat, it.lng, .8);
 }
 async function setMode(next) {
+    if (next !== 'webcams') closeWebcamPlayer();
     const def = DIRECTORIES[next];
     if (def && !dirState[next]) {
         try { const items = await loadDirectory(def); dirState[next] = { base: items, items, values: initialValues(def) }; }
@@ -602,7 +613,10 @@ async function applyLink(p) {
     if (!id) return;
     const it = state().items.find(x => String(x.id) === id);
     if (it) selectDir(it, { fly: !hasView });
-    else pendingPick = { mode, id };
+    else {
+        pendingPick = { mode, id };
+        if (d.live?.forId?.(id) && liveRun?.def !== d) loadLive(d); // a card outside the first file (webcam web links)
+    }
 }
 function toast(text) {
     const t = $('toast');
@@ -784,7 +798,8 @@ function initThemeMenu() {
 async function start() {
     guide = createGuide({ button: $('btnGuide'), layers: [RADIO_MODE, ...Object.values(DIRECTORIES)], groups: MODE_GROUPS,
         onLayer: id => { if (ready) setMode(id); },
-        dbFiles: [['qp1ng.sqlite.gz', 'db/qp1ng.sqlite.gz'], ['qp1ng-surveillance.sqlite.gz', 'db/qp1ng-surveillance.sqlite.gz']] });
+        dbFiles: [['qp1ng.sqlite.gz', 'db/qp1ng.sqlite.gz'], ['qp1ng-surveillance.sqlite.gz', 'db/qp1ng-surveillance.sqlite.gz'],
+            [WEBCAM_DB.name, WEBCAM_DB.href, WEBCAM_DB.notice]] });
     initKeys();
     initMirrorNotice();
     initThemeMenu();

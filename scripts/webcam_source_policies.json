@@ -1,0 +1,3067 @@
+{
+  "digitraffic": {
+    "source": {
+      "id": "digitraffic",
+      "name": "Fintraffic Digitraffic weather cameras",
+      "url": "https://www.digitraffic.fi/en/road-traffic/",
+      "terms_url": "https://www.digitraffic.fi/en/terms-of-service/",
+      "metadata_license": "CC-BY-4.0",
+      "media_rights": "CC-BY-4.0; official weather-camera images included in open-data service",
+      "attribution": "Source: Fintraffic / digitraffic.fi, CC BY 4.0. Metadata normalized by QGlobe.",
+      "allowed_hosts": [
+        "weathercam.digitraffic.fi"
+      ],
+      "refresh_interval_seconds": 600,
+      "snapshot_url_pattern": "https://weathercam.digitraffic.fi/{presetId}.jpg",
+      "license": "CC-BY-4.0",
+      "rights_status": "official_public_feed",
+      "rights_note": "CC-BY-4.0; official weather-camera images included in open-data service",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "media_hosts": [
+      "weathercam.digitraffic.fi"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location",
+    "countries": [
+      "FI"
+    ]
+  },
+  "vegagerdin": {
+    "source": {
+      "id": "vegagerdin",
+      "name": "Vegagerðin road webcams, Iceland",
+      "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/vefmyndavelar",
+      "terms_url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/skilmalar-vefthjonustur",
+      "metadata_license": "CC-BY-4.0",
+      "media_rights": "CC-BY-4.0 explicitly covers published data and photographs including webcams",
+      "attribution": "Vegagerðin, road webcams, retrieved 2026-11-14, CC BY 4.0. Metadata normalized by QGlobe.",
+      "allowed_hosts": [
+        "www.vegagerdin.is"
+      ],
+      "license": "CC-BY-4.0",
+      "rights_status": "official_public_feed",
+      "rights_note": "CC-BY-4.0 explicitly covers published data and photographs including webcams",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "media_hosts": [
+      "www.vegagerdin.is"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location",
+    "countries": [
+      "IS"
+    ]
+  },
+  "opendatahub": {
+    "source": {
+      "id": "opendatahub",
+      "name": "Open Data Hub public webcam metadata",
+      "url": "https://tourism.api.opendatahub.com/v1/WebcamInfo?pagesize=1000",
+      "terms_url": "https://docs.opendatahub.com/licensing/",
+      "metadata_license": "CC0 for accepted individual records only",
+      "media_rights": "Not established for linked third-party media; external links only, no embedding",
+      "attribution": "Webcam metadata: Open Data Hub / original providers. Media remain with the original publisher.",
+      "allowed_hosts": [],
+      "license": "CC0 for accepted individual records only",
+      "rights_status": "official_page_only",
+      "rights_note": "Not established for linked third-party media; external links only, no embedding",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "AD",
+      "AT",
+      "BE",
+      "CH",
+      "CZ",
+      "DE",
+      "ES",
+      "IT",
+      "SK",
+      "SM"
+    ]
+  },
+  "tfl_jamcam": {
+    "source": {
+      "id": "tfl_jamcam",
+      "name": "Transport for London JamCams",
+      "url": "https://api.tfl.gov.uk/Place/Type/JamCam",
+      "terms_url": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+      "metadata_license": "TfL Transport Data Service public API terms",
+      "media_rights": "Specific JamCam reuse guidelines exist; full general terms unavailable in fetched page. External links only pending review.",
+      "attribution": "Data provided by Transport for London. Preserve TfL branding; no cropping; observe refresh limits.",
+      "allowed_hosts": [],
+      "guidelines_url": "https://tfl.gov.uk/info-for/open-data-users/our-open-data?intcmp=3668",
+      "anonymous_api_limit_per_minute": 50,
+      "license": "TfL Transport Data Service public API terms",
+      "rights_status": "official_page_only",
+      "rights_note": "Specific JamCam reuse guidelines exist; full general terms unavailable in fetched page. External links only pending review."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "GB"
+    ]
+  },
+  "madrid_traffic": {
+    "source": {
+      "id": "madrid_traffic",
+      "name": "Ayuntamiento de Madrid traffic cameras",
+      "url": "https://datos.gob.es/es/catalogo/l01280796-trafico-camaras1",
+      "terms_url": "https://creativecommons.org/licenses/by/4.0/legalcode.es",
+      "metadata_license": "CC-BY-4.0",
+      "media_rights": "Dataset has CC BY 4.0; linked-photo terms not separately established. External links only.",
+      "attribution": "Ayuntamiento de Madrid, Tráfico. Cámaras, CC BY 4.0. Metadata normalized by QGlobe.",
+      "allowed_hosts": [],
+      "license": "CC-BY-4.0",
+      "rights_status": "official_page_only",
+      "rights_note": "Dataset has CC BY 4.0; linked-photo terms not separately established. External links only.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "ES"
+    ]
+  },
+  "vigo_traffic": {
+    "source": {
+      "id": "vigo_traffic",
+      "name": "Concello de Vigo traffic cameras",
+      "url": "https://datos.gob.es/es/catalogo/l01360577-camaras-de-trafico1",
+      "terms_url": "https://opendatacommons.org/licenses/by/1-0/",
+      "metadata_license": "ODC-BY-1.0",
+      "media_rights": "Database license does not establish separate image rights; external links only.",
+      "attribution": "Concello de Vigo, Cámaras de Tráfico, ODC-BY. Metadata normalized by QGlobe.",
+      "allowed_hosts": [],
+      "license": "ODC-BY-1.0",
+      "rights_status": "official_page_only",
+      "rights_note": "Database license does not establish separate image rights; external links only."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "ES"
+    ]
+  },
+  "lyon_traffic": {
+    "source": {
+      "id": "lyon_traffic",
+      "name": "Métropole de Lyon Web Criter cameras",
+      "url": "https://www.data.gouv.fr/datasets/cameras-web-criter-de-la-metropole-de-lyon",
+      "terms_url": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "metadata_license": "Licence Ouverte 2.0",
+      "media_rights": "Official open-data camera-image resource under the published dataset license.",
+      "attribution": "Métropole de Lyon, Caméras Web Criter, Licence Ouverte 2.0, retrieved 2026-11-14. Metadata normalized by QGlobe.",
+      "allowed_hosts": [
+        "download.data.grandlyon.com"
+      ],
+      "refresh_interval_seconds": 60,
+      "license": "Licence Ouverte 2.0",
+      "rights_status": "official_public_feed",
+      "rights_note": "Official open-data camera-image resource under the published dataset license."
+    },
+    "media_hosts": [
+      "download.data.grandlyon.com"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "FR"
+    ]
+  },
+  "osm_webcams": {
+    "source": {
+      "id": "osm_webcams",
+      "name": "OpenStreetMap explicit webcam links",
+      "url": "https://wiki.openstreetmap.org/wiki/Webcams",
+      "terms_url": "https://www.openstreetmap.org/copyright",
+      "metadata_license": "ODbL-1.0",
+      "media_rights": "Metadata license only. Linked publishers retain their media rights; no embedding authorized.",
+      "attribution": "© OpenStreetMap contributors, ODbL 1.0. Webcam metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "provenance_type": "community_directory",
+      "license": "ODbL-1.0",
+      "rights_note": "Metadata license only. Linked publishers retain their media rights; no embedding authorized.",
+      "country_inference": {
+        "source": "Natural Earth 1:10m admin-0 polygons",
+        "url": "https://www.naturalearthdata.com/about/terms-of-use/",
+        "license": "Public domain",
+        "sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+        "note": "Approximate geographic classification; country=ZZ where unassigned. Does not change coordinates."
+      },
+      "license_url": "https://opendatacommons.org/licenses/odbl/1-0/"
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "wikidata_webcams": {
+    "source": {
+      "id": "wikidata_webcams",
+      "name": "Wikidata webcam page links (P4238)",
+      "url": "https://www.wikidata.org/wiki/Property:P4238",
+      "terms_url": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+      "metadata_license": "CC0-1.0",
+      "media_rights": "CC0 applies to structured metadata, not linked pictures or streams. External links only.",
+      "attribution": "Wikidata contributors, CC0. Webcam metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "provenance_type": "community_directory",
+      "license": "CC0-1.0",
+      "rights_note": "CC0 applies to structured metadata, not linked pictures or streams. External links only.",
+      "country_inference": {
+        "source": "Natural Earth 1:10m admin-0 polygons",
+        "url": "https://www.naturalearthdata.com/about/terms-of-use/",
+        "license": "Public domain",
+        "sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+        "note": "Approximate geographic classification; country=ZZ where unassigned. Does not change coordinates."
+      },
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature",
+    "force_coordinate_role": "associated_feature"
+  },
+  "maryland_chart": {
+    "source": {
+      "id": "maryland_chart",
+      "name": "Maryland CHART / MD iMAP",
+      "url": "https://opendata.maryland.gov/d/4z3c-43ce",
+      "terms_url": "https://catalog.data.gov/dataset/md-imap-maryland-traffic-cameras-traffic-cameras-chart",
+      "metadata_license": "Public Domain; original metadata must remain unchanged; derived data must acknowledge State of Maryland",
+      "media_rights": "Official public player links only. Native media redistribution/restreaming rights not established.",
+      "attribution": "Derived from State of Maryland, MD iMAP and CHART. Original metadata preserved unchanged.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "chart.maryland.gov"
+      ],
+      "original_metadata_files": [
+        "data/webcam-source-metadata/maryland-original-metadata.json"
+      ],
+      "license": "Public Domain; original metadata must remain unchanged; derived data must acknowledge State of Maryland",
+      "rights_status": "official_page_only",
+      "rights_note": "Official public player links only. Native media redistribution/restreaming rights not established."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "oregon_tripcheck": {
+    "source": {
+      "id": "oregon_tripcheck",
+      "name": "Oregon Department of Transportation / TripCheck",
+      "url": "https://www.tripcheck.com/Pages/API",
+      "terms_url": "https://tripcheck.com/Pages/Frequently-Asked-Questions",
+      "metadata_license": "ODOT explicit permission to reuse TripCheck data/images with attribution",
+      "media_rights": "Published still images permitted with ODOT credit. Legacy videoId is not proof of continuous video.",
+      "attribution": "Camera courtesy of ODOT / TripCheck",
+      "allowed_hosts": [
+        "www.tripcheck.com",
+        "tripcheck.com"
+      ],
+      "official_page_hosts": [
+        "www.tripcheck.com",
+        "tripcheck.com"
+      ],
+      "license": "ODOT explicit permission to reuse TripCheck data/images with attribution",
+      "rights_status": "official_public_feed",
+      "rights_note": "Published still images permitted with ODOT credit. Legacy videoId is not proof of continuous video."
+    },
+    "media_hosts": [
+      "www.tripcheck.com",
+      "tripcheck.com"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "mtmd_quebec": {
+    "source": {
+      "id": "mtmd_quebec",
+      "name": "Ministère des Transports et de la Mobilité durable — Québec 511",
+      "url": "https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+      "terms_url": "https://www.donneesquebec.ca/recherche/dataset/camera-de-circulation",
+      "metadata_license": "CC-BY-4.0 (metadata)",
+      "media_rights": "Official player links only; cameras show periodic clips or snapshots, not verified continuous video.",
+      "attribution": "Données Québec / MTMD Québec — CC BY 4.0; metadata normalized by QGlobe.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.quebec511.info"
+      ],
+      "license": "CC-BY-4.0 (metadata)",
+      "rights_status": "official_page_only",
+      "rights_note": "Official player links only; cameras show periodic clips or snapshots, not verified continuous video.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "deldot": {
+    "source": {
+      "id": "deldot",
+      "name": "Delaware Department of Transportation",
+      "url": "https://deldot.gov/Programs/itms/index.shtml?dc=data",
+      "terms_url": "https://deldot.gov/OnlineServices/pdfs/PermissiontoPublish.pdf",
+      "metadata_license": "No express open redistribution licence found; public factual camera-directory links only",
+      "media_rights": "Native HLS reuse/embedding not cleared. Retain stream solely as reference_url; open official public map.",
+      "attribution": "DelDOT — Delaware Department of Transportation",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "deldot.gov"
+      ],
+      "metadata_rights_note": "No open licence is asserted; no video copied or embedded. Only names, coordinates and official source links.",
+      "license": "No express open redistribution licence found; public factual camera-directory links only",
+      "rights_status": "official_page_only",
+      "rights_note": "Native HLS reuse/embedding not cleared. Retain stream solely as reference_url; open official public map."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "drivebc": {
+    "source": {
+      "id": "drivebc",
+      "name": "DriveBC — Government of British Columbia",
+      "url": "https://catalogue.data.gov.bc.ca/dataset/bc-highwaycams",
+      "terms_url": "https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc",
+      "metadata_license": "Open Government Licence — British Columbia",
+      "media_rights": "Ministry camera data and images released for commercial reuse under OGL-BC. Partner-supplied or provider-disabled cameras link to official page only.",
+      "attribution": "DriveBC. Contains information licensed under the Open Government Licence — British Columbia.",
+      "allowed_hosts": [
+        "www.drivebc.ca"
+      ],
+      "official_page_hosts": [
+        "www.drivebc.ca"
+      ],
+      "license": "Open Government Licence — British Columbia",
+      "rights_status": "official_public_feed",
+      "rights_note": "Ministry camera data and images released for commercial reuse under OGL-BC. Partner-supplied or provider-disabled cameras link to official page only."
+    },
+    "media_hosts": [
+      "www.drivebc.ca"
+    ],
+    "formats": [
+      "official_page",
+      "snapshot"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "vancouver": {
+    "source": {
+      "id": "vancouver",
+      "name": "City of Vancouver — public web camera links",
+      "url": "https://opendata.vancouver.ca/explore/dataset/web-cam-url-links/",
+      "terms_url": "https://opendata.vancouver.ca/pages/licence/",
+      "metadata_license": "Open Government Licence — Vancouver",
+      "media_rights": "Licensed camera-location/link dataset; official camera pages opened externally. No extraction of image URLs.",
+      "attribution": "Contains information licensed under the Open Government Licence — Vancouver.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "trafficcams.vancouver.ca"
+      ],
+      "license": "Open Government Licence — Vancouver",
+      "rights_status": "official_page_only",
+      "rights_note": "Licensed camera-location/link dataset; official camera pages opened externally. No extraction of image URLs."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate",
+    "force_coordinate_role": "approximate"
+  },
+  "toronto": {
+    "source": {
+      "id": "toronto",
+      "name": "City of Toronto — Traffic Cameras",
+      "url": "https://open.toronto.ca/dataset/a3309088-5fd4-4d34-8297-77c8301840ac/",
+      "terms_url": "https://open.toronto.ca/open-data-licence/",
+      "metadata_license": "Open Government Licence — Toronto",
+      "media_rights": "Official open-data publication includes still images and explicit image URLs; no video redistribution asserted.",
+      "attribution": "Contains information licensed under the Open Government Licence — Toronto.",
+      "allowed_hosts": [
+        "opendata.toronto.ca"
+      ],
+      "official_page_hosts": [
+        "www.toronto.ca"
+      ],
+      "license": "Open Government Licence — Toronto",
+      "rights_status": "official_public_feed",
+      "rights_note": "Official open-data publication includes still images and explicit image URLs; no video redistribution asserted."
+    },
+    "media_hosts": [
+      "opendata.toronto.ca"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "calgary": {
+    "source": {
+      "id": "calgary",
+      "name": "City of Calgary — Traffic Cameras",
+      "url": "https://data.calgary.ca/Transportation-Transit/Traffic-Cameras/k7p9-kppz",
+      "terms_url": "https://data.calgary.ca/stories/s/Open-Calgary-Terms-of-Use/u45n-7awa",
+      "metadata_license": "Open Government Licence — City of Calgary",
+      "media_rights": "Published public still-image endpoints under the licensed camera dataset; attribution required.",
+      "attribution": "Contains information licensed under the Open Government Licence — City of Calgary.",
+      "allowed_hosts": [
+        "trafficcam.calgary.ca"
+      ],
+      "official_page_hosts": [
+        "www.calgary.ca"
+      ],
+      "license": "Open Government Licence — City of Calgary",
+      "rights_status": "official_public_feed",
+      "rights_note": "Published public still-image endpoints under the licensed camera dataset; attribution required."
+    },
+    "media_hosts": [
+      "trafficcam.calgary.ca"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "austin": {
+    "source": {
+      "id": "austin",
+      "name": "City of Austin Transportation and Public Works",
+      "url": "https://data.austintexas.gov/Transportation-and-Mobility/Traffic-Cameras/b4k4-adkb",
+      "terms_url": "https://data.austintexas.gov/stories/s/ranj-cccq",
+      "metadata_license": "Public Domain",
+      "media_rights": "City-owned public camera dataset publishes screenshot URLs. Only provider status TURNED_ON is admitted to the viewing catalog.",
+      "attribution": "City of Austin Transportation and Public Works — data.austintexas.gov (Public Domain).",
+      "allowed_hosts": [
+        "cctv.austinmobility.io"
+      ],
+      "official_page_hosts": [
+        "data.austintexas.gov"
+      ],
+      "license": "Public Domain",
+      "rights_status": "official_public_feed",
+      "rights_note": "City-owned public camera dataset publishes screenshot URLs. Only provider status TURNED_ON is admitted to the viewing catalog."
+    },
+    "media_hosts": [
+      "cctv.austinmobility.io"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "wsdot": {
+    "source": {
+      "id": "wsdot",
+      "name": "Washington State Department of Transportation — cameras",
+      "url": "https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/TravelInfoCamerasWeather/FeatureServer/0",
+      "terms_url": "https://wsdot.maps.arcgis.com/sharing/rest/content/items/6692b4f163bd4ec99b5a897b2d207aa6/info/metadata/metadata.xml?format=default&output=html",
+      "metadata_license": "WSDOT public data feed terms — low volume use; no access constraints",
+      "media_rights": "Official map links only in this import. Image references retained; no automatic imagery requests under the low-volume feed or third-party camera terms.",
+      "attribution": "Washington State Department of Transportation — Travel Center.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "wsdot.com"
+      ],
+      "license": "WSDOT public data feed terms — low volume use; no access constraints",
+      "rights_status": "official_page_only",
+      "rights_note": "Official map links only in this import. Image references retained; no automatic imagery requests under the low-volume feed or third-party camera terms."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "surrey": {
+    "source": {
+      "id": "surrey",
+      "name": "City of Surrey — Traffic Cameras",
+      "url": "https://gisservices.surrey.ca/arcgis/rest/services/OpenData/MapServer/265",
+      "terms_url": "https://www.surrey.ca/services-payments/online-services/open-data",
+      "metadata_license": "Open Government Licence — City of Surrey",
+      "media_rights": "City camera image URLs intentionally published in the OGL Open Data catalog. Provincial/unknown-owner views link to the official city camera page only.",
+      "attribution": "Contains information licensed under the Open Government License — City of Surrey.",
+      "allowed_hosts": [
+        "stcameleonprod.blob.core.windows.net",
+        "cosmos.surrey.ca"
+      ],
+      "official_page_hosts": [
+        "www.surrey.ca"
+      ],
+      "coordinate_provenance": "OpenData layer had null geometries. Exact IMAGE URL joined to documented Public/Transportation layer 2; server reprojected its supplied NAD83 UTM CRS to EPSG:4326.",
+      "license": "Open Government Licence — City of Surrey",
+      "rights_status": "official_public_feed",
+      "rights_note": "City camera image URLs intentionally published in the OGL Open Data catalog. Provincial/unknown-owner views link to the official city camera page only."
+    },
+    "media_hosts": [
+      "stcameleonprod.blob.core.windows.net",
+      "cosmos.surrey.ca"
+    ],
+    "formats": [
+      "official_page",
+      "snapshot"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "taiwan_highway": {
+    "source": {
+      "id": "taiwan_highway",
+      "name": "Taiwan Highway Bureau public road cameras",
+      "url": "https://thbapp.thb.gov.tw/opendata/",
+      "terms_url": "https://thbapp.thb.gov.tw/opendata/",
+      "metadata_license": "Taiwan Open Government Data License, version 1.0",
+      "media_rights": "Official open-data camera snapshots: free reuse with source attribution; fetch each feed no more often than once per 60 seconds.",
+      "attribution": "Taiwan Highway Bureau, Ministry of Transportation and Communications",
+      "allowed_hosts": [
+        "cctv-ss01.thb.gov.tw",
+        "cctv-ss02.thb.gov.tw",
+        "cctv-ss03.thb.gov.tw",
+        "cctv-ss04.thb.gov.tw",
+        "cctv-ss05.thb.gov.tw",
+        "cctv-ss06.thb.gov.tw",
+        "cctv-ss07.thb.gov.tw",
+        "cctv-ss08.thb.gov.tw"
+      ],
+      "raw_files": [
+        {
+          "file": "raw/taiwan_highway.xml",
+          "sha256": "c3c3fe4f4acf5a704009387e6496f3d9d42554b29b1297e0ff7016602a10e99c",
+          "observed_at": "2026-11-14T01:48:10.510527+00:00",
+          "url": "https://cctv-maintain.thb.gov.tw/opendataCCTVs.xml"
+        }
+      ],
+      "minimum_refresh_seconds": 60,
+      "catalog_page": "https://data.gov.tw/en/datasets/29817",
+      "coverage": "All 2351 CCTV elements in the fetched current Highway Bureau XML; excludes the separately unavailable freeway feed.",
+      "license": "Taiwan Open Government Data License, version 1.0",
+      "rights_status": "official_public_feed",
+      "rights_note": "Official open-data camera snapshots: free reuse with source attribution; fetch each feed no more often than once per 60 seconds."
+    },
+    "media_hosts": [
+      "cctv-ss01.thb.gov.tw",
+      "cctv-ss02.thb.gov.tw",
+      "cctv-ss03.thb.gov.tw",
+      "cctv-ss04.thb.gov.tw",
+      "cctv-ss05.thb.gov.tw",
+      "cctv-ss06.thb.gov.tw",
+      "cctv-ss07.thb.gov.tw",
+      "cctv-ss08.thb.gov.tw"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "TW"
+    ],
+    "operator_hints": []
+  },
+  "hong_kong_transport": {
+    "source": {
+      "id": "hong_kong_transport",
+      "name": "Hong Kong Transport Department traffic snapshots",
+      "url": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
+      "terms_url": "https://data.gov.hk/en/terms-and-conditions",
+      "metadata_license": "DATA.GOV.HK Terms and Conditions",
+      "media_rights": "Government photographs/data may be reused commercially or non-commercially with source attribution, subject to the portal terms.",
+      "attribution": "Transport Department, Government of the Hong Kong SAR / DATA.GOV.HK",
+      "allowed_hosts": [
+        "tdcctv.data.one.gov.hk"
+      ],
+      "raw_files": [
+        {
+          "file": "raw/hong_kong_cameras.csv",
+          "sha256": "16313d2c7fde622aea3f08e91307c1585111bbec49f9d8a1e54e41033f602910",
+          "observed_at": "2026-11-14T01:46:04.518023+00:00",
+          "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_En.csv"
+        }
+      ],
+      "provider_notice": "Official catalog announces service suspension until 2026-11-16 00:00 Hong Kong time. No media availability was checked.",
+      "coverage": "All 1013 rows in the official location table.",
+      "license": "DATA.GOV.HK Terms and Conditions",
+      "rights_status": "official_public_feed",
+      "rights_note": "Government photographs/data may be reused commercially or non-commercially with source attribution, subject to the portal terms."
+    },
+    "media_hosts": [
+      "tdcctv.data.one.gov.hk"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "HK"
+    ],
+    "operator_hints": []
+  },
+  "taichung_transport": {
+    "source": {
+      "id": "taichung_transport",
+      "name": "Taichung traffic camera official pages",
+      "url": "https://data.gov.tw/dataset/83750",
+      "terms_url": "https://data.gov.tw/license",
+      "metadata_license": "Taiwan Open Government Data License, version 1.0",
+      "media_rights": "Camera-page links only; metadata licence is not treated as an express licence to redistribute the camera video.",
+      "attribution": "Taichung City Government Transportation Bureau",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/taichung.json",
+          "sha256": "9a2e131b8dda787160841ba0f909cba6d6eb202c0b9d722cca65cee9f06b89e8",
+          "observed_at": "2026-11-14T01:46:04.519969+00:00",
+          "url": "https://newdatacenter.taichung.gov.tw/api/v1/no-auth/resource.download?rid=6c9f5fd5-d74c-4450-9339-1a00e6cda2e6"
+        }
+      ],
+      "license": "Taiwan Open Government Data License, version 1.0",
+      "rights_status": "official_page_only",
+      "rights_note": "Camera-page links only; metadata licence is not treated as an express licence to redistribute the camera video."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "TW"
+    ],
+    "operator_hints": []
+  },
+  "taipei_transport": {
+    "source": {
+      "id": "taipei_transport",
+      "name": "Taipei traffic camera locations and official viewer",
+      "url": "https://data.gov.tw/dataset/121253",
+      "terms_url": "https://bote.gov.taipei/cp.aspx?n=8B8FFEA8353857B5",
+      "metadata_license": "Taiwan Open Government Data License, version 1.0",
+      "media_rights": "Redistribution of traffic images requires a separate signed agreement. Only official map links are enabled.",
+      "attribution": "Taipei City Traffic Engineering Office",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/taipei.csv",
+          "sha256": "619e2200bc781326e3fed0e00ca2464a64707ea068874c2f93491a1d208c8022",
+          "observed_at": "2026-11-14T01:48:10.512265+00:00",
+          "url": "https://data.taipei/api/dataset/50a5c4ec-9515-4c30-b83f-30b66e37053d/resource/d317a3c4-ff08-48af-894e-31dfb5155de3/download"
+        }
+      ],
+      "metadata_terms_url": "https://data.gov.tw/license",
+      "coverage": "All 432 location rows; the catalog does not contain individual camera-page URLs.",
+      "license": "Taiwan Open Government Data License, version 1.0",
+      "rights_status": "official_page_only",
+      "rights_note": "Redistribution of traffic images requires a separate signed agreement. Only official map links are enabled."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "TW"
+    ],
+    "operator_hints": []
+  },
+  "new_taipei_transport": {
+    "source": {
+      "id": "new_taipei_transport",
+      "name": "New Taipei traffic camera locations and official viewer",
+      "url": "https://data.gov.tw/dataset/158108",
+      "terms_url": "https://data.gov.tw/license",
+      "metadata_license": "Taiwan Open Government Data License, version 1.0",
+      "media_rights": "Metadata and official map links only; no media reuse permission established.",
+      "attribution": "New Taipei City Government Transportation Department",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/new_taipei.csv",
+          "sha256": "53a632e47fd83519acd463a81477c77088c859d076b1485708389f0c47756f9f",
+          "observed_at": "2026-11-14T01:51:02.873364+00:00",
+          "url": "https://data.ntpc.gov.tw/api/datasets/157501bf-f1cd-4838-92a7-612770351e43/csv/file"
+        }
+      ],
+      "license": "Taiwan Open Government Data License, version 1.0",
+      "rights_status": "official_page_only",
+      "rights_note": "Metadata and official map links only; no media reuse permission established."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "TW"
+    ],
+    "operator_hints": []
+  },
+  "singapore_lta": {
+    "source": {
+      "id": "singapore_lta",
+      "name": "Singapore LTA traffic images",
+      "url": "https://data.gov.sg/datasets/d_6cdb6b405b25aaaacbaf7689bcc6fae0/view",
+      "terms_url": "https://data.gov.sg/open-data-licence",
+      "metadata_license": "Singapore Open Data Licence v1.0",
+      "media_rights": "Traffic Images dataset is available for commercial/non-commercial reuse under the Singapore Open Data Licence with attribution.",
+      "attribution": "Contains information from Traffic Images accessed 14 November 2026 from Land Transport Authority / data.gov.sg, made available under the Singapore Open Data Licence v1.0.",
+      "allowed_hosts": [
+        "images.data.gov.sg"
+      ],
+      "raw_files": [
+        {
+          "file": "raw/singapore_traffic.json",
+          "sha256": "6a2beb770bdfae9a12777588f539c8df920384505c774aae9e8ea8e2b747214e",
+          "observed_at": "2026-11-14T01:46:04.516659+00:00",
+          "url": "https://api.data.gov.sg/v1/transport/traffic-images"
+        }
+      ],
+      "coverage": "The fetched current API response contained 8 cameras; no larger historical catalog count is claimed.",
+      "image_url_lifecycle": "Dated snapshot URLs: periodically refetch the official metadata API; the saved image URL will not advance on its own.",
+      "license": "Singapore Open Data Licence v1.0",
+      "rights_status": "official_public_feed",
+      "rights_note": "Traffic Images dataset is available for commercial/non-commercial reuse under the Singapore Open Data Licence with attribution."
+    },
+    "media_hosts": [
+      "images.data.gov.sg"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "SG"
+    ],
+    "operator_hints": []
+  },
+  "queensland_tmr": {
+    "source": {
+      "id": "queensland_tmr",
+      "name": "Queensland Transport and Main Roads traffic and flood cameras",
+      "url": "https://qldtraffic.qld.gov.au/more/Developers-and-Data/index.html",
+      "terms_url": "https://qldtraffic.qld.gov.au/media/moreDevelopers-and-Data/qldtraffic-website-api-specification-v1-10.pdf?lang=en-AU",
+      "metadata_license": "Creative Commons Attribution 4.0 (Queensland Traffic API specification, section 2.1)",
+      "media_rights": "The official API specification expressly includes camera still images. TMR rows enabled; three explicitly third-party council images retained as official-page links pending rights review.",
+      "attribution": "State of Queensland, Department of Transport and Main Roads",
+      "allowed_hosts": [
+        "cameras.qldtraffic.qld.gov.au"
+      ],
+      "raw_files": [
+        {
+          "file": "raw/queensland_api_cameras.geojson",
+          "sha256": "c5618758a38a1e399a58889082bbd22b2d624849695c916bf3d82265f3c7fa0c",
+          "observed_at": "2026-11-14T01:51:48.385359+00:00",
+          "url": "https://api.qldtraffic.qld.gov.au/v1/webcams?apikey=3e83add325cbb69ac4d8e5bf433d770b"
+        },
+        {
+          "file": "raw/queensland_floodcams.geojson",
+          "sha256": "bbd52216b163a56664b697645661a6303a98cbdc3854e8ff6a5dac9441a188fb",
+          "observed_at": "2026-11-14T01:51:48.386328+00:00",
+          "url": "https://api.qldtraffic.qld.gov.au/v1/floodcams?apikey=3e83add325cbb69ac4d8e5bf433d770b"
+        }
+      ],
+      "access": "The API uses a shared public key published by TMR for developers without registration. Shared limit 100 requests/minute; two catalog requests made.",
+      "coordinate_reference_system": "EPSG:7844 (GDA2020); source angular coordinates retained without a datum transformation.",
+      "coverage": "All 136 traffic and 123 flood camera features in current API responses. Older ArcGIS catalog retained as evidence only, not merged.",
+      "license": "Creative Commons Attribution 4.0 (Queensland Traffic API specification, section 2.1)",
+      "rights_status": "official_public_feed",
+      "rights_note": "The official API specification expressly includes camera still images. TMR rows enabled; three explicitly third-party council images retained as official-page links pending rights review.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "media_hosts": [
+      "cameras.qldtraffic.qld.gov.au"
+    ],
+    "formats": [
+      "official_page",
+      "snapshot"
+    ],
+    "countries": [
+      "AU"
+    ],
+    "operator_hints": []
+  },
+  "nsw_transport": {
+    "source": {
+      "id": "nsw_transport",
+      "name": "New South Wales Live Traffic camera locations",
+      "url": "https://opendata.transport.nsw.gov.au/data/dataset/live-traffic-cameras",
+      "terms_url": "https://opendata.transport.nsw.gov.au/data/dataset/live-traffic-cameras",
+      "metadata_license": "Creative Commons Attribution (catalog states CC-BY; version not independently confirmed)",
+      "media_rights": "Official-page links only: public metadata obtained, but scope of image redistribution licence was not independently confirmed.",
+      "attribution": "Transport for NSW",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/nsw_cameras.geojson",
+          "sha256": "9de7c575c66740107b5442f5c842a70e7ee7a65426fa1801c482f81c79e1b874",
+          "observed_at": "2026-11-14T01:46:43.879113+00:00",
+          "url": "https://data.livetraffic.com/cameras/traffic-cam.json"
+        }
+      ],
+      "coverage": "All 250 features in the official Live Traffic JSON feed.",
+      "license": "Creative Commons Attribution (catalog states CC-BY; version not independently confirmed)",
+      "rights_status": "official_page_only",
+      "rights_note": "Official-page links only: public metadata obtained, but scope of image redistribution licence was not independently confirmed."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "AU"
+    ],
+    "operator_hints": []
+  },
+  "shizuoka_rivers": {
+    "source": {
+      "id": "shizuoka_rivers",
+      "name": "Shizuoka Prefecture river camera pages",
+      "url": "https://opendata.pref.shizuoka.jp/dataset/fuji-156.html",
+      "terms_url": "https://opendata.pref.shizuoka.jp/privacy.html",
+      "metadata_license": "Creative Commons Attribution (official open-data catalog)",
+      "media_rights": "Metadata licence not assumed to cover the camera imagery; official per-camera pages only, no framing.",
+      "attribution": "Shizuoka Prefecture",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/shizuoka.csv",
+          "sha256": "d7a9beebb93777c23767bc9eedadf40d78a163091d336fd4a8f502cfbe467e3d",
+          "observed_at": "2026-11-14T01:48:10.512937+00:00",
+          "url": "https://opendata.pref.shizuoka.jp/dataset/fuji-156/resource/32450/%E6%B2%B3%E5%B7%9D%E3%82%AB%E3%83%A1%E3%83%A9%EF%BC%88202010401%EF%BC%89.csv"
+        }
+      ],
+      "coverage": "All 154 rows in the official camera location CSV; dataset page last updated in 2021, camera pages not live-checked.",
+      "license": "Creative Commons Attribution (official open-data catalog)",
+      "rights_status": "official_page_only",
+      "rights_note": "Metadata licence not assumed to cover the camera imagery; official per-camera pages only, no framing."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "JP"
+    ],
+    "operator_hints": []
+  },
+  "fukui_rivers": {
+    "source": {
+      "id": "fukui_rivers",
+      "name": "Fukui Prefecture river camera pages",
+      "url": "https://www.pref.fukui.lg.jp/doc/dx-suishin/opendata/list_1.html",
+      "terms_url": "https://www.pref.fukui.lg.jp/doc/dx-suishin/opendata/",
+      "metadata_license": "Creative Commons Attribution 4.0 (Fukui open-data policy)",
+      "media_rights": "Camera image reuse not independently established; only the published official per-camera pages are enabled.",
+      "attribution": "Fukui Prefecture",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/fukui.csv",
+          "sha256": "0c2271cb69068782a81770391104cb2922936bb4c5b07b09f008b18f5155458b",
+          "observed_at": "2026-11-14T01:48:15.074225+00:00",
+          "url": "https://www.pref.fukui.lg.jp/doc/dx-suishin/opendata/list_1_d/fil/kasen_ichi.csv"
+        }
+      ],
+      "coordinate_precision": "Coordinates in the source are whole arcseconds (roughly tens of metres); avoid precision-based exact camera matching.",
+      "license": "Creative Commons Attribution 4.0 (Fukui open-data policy)",
+      "rights_status": "official_page_only",
+      "rights_note": "Camera image reuse not independently established; only the published official per-camera pages are enabled.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "JP"
+    ],
+    "operator_hints": [],
+    "force_coordinate_role": "approximate"
+  },
+  "india_iao": {
+    "source": {
+      "id": "india_iao",
+      "name": "Indian Astronomical Observatory Hanle cameras",
+      "url": "https://www.iiap.res.in/centers/iao/mets/",
+      "terms_url": "https://www.iiap.res.in/footer/website-policies/",
+      "metadata_license": "Indian Institute of Astrophysics website reproduction policy",
+      "media_rights": "IIA-owned material may be reproduced free of charge with attribution, accurately and without misleading use; third-party content excluded. No embedding of the entire page.",
+      "attribution": "Indian Institute of Astrophysics, Indian Astronomical Observatory, Hanle",
+      "allowed_hosts": [
+        "www.iiap.res.in"
+      ],
+      "raw_files": [
+        {
+          "file": "raw/india_mets.html",
+          "sha256": "70218ac12c5c8d9b32136488d73a2717edc1072f1dad99727db6dda9fb58f441",
+          "observed_at": "2026-11-14T01:51:02.874434+00:00",
+          "url": "https://www.iiap.res.in/centers/iao/mets/"
+        },
+        {
+          "file": "raw/india_iao.html",
+          "sha256": "326a72bddaf4a1ae78219b51f37b0544dd2b906e542e045576136b269c471132",
+          "observed_at": "2026-11-14T01:49:53.172139+00:00",
+          "url": "https://www.iiap.res.in/centers/iao/"
+        }
+      ],
+      "coverage": "Two official IAO images (day and all-sky); satellite/weather images from other providers excluded.",
+      "coordinate_source": "https://www.iiap.res.in/centers/iao/",
+      "coordinate_note": "Both cameras are placed at the published observatory coordinates 32°46′46″N, 78°57′51″E; exact camera positions are unknown.",
+      "license": "Indian Institute of Astrophysics website reproduction policy",
+      "rights_status": "official_public_feed",
+      "rights_note": "IIA-owned material may be reproduced free of charge with attribution, accurately and without misleading use; third-party content excluded. No embedding of the entire page."
+    },
+    "media_hosts": [
+      "www.iiap.res.in"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "IN"
+    ],
+    "operator_hints": []
+  },
+  "semarang_public": {
+    "source": {
+      "id": "semarang_public",
+      "name": "Semarang official public traffic and public works camera map",
+      "url": "https://pantausemar.semarangkota.go.id/",
+      "terms_url": "https://pantausemar.semarangkota.go.id/",
+      "metadata_license": "Official public map; no express open reuse licence identified",
+      "media_rights": "Official viewing links only. Published HLS references are retained as provenance, never enabled in a third-party player.",
+      "attribution": "Government of Semarang City; camera operator identified on each item",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/semarang.html",
+          "sha256": "957cb950b9d64af729a122338af5bc96a3eea27c6b109b2cd6f618f814559bd7",
+          "observed_at": "2026-11-14T01:52:09.563462+00:00",
+          "url": "https://pantausemar.semarangkota.go.id/"
+        }
+      ],
+      "coverage": "65 public preview camera links on 60 sites embedded in the official map response. This is not a claim about all cameras operated in the city.",
+      "license": "Official public map; no express open reuse licence identified",
+      "rights_status": "official_page_only",
+      "rights_note": "Official viewing links only. Published HLS references are retained as provenance, never enabled in a third-party player."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "operator_hints": []
+  },
+  "bandung_atcs": {
+    "source": {
+      "id": "bandung_atcs",
+      "name": "Bandung official public traffic camera map",
+      "url": "https://atcs-dishub.bandung.go.id/",
+      "terms_url": "https://atcs-dishub.bandung.go.id/",
+      "metadata_license": "Official public map; no express open reuse licence identified",
+      "media_rights": "Official viewing links only; no HLS URL extraction or media redistribution.",
+      "attribution": "Bandung City Transportation Department (ATCS)",
+      "allowed_hosts": [],
+      "raw_files": [
+        {
+          "file": "raw/bandung_locations.json",
+          "sha256": "c63ebdcaf4d2fcb1b326e1eaa60ff3681d9ea8c9f0d9198755b6550ab117b9e1",
+          "observed_at": "2026-11-14T01:53:34.367165+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/lokasi"
+        },
+        {
+          "file": "raw/bandung_list_1.html",
+          "sha256": "d1113f3294043a2506175dfc34240fd1b4b5244cf9a5640c4338951f9316a3c0",
+          "observed_at": "2026-11-14T01:55:55.056925+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_15.html",
+          "sha256": "24f2c7762646c5fb6d5f31e1de605fc623f06ee86762a4dd871fe64e81411e45",
+          "observed_at": "2026-11-14T01:56:08.809620+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_16.html",
+          "sha256": "d704feaa516bcb24683828848ef02859923034c46505e9d34ef2c3c36c806b3b",
+          "observed_at": "2026-11-14T01:56:08.822177+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_2.html",
+          "sha256": "0c969823cc1d635d3c1341e88e546eb7f7e8f4271f6b90d997200ad0af6fb165",
+          "observed_at": "2026-11-14T01:55:55.058013+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_21.html",
+          "sha256": "0e5247e787c2299ec5a9a1c36d51d4a4590b7ecd394597cf467cc7ab7c85ede0",
+          "observed_at": "2026-11-14T01:56:14.627995+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_22.html",
+          "sha256": "9364764f24375f68b1d8d4ba8457cb46fff5c055281e891fae774b59447872a4",
+          "observed_at": "2026-11-14T01:56:14.645948+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_23.html",
+          "sha256": "47f23dcea2067ca57eb8ea5884c2ca930c9a394e5191b698ea69c5edf159e0be",
+          "observed_at": "2026-11-14T01:56:20.477538+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_3.html",
+          "sha256": "df7c69d5668a28bf2b526a3141ba03bd7696680b51ef9f73db344e3c2d36c5d0",
+          "observed_at": "2026-11-14T01:56:03.013776+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_30.html",
+          "sha256": "faacfb913779d7d1547a85ac87183964db8ebf258f4d77b46922a7eb126b5a3d",
+          "observed_at": "2026-11-14T01:56:20.494717+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_37.html",
+          "sha256": "d3ca16b9646789d8e4fb2bd0f0fd64f6e905e777320f3436484c5e0fa04d1b2c",
+          "observed_at": "2026-11-14T01:56:26.318066+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_38.html",
+          "sha256": "f0e802caf722ee7c044244914a40335188a99f3351b682f4029b33047414ddda",
+          "observed_at": "2026-11-14T01:56:26.336457+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_39.html",
+          "sha256": "9a582692ab131686d1251869c5d8ae95067961f373dce7c6ac0bc4993adcacfe",
+          "observed_at": "2026-11-14T01:56:32.096308+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_4.html",
+          "sha256": "94c67e4ecc66489d93b3c615e4b81b2f77b9984a2c05d3dae9814a07e24eb5c5",
+          "observed_at": "2026-11-14T01:56:03.056751+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_40.html",
+          "sha256": "c9736739e0965b33749def91b8240cbd918c7aa53470295f56914270123ec70b",
+          "observed_at": "2026-11-14T01:56:32.116089+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        },
+        {
+          "file": "raw/bandung_list_65.html",
+          "sha256": "4450a08abecb69244bdf3d05f28beff3d3a69845ba89e3db9c94442b5d0b73ef",
+          "observed_at": "2026-11-14T01:56:37.889928+00:00",
+          "url": "https://atcs-dishub.bandung.go.id/ajax/cctv-list"
+        }
+      ],
+      "coverage": "Public map locations and the camera IDs actually returned by their public camera-list endpoint; site coordinates used, not exact camera positions.",
+      "license": "Official public map; no express open reuse licence identified",
+      "rights_status": "official_page_only",
+      "rights_note": "Official viewing links only; no HLS URL extraction or media redistribution."
+    },
+    "media_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "operator_hints": []
+  },
+  "iowa_dot": {
+    "source": {
+      "id": "iowa_dot",
+      "name": "Iowa DOT public traffic camera views",
+      "url": "https://data.iowadot.gov/datasets/IowaDOT::traffic-cameras-3/about",
+      "catalog_url": "https://services.arcgis.com/8lRhdTsQyJpO52F1/arcgis/rest/services/Traffic_Cameras_View/FeatureServer/0",
+      "terms_url": "https://iowadot.gov/policies-statements/terms-use",
+      "metadata_license": "CC-BY-4.0 for GIS camera metadata, with Iowa DOT GIS terms",
+      "license": "CC-BY-4.0 for GIS camera metadata, with Iowa DOT GIS terms",
+      "media_rights": "External references only. GIS CC-BY-4.0 and official integrator guidance do not unambiguously establish separate commercial video/image reuse; no embedded media authorized in this proposal.",
+      "rights_note": "External references only. GIS CC-BY-4.0 and official integrator guidance do not unambiguously establish separate commercial video/image reuse; no embedded media authorized in this proposal.",
+      "attribution": "Iowa Department of Transportation, Traffic Cameras, CC BY 4.0. Metadata normalized by QGlobe; media remain with Iowa DOT.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "data.iowadot.gov"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "data.iowadot.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "US"
+    ]
+  },
+  "wisconsin_dot": {
+    "source": {
+      "id": "wisconsin_dot",
+      "name": "WisDOT public 511 camera locations",
+      "url": "https://data-wisdot.opendata.arcgis.com/",
+      "catalog_url": "https://services5.arcgis.com/0pgGLzT0Nh7FVjon/ArcGIS/rest/services/511_Camera_view/FeatureServer/0",
+      "terms_url": "https://wisconsindot.gov/Documents/doing-bus/gis/WisDOT-GIS-Data-Legal-062021.pdf",
+      "metadata_license": "WisDOT public GIS data; GIS legal notices; no Creative Commons license claimed",
+      "license": "WisDOT public GIS data; GIS legal notices; no Creative Commons license claimed",
+      "media_rights": "External official player links only. WisDOT website acceptable-use terms do not establish general commercial reuse of images/video.",
+      "rights_note": "External official player links only. WisDOT website acceptable-use terms do not establish general commercial reuse of images/video.",
+      "attribution": "Wisconsin Department of Transportation, 511 Camera data. Metadata normalized by QGlobe; original player and media remain with WisDOT.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "trust.dot.state.wi.us",
+        "511wi.gov"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "trust.dot.state.wi.us",
+      "511wi.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "US"
+    ]
+  },
+  "illinois_gateway": {
+    "source": {
+      "id": "illinois_gateway",
+      "name": "IDOT Illinois Gateway traffic camera views",
+      "url": "https://www.arcgis.com/home/item.html?id=8a885da23dfb46caaa1827ad920fb5b1",
+      "catalog_url": "https://services2.arcgis.com/aIrBD8yn1TDTEXoz/ArcGIS/rest/services/TrafficCamerasTM_Public/FeatureServer/0",
+      "terms_url": "https://travelmidwest.com/About/InfoReusePolicy",
+      "metadata_license": "CC-BY-SA-2.0 for the IDOT GIS camera metadata; preserve attribution and ShareAlike on adapted metadata",
+      "license": "CC-BY-SA-2.0 for the IDOT GIS camera metadata; preserve attribution and ShareAlike on adapted metadata",
+      "media_rights": "External official camera pages only. Travel Midwest reuse policy requires registration and image attribution/refresh conditions; no image embed authorized here.",
+      "rights_note": "External official camera pages only. Travel Midwest reuse policy requires registration and image attribution/refresh conditions; no image embed authorized here.",
+      "attribution": "Illinois Department of Transportation / Travel Midwest, Illinois Gateway Traffic Cameras, CC BY-SA 2.0. Metadata normalized by QGlobe under CC BY-SA 2.0; linked media rights remain with the originating agency.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "travelmidwest.com"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "travelmidwest.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "US"
+    ]
+  },
+  "txdot_its": {
+    "source": {
+      "id": "txdot_its",
+      "name": "TxDOT ITS public district camera directory",
+      "url": "https://www.txdot.gov/discover/live-traffic-cameras.html",
+      "catalog_url": "https://its.txdot.gov/its/District/DAL",
+      "terms_url": "https://www.txdot.gov/about/disclaimer.html",
+      "metadata_license": "Published factual camera index and official links; no express open-data license located; link-only proposal subject to source review",
+      "license": "Published factual camera index and official links; no express open-data license located; link-only proposal subject to source review",
+      "media_rights": "No image/video reuse permission established. External district camera-list pages only; no media fetched or embedded.",
+      "rights_note": "No image/video reuse permission established. External district camera-list pages only; no media fetched or embedded.",
+      "attribution": "Texas Department of Transportation, public ITS district camera directory. Metadata normalized by QGlobe; no endorsement implied.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "its.txdot.gov",
+        "www.txdot.gov"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "provider_notice": "The publisher provides latitude/longitude for its public map without declaring a datum. Positions are approximate and do not establish a precise camera identity match. Open the official directory to select the named camera; video availability has not been checked.",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "its.txdot.gov",
+      "www.txdot.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate",
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate"
+  },
+  "alabama_algo": {
+    "source": {
+      "id": "alabama_algo",
+      "name": "ALDOT ALGO explicitly public traffic cameras",
+      "url": "https://www.dot.state.al.us/travel.html",
+      "catalog_url": "https://api.algotraffic.com/v4.0/Cameras",
+      "terms_url": "https://algotraffic.com/privacy-policy.html",
+      "metadata_license": "Published factual public camera index and links; no express open-data license located; link-only proposal subject to source review",
+      "license": "Published factual public camera index and links; no express open-data license located; link-only proposal subject to source review",
+      "media_rights": "No image/video reuse permission established. Only accessLevel=Public records and their published official permalinks; no embedded media.",
+      "rights_note": "No image/video reuse permission established. Only accessLevel=Public records and their published official permalinks; no embedded media.",
+      "attribution": "Alabama Department of Transportation / ALGO Traffic. Public camera metadata normalized by QGlobe; media remain with the original publisher.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.algotraffic.com",
+        "algotraffic.com"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "provider_notice": "The publisher provides latitude/longitude for its public map without declaring a datum. Positions are approximate and do not establish a precise camera identity match. Open the official directory to select the named camera; video availability has not been checked.",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.algotraffic.com",
+      "algotraffic.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate",
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate"
+  },
+  "baton_rouge": {
+    "source": {
+      "id": "baton_rouge",
+      "name": "City of Baton Rouge public traffic camera locations",
+      "url": "https://data.brla.gov/Transportation-and-Infrastructure/Traffic-Camera/6z6u-ts44",
+      "catalog_url": "https://data.brla.gov/resource/6z6u-ts44.json",
+      "terms_url": "https://data.brla.gov/api/views/6z6u-ts44.json",
+      "metadata_license": "Public Domain, as declared by City of Baton Rouge metadata",
+      "license": "Public Domain, as declared by City of Baton Rouge metadata",
+      "media_rights": "Public Domain applies to this geospatial dataset. Separate LADOTD camera-image reuse not established; public dataset page and image references only.",
+      "rights_note": "Public Domain applies to this geospatial dataset. Separate LADOTD camera-image reuse not established; public dataset page and image references only.",
+      "attribution": "City of Baton Rouge / LA Department of Transportation and Development (DOTD), Traffic Camera dataset, Public Domain. Metadata normalized by QGlobe.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "data.brla.gov"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "data.brla.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "US"
+    ]
+  },
+  "kentucky_kytc": {
+    "source": {
+      "id": "kentucky_kytc",
+      "name": "KYTC public traffic camera locations and partner views",
+      "url": "https://maps.kytc.ky.gov/trafficcameras/",
+      "catalog_url": "https://services2.arcgis.com/CcI36Pduqd0OR4W9/arcgis/rest/services/trafficCamerasCur_Prd/FeatureServer/0",
+      "terms_url": "https://www.arcgis.com/sharing/rest/content/items/0666efd2054343b080b5c2f0924ef2ae/info/metadata/metadata.xml?format=default&output=html",
+      "metadata_license": "CC0-1.0 for KYTC published map/data; source webmap explicitly loads the acquired traffic camera layer",
+      "license": "CC0-1.0 for KYTC published map/data; source webmap explicitly loads the acquired traffic camera layer",
+      "media_rights": "External official map only. KYTC map/data CC0 does not conclusively establish rights in all linked TRIMARC/Indiana partner images; no snapshots embedded in this proposal.",
+      "rights_note": "External official map only. KYTC map/data CC0 does not conclusively establish rights in all linked TRIMARC/Indiana partner images; no snapshots embedded in this proposal.",
+      "attribution": "Kentucky Transportation Cabinet, Traffic Cameras, CC0. Metadata normalized by QGlobe; linked images remain subject to their original publisher's rights.",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "maps.kytc.ky.gov"
+      ],
+      "rights_status": "official_page_only",
+      "review_status": "reviewed_for_external_references_only",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "maps.kytc.ky.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "countries": [
+      "US"
+    ]
+  },
+  "japan_mlit_rivers": {
+    "source": {
+      "id": "japan_mlit_rivers",
+      "name": "Japan MLIT — river camera directory",
+      "url": "https://www.river.go.jp/kawabou/pcfull",
+      "terms_url": "https://www.river.go.jp/kawabou/kwb_apend/html/caution.html",
+      "metadata_license": "Government of Japan Standard Terms of Use 2.0; attribution and modification notice",
+      "media_rights": "Official page links only; in-app media reuse not authorized by this adapter.",
+      "attribution": "Source: MLIT River Disaster Prevention Information (川の防災情報). Metadata normalized by QGlobe; not an official MLIT product.",
+      "allowed_hosts": [],
+      "rights_status": "official_page_only",
+      "rights_note": "The published site terms permit reuse of its information with attribution and modification disclosure; third-party rights are excluded. This adapter reuses camera directory metadata and links, not imagery. The site asks users not to run periodic automated collection; scheduled ingestion requires the designated distribution route.",
+      "provider_notice": "Camera details open on the official MLIT site. No current image or live status has been checked. Do not poll this directory automatically.",
+      "license_url": "https://www.river.go.jp/kawabou/kwb_apend/html/caution.html",
+      "collection_policy": "One-time bounded metadata acquisition only; no scheduled polling of river.go.jp.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.river.go.jp"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "JP"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "malaysia_llm": {
+    "source": {
+      "id": "malaysia_llm",
+      "name": "Lembaga Lebuhraya Malaysia — highway camera directory",
+      "url": "https://www.llm.gov.my/awam/cctv1",
+      "terms_url": "https://www.llm.gov.my/awam/panduandata",
+      "metadata_license": "Malaysia Government Open Data Terms 1.0, as published by LLM",
+      "media_rights": "Official page links only; in-app media reuse not authorized by this adapter.",
+      "attribution": "Data: Lembaga Lebuhraya Malaysia. Data dan maklumat tertakluk di bawah Terma Penggunaan Data Terbuka Kerajaan Malaysia 1.0. Metadata normalized by QGlobe.",
+      "allowed_hosts": [],
+      "rights_status": "official_page_only",
+      "rights_note": "LLM publishes government open-data reuse terms and a public highway CCTV GIS layer. The GIS item has no separate licence field; the general LLM data policy is the metadata basis. Concessionaire/third-party image rights are not assumed.",
+      "provider_notice": "Camera locations and names are from LLM's public GIS directory. The underlying records include older modification dates. Shared coordinates do not establish shared camera identity. Open the official directory to view current availability.",
+      "license_url": "https://www.llm.gov.my/awam/panduandata",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.llm.gov.my"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "MY"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "indonesia_bpjt": {
+    "source": {
+      "id": "indonesia_bpjt",
+      "name": "BPJT — Indonesia public toll-road camera directory",
+      "url": "https://bpjt.pu.go.id/cctv/",
+      "terms_url": "https://bpjt.pu.go.id/faq/apakah-data-cctv-tersedia-di-bpjt/",
+      "metadata_license": "No explicit bulk reuse licence located; factual public directory references only",
+      "media_rights": "Official page links only; in-app media reuse not authorized by this adapter.",
+      "attribution": "Public camera directory: Badan Pengatur Jalan Tol, Kementerian Pekerjaan Umum, Indonesia; respective toll-road operators. Factual metadata normalized by QGlobe.",
+      "allowed_hosts": [],
+      "rights_status": "official_page_only",
+      "rights_note": "BPJT expressly offers current camera viewing to the public. It distinguishes restricted historical footage. No media redistribution licence was found: only links to the public BPJT directory are activated; concessionaire URLs remain inert provenance references where safe.",
+      "provider_notice": "Open the official BPJT directory and select the named road/camera. This record does not authorize video embedding. The catalog does not identify a coordinate datum; map positions are approximate.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "bpjt.pu.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "south_africa_saao": {
+    "source": {
+      "id": "south_africa_saao",
+      "name": "South African Astronomical Observatory — public Sutherland webcams",
+      "url": "https://www.saao.ac.za/explore/media/saao-live/",
+      "terms_url": "https://www.saao.ac.za/explore/media/",
+      "metadata_license": "No explicit open media licence located; factual links to the official public outreach page only",
+      "media_rights": "Official page links only; in-app media reuse not authorized by this adapter.",
+      "attribution": "Public camera references: South African Astronomical Observatory / National Research Foundation; respective telescope operators.",
+      "allowed_hosts": [],
+      "rights_status": "official_page_only",
+      "rights_note": "The observatory deliberately publishes webcam animations on its public outreach page. This adapter does not copy or embed clips. The published 1.0-m telescope coordinates identify the observing site, not the individual webcam mounts.",
+      "provider_notice": "The official page publishes webcam animations. These are not verified live streams. The marker identifies the Sutherland observing site, not a surveyed camera location.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.saao.ac.za"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ZA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location",
+    "force_coordinate_role": "station_location"
+  },
+  "chmi": {
+    "source": {
+      "id": "chmi",
+      "name": "Český hydrometeorologický ústav — public webcam map",
+      "url": "https://produkty.chmi.cz/webkamery/webcamMap.php",
+      "terms_url": "https://www.chmi.cz/-/jak-mohu-pou%C5%BE%C3%ADvat-otev%C5%99en%C3%A1-data-%C4%8Dhm%C3%BA-",
+      "metadata_license": "CHMI open-data policy: CC-BY-4.0. Camera-directory-specific scope not separately declared; factual links only.",
+      "license": "CHMI open-data policy: CC-BY-4.0. Camera-directory-specific scope not separately declared; factual links only.",
+      "media_rights": "The map includes other operators. No blanket rights to their images are asserted; no media embedded.",
+      "rights_note": "The map includes other operators. No blanket rights to their images are asserted; no media embedded.",
+      "rights_status": "official_page_only",
+      "attribution": "ČHMÚ and the operators identified on each original webcam page",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "produkty.chmi.cz"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/chmi_cameras.json",
+          "url": "https://produkty.chmi.cz/webkamery/webcams.json",
+          "observed_at": "2026-11-14T02:35:12.147013+00:00",
+          "sha256": "9e53f8eadc70fe3bd1af3767d956100834fdf2b8b3ae2637816232f1031ee6df",
+          "bytes": 14702
+        },
+        {
+          "file": "raw/chmi_map.html",
+          "url": "https://produkty.chmi.cz/webkamery/webcamMap.php",
+          "observed_at": "2026-11-14T02:32:07.952498+00:00",
+          "sha256": "10de0eaf9a5aeea2423edc5492991655b3f053da9c9749fc76d4ee8916442764",
+          "bytes": 140673
+        },
+        {
+          "file": "raw/chmi_data_terms.html",
+          "url": "https://www.chmi.cz/-/jak-mohu-pou%C5%BE%C3%ADvat-otev%C5%99en%C3%A1-data-%C4%8Dhm%C3%BA-",
+          "observed_at": "2026-11-14T02:32:07.953249+00:00",
+          "sha256": "803b109538ac38831bfab046c2d27bb060b29e55fe052a1fe52c9e29a67ee518",
+          "bytes": 241102
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "produkty.chmi.cz"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "CZ"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "trafficwatchni": {
+    "source": {
+      "id": "trafficwatchni",
+      "name": "TrafficWatchNI — Department for Infrastructure",
+      "url": "https://www.trafficwatchni.com/twni/cameras",
+      "terms_url": "https://www.trafficwatchni.com/twni/crown-copyright",
+      "metadata_license": "Open Government Licence (version not specified on publisher page)",
+      "license": "Open Government Licence (version not specified on publisher page)",
+      "media_rights": "Crown copyright site information reusable under OGL except logos/otherwise marked content. Public CCTV images use the official cctv host; no frames downloaded.",
+      "rights_note": "Crown copyright site information reusable under OGL except logos/otherwise marked content. Public CCTV images use the official cctv host; no frames downloaded.",
+      "rights_status": "official_public_feed",
+      "attribution": "© Crown copyright — DfI Traffic Information and Control Centre / TrafficWatchNI — Open Government Licence",
+      "allowed_hosts": [
+        "cctv.trafficwatchni.com"
+      ],
+      "official_page_hosts": [
+        "www.trafficwatchni.com"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/ni_cameras.json",
+          "url": "https://www.trafficwatchni.com/twni/map/mapData",
+          "observed_at": "2026-11-14T02:36:09.170851+00:00",
+          "sha256": "c78d3a84a665ae6d82dea695feb476e731555d60ae1d34155747debb0408fd02",
+          "bytes": 27748
+        },
+        {
+          "file": "raw/ni_camera_directory.html",
+          "url": "https://www.trafficwatchni.com/twni/cameras",
+          "observed_at": "2026-11-14T02:43:55.208919+00:00",
+          "sha256": "0e90906d58855e0ce6a800cc25f255424b0a2dd7f12d431dcefc72dca552b99a",
+          "bytes": 237990
+        },
+        {
+          "file": "raw/ni_copyright.html",
+          "url": "https://www.trafficwatchni.com/twni/crown-copyright",
+          "observed_at": "2026-11-14T02:32:14.586654+00:00",
+          "sha256": "6f864727dcebca1d7276dacb186147f29506fd22908115b07e365dab76accc23",
+          "bytes": 15424
+        },
+        {
+          "file": "raw/ni_terms.html",
+          "url": "https://www.trafficwatchni.com/twni/terms-and-conditions",
+          "observed_at": "2026-11-14T02:35:58.798039+00:00",
+          "sha256": "649b349859610a571ae040d53ea9369bcb2bc1ff4255a56403d9f6ab9f519e13",
+          "bytes": 20054
+        },
+        {
+          "file": "raw/ni_page_sample.html",
+          "url": "https://www.trafficwatchni.com/twni/cameras/cctvMapPopup?id=155",
+          "observed_at": "2026-11-14T02:42:38.088502+00:00",
+          "sha256": "999503ac39ee6603fa0fea5217120fb8704defd5f8e6d9babd9b120919512b68",
+          "bytes": 2643
+        }
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [
+      "cctv.trafficwatchni.com"
+    ],
+    "page_hosts": [
+      "www.trafficwatchni.com"
+    ],
+    "formats": [
+      "official_page",
+      "snapshot"
+    ],
+    "countries": [
+      "GB"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "geneva_sitg": {
+    "source": {
+      "id": "geneva_sitg",
+      "name": "SITG Genève — caméras de surveillance du trafic",
+      "url": "https://sitg.ge.ch/donnees/infomob-camera",
+      "terms_url": "https://sitg.ge.ch/ressources/conditions-utilisation-donnees",
+      "metadata_license": "SITG level A — open data, commercial reuse with source/extraction-date/transformation attribution",
+      "license": "SITG level A — open data, commercial reuse with source/extraction-date/transformation attribution",
+      "media_rights": "Dataset warns that imagery is not updated in real time. Only the official traffic map is linked.",
+      "rights_note": "Dataset warns that imagery is not updated in real time. Only the official traffic map is linked.",
+      "rights_status": "official_page_only",
+      "attribution": "Données SITG, extraction 2026-11-14; server transformation EPSG:21781 → EPSG:4326",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "ge.ch"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/geneva_cameras.json",
+          "url": "https://vector.sitg.ge.ch/arcgis/rest/services/INFOMOB_CAMERA/FeatureServer/0/query?f=json&where=1%3D1&outFields=*&returnGeometry=true&outSR=4326",
+          "observed_at": "2026-11-14T02:35:54.185691+00:00",
+          "sha256": "14f727816ab40b5a347c565c525186607500389d3c60004f8dee5a3d3ee2d602",
+          "bytes": 3195
+        },
+        {
+          "file": "raw/geneva_count.json",
+          "url": "https://vector.sitg.ge.ch/arcgis/rest/services/INFOMOB_CAMERA/FeatureServer/0/query?f=json&where=1%3D1&returnCountOnly=true",
+          "observed_at": "2026-11-14T02:35:54.186441+00:00",
+          "sha256": "77225c1b889e1a23d33f5e7724a89deba869a0b481aff9fe90736b56532d0542",
+          "bytes": 11
+        },
+        {
+          "file": "raw/geneva_dataset.html",
+          "url": "https://sitg.ge.ch/donnees/infomob-camera",
+          "observed_at": "2026-11-14T02:32:07.953854+00:00",
+          "sha256": "e2f356aa8823b1e2d0282e583bd6aba0957c13bb6729dad6106dffdef79a173a",
+          "bytes": 232385
+        },
+        {
+          "file": "raw/geneva_terms.html",
+          "url": "https://sitg.ge.ch/ressources/conditions-utilisation-donnees",
+          "observed_at": "2026-11-14T02:35:19.215924+00:00",
+          "sha256": "a8221891daf0b493c84febf81e6a2c18a96b875c8eff20dd7731c4c21b1b9365",
+          "bytes": 138985
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "ge.ch"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "CH"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "anglet": {
+    "source": {
+      "id": "anglet",
+      "name": "Ville d’Anglet — webcams du littoral",
+      "url": "https://www.data.gouv.fr/datasets/localisation-des-webcams-littoral-anglet",
+      "terms_url": "https://www.data.gouv.fr/datasets/localisation-des-webcams-littoral-anglet",
+      "metadata_license": "Licence Ouverte / Open Licence 2.0 (metadata)",
+      "license": "Licence Ouverte / Open Licence 2.0 (metadata)",
+      "media_rights": "Viewsurf player rights not inferred from the open metadata licence. Original published player page links only.",
+      "rights_note": "Viewsurf player rights not inferred from the open metadata licence. Original published player page links only.",
+      "rights_status": "official_page_only",
+      "attribution": "Ville d’Anglet — Licence Ouverte 2.0; imagery on original Viewsurf pages",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "pv.viewsurf.com"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/anglet_cameras.geojson",
+          "url": "https://anglet-opendatapaysbasque.opendatasoft.com/api/explore/v2.1/catalog/datasets/20240325-webcam_64024-21640024200014_anglet/exports/geojson",
+          "observed_at": "2026-11-14T02:35:18.163789+00:00",
+          "sha256": "b3a162aed0a558f365c2bd5ac0ccdfc5614df9f192b43de5089b0b67644a48cd",
+          "bytes": 2213
+        },
+        {
+          "file": "raw/anglet_dataset.html",
+          "url": "https://www.data.gouv.fr/api/1/datasets/localisation-des-webcams-littoral-anglet/",
+          "observed_at": "2026-11-14T02:32:13.485747+00:00",
+          "sha256": "2575bb5605009f07f647b1c305979b05082a2b511dd8b130126f873c9afb0ebd",
+          "bytes": 15558
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "pv.viewsurf.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "FR"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "vialietuva": {
+    "source": {
+      "id": "vialietuva",
+      "name": "Via Lietuva — Eismoinfo public camera pages",
+      "url": "https://eismoinfo.lt/cameras",
+      "terms_url": "https://eismoinfo.lt/eismoinfo-backend-v2/content?id=5914",
+      "metadata_license": "No camera-catalog-specific open redistribution licence established; factual directory links only, attributed to Via Lietuva.",
+      "license": "No camera-catalog-specific open redistribution licence established; factual directory links only, attributed to Via Lietuva.",
+      "media_rights": "Current terms explicitly exclude traffic camera images and non-open content from open-data permissions. No image URL collected or embedded.",
+      "rights_note": "Current terms explicitly exclude traffic camera images and non-open content from open-data permissions. No image URL collected or embedded.",
+      "rights_status": "official_page_only",
+      "attribution": "Via Lietuva / eismoinfo.lt",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "eismoinfo.lt"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/lithuania_camera_locations_v2.json",
+          "url": "https://eismoinfo.lt/eismoinfo-backend-v2/layer-static-features/VKR",
+          "observed_at": "2026-11-14T02:40:29.168615+00:00",
+          "sha256": "b7ac15b5b258f4a174cf19a73176a0138106d52f894a7caeb7510d1d8bacf699",
+          "bytes": 47274
+        },
+        {
+          "file": "raw/lithuania_config.js",
+          "url": "https://eismoinfo.lt/config.js",
+          "observed_at": "2026-11-14T02:39:31.821513+00:00",
+          "sha256": "7deeb959d1f22156e83f6946a512c0c3165fca907fa483de73ba20a74ac19b33",
+          "bytes": 1328
+        },
+        {
+          "file": "raw/lithuania_main.js",
+          "url": "https://eismoinfo.lt/assets/index-mz-7J9SQ.js",
+          "observed_at": "2026-11-14T02:38:37.153733+00:00",
+          "sha256": "7bd076522bd412249d23802e150be032702a4b3ca8bbc91ab1ba6957bf188569",
+          "bytes": 2759000
+        },
+        {
+          "file": "raw/lithuania_terms_current.json",
+          "url": "https://eismoinfo.lt/eismoinfo-backend-v2/content?id=5914",
+          "observed_at": "2026-11-14T02:39:54.735788+00:00",
+          "sha256": "7408cfb0a6a9e98e5aa16d4993d175bd0f54a34fec1149720f684ddad68b3fab",
+          "bytes": 842
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "eismoinfo.lt"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "LT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "euskadi_traffic": {
+    "source": {
+      "id": "euskadi_traffic",
+      "name": "Open Data Euskadi — public traffic camera directory",
+      "url": "https://opendata.euskadi.eus/api-traffic/?api=traffic",
+      "terms_url": "https://opendata.euskadi.eus/general/-/informacion-legal-opendata/",
+      "metadata_license": "Open Data Euskadi reuse terms (CC-BY-4.0/open public-information licence); upstream Bilbao catalogue CC-BY-3.0-ES.",
+      "license": "Open Data Euskadi reuse terms (CC-BY-4.0/open public-information licence); upstream Bilbao catalogue CC-BY-3.0-ES.",
+      "media_rights": "Mixed operators and licences. Keep published image URL as reference only; no blanket right to embed images asserted.",
+      "rights_note": "Mixed operators and licences. Keep published image URL as reference only; no blanket right to embed images asserted.",
+      "rights_status": "official_page_only",
+      "attribution": "Open Data Euskadi; Gobierno Vasco, Ayuntamiento de Bilbao and Ayuntamiento de Donostia-San Sebastián",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.trafikoa.eus",
+        "www.bilbao.eus"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/euskadi_openapi.json",
+          "url": "https://api.euskadi.eus/traffic/api-docs?group=Version_1.0",
+          "observed_at": "2026-11-14T02:39:54.734767+00:00",
+          "sha256": "76301ed39d44c396fd731fb8fb2059b6119028735c4aecc80dd1b28693a668d0",
+          "bytes": 60554
+        },
+        {
+          "file": "raw/euskadi_sources.json",
+          "url": "https://api.euskadi.eus/traffic/v1.0/sources",
+          "observed_at": "2026-11-14T02:40:24.991965+00:00",
+          "sha256": "98c4abb30c72478ccda80438819e7f4a1f6bf3f5389bc4b0afade90a3f368dfb",
+          "bytes": 663
+        },
+        {
+          "file": "raw/euskadi_terms.html",
+          "url": "https://opendata.euskadi.eus/general/-/informacion-legal-opendata/",
+          "observed_at": "2026-11-14T02:39:25.599380+00:00",
+          "sha256": "3a41457454140448158fa7089fbde70cdf2d341a52ae39e2164201a954fef602",
+          "bytes": 150448
+        },
+        {
+          "file": "raw/euskadi_dataset.html",
+          "url": "https://opendata.euskadi.eus/catalogo/-/camaras-de-trafico-de-euskadi/",
+          "observed_at": "2026-11-14T02:38:35.771644+00:00",
+          "sha256": "d4926fb2ab3eab07c470617ff4329d90610635b165356e7a560ef4b8ca952b7d",
+          "bytes": 160766
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.trafikoa.eus",
+      "www.bilbao.eus"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ES"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "vitoria": {
+    "source": {
+      "id": "vitoria",
+      "name": "Ayuntamiento de Vitoria-Gasteiz — traffic cameras",
+      "url": "https://www.vitoria-gasteiz.org/wb021/was/contenidoAction.do?idioma=en&uid=app_j34_0202",
+      "terms_url": "https://www.vitoria-gasteiz.org/wb021/was/contenidoAction.do?idioma=en&uid=app_j34_0202",
+      "metadata_license": "CC-BY-4.0",
+      "license": "CC-BY-4.0",
+      "media_rights": "Official camera-service dataset expressly licenses reuse including commercial use and documents action=get for public camera images. No frames fetched.",
+      "rights_note": "Official camera-service dataset expressly licenses reuse including commercial use and documents action=get for public camera images. No frames fetched.",
+      "rights_status": "official_public_feed",
+      "attribution": "Ayuntamiento de Vitoria-Gasteiz — CC-BY-4.0",
+      "allowed_hosts": [
+        "www.vitoria-gasteiz.org"
+      ],
+      "official_page_hosts": [
+        "www.vitoria-gasteiz.org"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/vitoria_current_cameras.geojson",
+          "url": "https://www.vitoria-gasteiz.org/c11-01w/cameras?action=list&format=GEOJSON",
+          "observed_at": "2026-11-14T02:44:49.550610+00:00",
+          "sha256": "7149a78f70022727b069a07f4eeaf06f9988e12947ca078cb8c1857fe97de603",
+          "bytes": 13530
+        },
+        {
+          "file": "raw/vitoria_dataset.html",
+          "url": "https://www.vitoria-gasteiz.org/wb021/was/contenidoAction.do?idioma=en&uid=app_j34_0202",
+          "observed_at": "2026-11-14T02:43:55.210691+00:00",
+          "sha256": "5eacee4561c6163d54e1ac7b3157c4e537350521ddc5853b08c2ad752093faf9",
+          "bytes": 47074
+        },
+        {
+          "file": "raw/vitoria_camera_docs.txt",
+          "url": "https://www.vitoria-gasteiz.org/docs/j34/catalogo/02/02/Propiedadesdelservicio_camaras.txt",
+          "observed_at": "2026-11-14T02:44:49.551254+00:00",
+          "sha256": "19fd8b2a96d36ac5acf53dc0c20bc0ada1180323fabdabc67bca38f5cd9fb103",
+          "bytes": 1219
+        }
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [
+      "www.vitoria-gasteiz.org"
+    ],
+    "page_hosts": [
+      "www.vitoria-gasteiz.org"
+    ],
+    "formats": [
+      "official_page",
+      "snapshot"
+    ],
+    "countries": [
+      "ES"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "bizkaia": {
+    "source": {
+      "id": "bizkaia",
+      "name": "Diputación Foral de Bizkaia — public traffic camera metadata",
+      "url": "https://www.opendatabizkaia.eus/es/catalogo/trafico/recurso/camaras-trafico",
+      "terms_url": "https://www.opendatabizkaia.eus/es/catalogo/trafico/recurso/camaras-trafico",
+      "metadata_license": "CC-BY-4.0 (metadata)",
+      "license": "CC-BY-4.0 (metadata)",
+      "media_rights": "Only entries that explicitly publish an image URL are retained. Image rights not inferred from metadata; directory link plus reference URL only.",
+      "rights_note": "Only entries that explicitly publish an image URL are retained. Image rights not inferred from metadata; directory link plus reference URL only.",
+      "rights_status": "official_page_only",
+      "attribution": "Diputación Foral de Bizkaia / Interbiak — CC-BY-4.0 metadata",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.opendatabizkaia.eus"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/bizkaia_cameras.json",
+          "url": "https://www.opendatabizkaia.eus/es/dump/a0222f71-1b4a-4285-924d-b62f888eabe1/camaras-trafico?format=json",
+          "observed_at": "2026-11-14T02:44:14.644899+00:00",
+          "sha256": "c4585aea1155a484ea30e62932261b8724d6a262181a182bcac0ca685891e368",
+          "bytes": 38095
+        },
+        {
+          "file": "raw/bizkaia_dataset.html",
+          "url": "https://www.opendatabizkaia.eus/es/catalogo/trafico/recurso/camaras-trafico",
+          "observed_at": "2026-11-14T02:43:55.209633+00:00",
+          "sha256": "f039e4ec869f2c0305ec2ec1bd066d57609a031faf0e4c716079d99ab602db13",
+          "bytes": 48202
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.opendatabizkaia.eus"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ES"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "catalonia_sct": {
+    "source": {
+      "id": "catalonia_sct",
+      "name": "Generalitat de Catalunya — open camera locations",
+      "url": "https://analisi.transparenciacatalunya.cat/d/3tzz-6b9y",
+      "terms_url": "https://web.gencat.cat/es/avis-legal",
+      "metadata_license": "Generalitat open information reuse terms; dataset-specific licence points to Generalitat open-data licensing policy.",
+      "license": "Generalitat open information reuse terms; dataset-specific licence points to Generalitat open-data licensing policy.",
+      "media_rights": "Mixed SCT, Terrassa and Andorra imagery; published URLs preserved as reference only. HTTP references are not silently upgraded.",
+      "rights_note": "Mixed SCT, Terrassa and Andorra imagery; published URLs preserved as reference only. HTTP references are not silently upgraded.",
+      "rights_status": "official_page_only",
+      "attribution": "Generalitat de Catalunya / Servei Català de Trànsit; respective listed camera operators",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "transit.gencat.cat",
+        "analisi.transparenciacatalunya.cat",
+        "www.mobilitat.ad"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/catalonia_cameras.xml",
+          "url": "https://www.gencat.cat/transit/opendata/cameres.xml",
+          "observed_at": "2026-11-14T02:38:25.471547+00:00",
+          "sha256": "b757e73cc174551ffe890b952b4a65af0c7576dadada3cdd5aaaf3e5166f76fd",
+          "bytes": 21475
+        },
+        {
+          "file": "raw/catalonia_dataset.json",
+          "url": "https://analisi.transparenciacatalunya.cat/api/views/3tzz-6b9y.json",
+          "observed_at": "2026-11-14T02:38:30.508734+00:00",
+          "sha256": "f0e53fd1857aa046761ad5deffc7eb869c151a1b909514fa2d870b9c2cc9a45e",
+          "bytes": 4514
+        },
+        {
+          "file": "raw/catalonia_current_legal.html",
+          "url": "https://web.gencat.cat/es/avis-legal",
+          "observed_at": "2026-11-14T02:39:58.885350+00:00",
+          "sha256": "ca933f553bd41feb2d7f8c5344f1ab2b72da166848db8bf96bae929752ea2082",
+          "bytes": 163745
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "transit.gencat.cat",
+      "analisi.transparenciacatalunya.cat",
+      "www.mobilitat.ad"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ES",
+      "AD"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "flanders": {
+    "source": {
+      "id": "flanders",
+      "name": "Vlaams Verkeerscentrum — public camera pages",
+      "url": "https://www.verkeerscentrum.be/camerabeelden",
+      "terms_url": "https://www.verkeerscentrum.be/algemene-voorwaarden",
+      "metadata_license": "No open camera metadata licence asserted. Terms explicitly allow links to publisher web pages; factual directory references only.",
+      "license": "No open camera metadata licence asserted. Terms explicitly allow links to publisher web pages; factual directory references only.",
+      "media_rights": "Terms prohibit copying/downloading/reuse/redistribution of camera images and require permission for embedding. No media URLs activated or media downloaded.",
+      "rights_note": "Terms prohibit copying/downloading/reuse/redistribution of camera images and require permission for embedding. No media URLs activated or media downloaded.",
+      "rights_status": "official_page_only",
+      "attribution": "Vlaams Verkeerscentrum",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.verkeerscentrum.be"
+      ],
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "raw_files": [
+        {
+          "file": "raw/belgium_camera_locations.json",
+          "url": "https://www.verkeerscentrum.be/vvc/map-data/cameras",
+          "observed_at": "2026-11-14T02:41:52.312848+00:00",
+          "sha256": "673a6ce79cb65394db2f9849437e8b0f253e6fa8fffdb25939f6a84701c68557",
+          "bytes": 6155
+        },
+        {
+          "file": "raw/belgium_cameras.html",
+          "url": "https://www.verkeerscentrum.be/camerabeelden",
+          "observed_at": "2026-11-14T02:37:32.499918+00:00",
+          "sha256": "0f5899cbd62267e4e11cd9d84368ad5c8b016f7b1c5f5e8f376bafdef2a01192",
+          "bytes": 68780
+        },
+        {
+          "file": "raw/belgium_map.js",
+          "url": "https://www.verkeerscentrum.be/sites/default/files/js/js_J3zNgdqtl4WNhL49atixWOJ4G96QJxbPI9g6tglQzVk.js?scope=footer&delta=0&language=nl&theme=vvc_theme&include=eJxFjVEOwyAMQy8E5UiVFVLGRhoU0mrHX8s--mM_ybZMapyyHR1tyRVNy4I3vuHTYJqmBoGraPpbOE9a6V4RhA1xuDGk7uVJjEvVPQ5uTK72BG7YtkpxVD_gd8e4KfJsCPr10Sf7i4XTRXHSD9zEQBs",
+          "observed_at": "2026-11-14T02:40:24.988212+00:00",
+          "sha256": "b195636b186aef44ed77a6d7c6a4f4acb20faf592f61f41ef528a7052a3ffb88",
+          "bytes": 2305494
+        },
+        {
+          "file": "raw/belgium_terms.html",
+          "url": "https://www.verkeerscentrum.be/algemene-voorwaarden",
+          "observed_at": "2026-11-14T02:37:32.887493+00:00",
+          "sha256": "9b5b7b7b63474296c09d5e1672b08741a62a92ca36c552cc59095b4925f913ae",
+          "bytes": 38348
+        }
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.verkeerscentrum.be"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "BE"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "les_atcs_bandung": {
+    "source": {
+      "id": "les_atcs_bandung",
+      "name": "Bandung city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Bandung (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "atcs-dishub.bandung.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_atcs_cianjur": {
+    "source": {
+      "id": "les_atcs_cianjur",
+      "name": "Cianjur city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Cianjur (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "atcs.cianjurkab.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_atcs_denpasar": {
+    "source": {
+      "id": "les_atcs_denpasar",
+      "name": "Denpasar city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Denpasar (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "atcs.denpasarkota.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_atcs_palembang": {
+    "source": {
+      "id": "les_atcs_palembang",
+      "name": "Palembang city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Palembang (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "stream.palembang.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_atcs_pekanbaru": {
+    "source": {
+      "id": "les_atcs_pekanbaru",
+      "name": "Pekanbaru city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Pekanbaru (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cctv.pekanbaru.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_atcs_tasikmalaya": {
+    "source": {
+      "id": "les_atcs_tasikmalaya",
+      "name": "Tasikmalaya city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Tasikmalaya (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "atcs.tasikmalayakota.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_cirebon": {
+    "source": {
+      "id": "les_cctv_cirebon",
+      "name": "Cirebon city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Cirebon (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cctv.cirebonkota.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_jogjakota": {
+    "source": {
+      "id": "les_cctv_jogjakota",
+      "name": "Kota Yogyakarta city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Kota Yogyakarta (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cctvjss.jogjakota.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_kebumen": {
+    "source": {
+      "id": "les_cctv_kebumen",
+      "name": "Kebumen city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Kebumen (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cctv.kebumenkab.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_magelang": {
+    "source": {
+      "id": "les_cctv_magelang",
+      "name": "Magelang city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Magelang (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "restreamer.magelangkota.go.id",
+      "dev.cctv.magelangkota.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_padang": {
+    "source": {
+      "id": "les_cctv_padang",
+      "name": "Padang city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Padang (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "streamcctv.padang.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_salatiga": {
+    "source": {
+      "id": "les_cctv_salatiga",
+      "name": "Salatiga city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Salatiga (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "restreamer.salatiga.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_cctv_wonosobo": {
+    "source": {
+      "id": "les_cctv_wonosobo",
+      "name": "Wonosobo city transport office (Dinas Perhubungan), Indonesia — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Dinas Perhubungan Wonosobo (Indonesia). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": null,
+      "upstream_operator_url": null,
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "mata.wonosobokab.go.id"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "ID"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_trafficvision": {
+    "source": {
+      "id": "les_trafficvision",
+      "name": "Thailand Department of Highways — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Department of Highways, Thailand. Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://www.highwaytraffic.go.th",
+      "upstream_operator_url": "https://www.highwaytraffic.go.th",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "streaming1.highwaytraffic.go.th",
+      "streaming2.highwaytraffic.go.th"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "TH"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_tdx_city_cctv": {
+    "source": {
+      "id": "les_tdx_city_cctv",
+      "name": "Keelung City Government via Taiwan TDX — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Keelung City Government via TDX (OGDL-Taiwan-1.0). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://data.gov.tw/en/datasets/161157",
+      "upstream_operator_url": "https://tdx.transportdata.tw",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cctv.klcg.gov.tw"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "TW"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_goakamai_hdot": {
+    "source": {
+      "id": "les_goakamai_hdot",
+      "name": "Hawaii Department of Transportation (GoAkamai) — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Hawaii Department of Transportation (GoAkamai). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://hidot.hawaii.gov",
+      "upstream_operator_url": "https://goakamai.org",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cdn3.wowza.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_ladotd_511": {
+    "source": {
+      "id": "les_ladotd_511",
+      "name": "Louisiana Department of Transportation and Development (511LA) — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; Louisiana DOTD (511LA). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://511la.org/about/disclaimer",
+      "upstream_operator_url": "https://www.511la.org",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "itsstreamingbr2.dotd.la.gov",
+      "itsstreamingbr.dotd.la.gov",
+      "itsstreamingno.dotd.la.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_mndot": {
+    "source": {
+      "id": "les_mndot",
+      "name": "Minnesota Department of Transportation — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; MnDOT (Minnesota Department of Transportation). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://511mn.org",
+      "upstream_operator_url": "https://511mn.org",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "video.dot.state.mn.us"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_seattle_sdot": {
+    "source": {
+      "id": "les_seattle_sdot",
+      "name": "Seattle Department of Transportation — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; City of Seattle Department of Transportation. Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://data.seattle.gov",
+      "upstream_operator_url": "https://web.seattle.gov/travelers/",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "61e0c5d388c2e.streamlock.net"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "les_vdot": {
+    "source": {
+      "id": "les_vdot",
+      "name": "Virginia Department of Transportation — published references via Live Environment Streams",
+      "url": "https://github.com/william-ricchiuti/Live-Environment-Streams",
+      "catalog_url": "https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson",
+      "terms_url": "https://github.com/william-ricchiuti/Live-Environment-Streams/blob/462171be74a94963277dd76c8b2f8cd18f928cda/LICENSE",
+      "metadata_license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "license": "CC-BY-4.0 (Live Environment Streams metadata); operator media rights separate",
+      "media_rights": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "rights_note": "External references only. The dataset grants no licence to footage; no embedded playback authorized.",
+      "attribution": "Live Environment Streams (William Ricchiuti), CC BY 4.0; VDOT (Virginia Department of Transportation). Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_terms_url": "https://511.vdot.virginia.gov",
+      "upstream_operator_url": "https://511.vdot.virginia.gov",
+      "dataset_version": "4.0.0",
+      "dataset_commit": "462171be74a94963277dd76c8b2f8cd18f928cda",
+      "coordinate_note": "Aggregate quality labels are not independently verified camera positions.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "media-sfs1.vdotcameras.com",
+      "media-sfs2.vdotcameras.com",
+      "media-sfs3.vdotcameras.com",
+      "media-sfs4.vdotcameras.com",
+      "media-sfs5.vdotcameras.com",
+      "media-sfs6.vdotcameras.com",
+      "media-sfs7.vdotcameras.com",
+      "media-sfs8.vdotcameras.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "livetraf_faa_links": {
+    "source": {
+      "id": "livetraf_faa_links",
+      "name": "FAA WeatherCams page references via LiveTrafficCam",
+      "url": "https://github.com/bzsasson/traffic-camera-sources",
+      "catalog_url": "https://raw.githubusercontent.com/bzsasson/traffic-camera-sources/d72090d56ae33d70ba28ef931fb8c229a8474beb/data/cameras.geojson",
+      "terms_url": "https://bzsasson.github.io/traffic-camera-sources/api.html",
+      "metadata_license": "Public factual camera references under LiveTrafficCam API reuse conventions; retain FAA attribution. Repository CC-BY grant does not cover generated camera rows.",
+      "license": "Public factual camera references under LiveTrafficCam API reuse conventions; retain FAA attribution. Repository CC-BY grant does not cover generated camera rows.",
+      "media_rights": "External FAA page references only; no images licensed or embedded by this adapter.",
+      "rights_note": "External FAA page references only; no images licensed or embedded by this adapter.",
+      "attribution": "Camera: FAA WeatherCams. References aggregated by LiveTrafficCam (https://livetrafficcam.com/); metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "coordinate_note": "Positions and US states reported by the aggregate; not independently surveyed camera mounts.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "weathercams.faa.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "force_coordinate_role": "approximate",
+    "operator_hints": []
+  },
+  "geonet_volcano": {
+    "source": {
+      "id": "geonet_volcano",
+      "name": "GeoNet volcano cameras, New Zealand",
+      "url": "https://www.geonet.org.nz/data/types/camera",
+      "catalog_url": "https://images.geonet.org.nz/volcano/cameras/all.json",
+      "terms_url": "https://www.geonet.org.nz/policy",
+      "metadata_license": "CC-BY-3.0-NZ",
+      "license": "CC-BY-3.0-NZ",
+      "media_rights": "GeoNet data and images published under CC BY 3.0 NZ; preserve attribution and image timestamp.",
+      "rights_note": "GeoNet data and images published under CC BY 3.0 NZ; preserve attribution and image timestamp.",
+      "attribution": "GeoNet / Earth Sciences New Zealand; sponsors NHC, LINZ, NEMA and MBIE. CC BY 3.0 NZ. Webcam data DOI: 10.21420/vq6s-w222. Metadata normalized by QGlobe.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "images.geonet.org.nz"
+      ],
+      "license_url": "https://creativecommons.org/licenses/by/3.0/nz/",
+      "minimum_refresh_seconds": 600,
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [
+      "images.geonet.org.nz"
+    ],
+    "page_hosts": [],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "NZ"
+    ],
+    "force_coordinate_role": "station_location",
+    "operator_hints": []
+  },
+  "aviationwx": {
+    "source": {
+      "id": "aviationwx",
+      "name": "AviationWX airport weather cameras",
+      "url": "https://api.aviationwx.org/",
+      "catalog_url": "https://api.aviationwx.org/v1/weathercam/bulk",
+      "terms_url": "https://api.aviationwx.org/",
+      "metadata_license": "AviationWX public API terms; attribution required",
+      "license": "AviationWX public API terms; attribution required",
+      "media_rights": "Public API explicitly provides weathercam images and bulk directory metadata; attribution and rate limits apply.",
+      "rights_note": "Public API explicitly provides weathercam images and bulk directory metadata; attribution and rate limits apply.",
+      "attribution": "Weather data from AviationWX.org. Metadata normalized by QGlobe.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "api.aviationwx.org"
+      ],
+      "minimum_refresh_seconds": 60,
+      "anonymous_limits": {
+        "requests_per_minute": 50,
+        "requests_per_hour": 500,
+        "requests_per_day": 2000
+      },
+      "coordinate_note": "Published airport reference point, not an independently located camera.",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [
+      "api.aviationwx.org"
+    ],
+    "page_hosts": [],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "US",
+      "CA"
+    ],
+    "force_coordinate_role": "associated_feature",
+    "operator_hints": []
+  },
+  "aviationwx_partner_links": {
+    "source": {
+      "id": "aviationwx_partner_links",
+      "name": "AviationWX partner camera references",
+      "url": "https://api.aviationwx.org/",
+      "catalog_url": "https://api.aviationwx.org/v1/weathercam/bulk",
+      "terms_url": "https://api.aviationwx.org/",
+      "metadata_license": "AviationWX public API terms; attribution required",
+      "license": "AviationWX public API terms; attribution required",
+      "media_rights": "Partner camera media retained as external references only.",
+      "rights_note": "Partner camera media retained as external references only.",
+      "attribution": "Weather data from AviationWX.org. Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "minimum_refresh_seconds": 60,
+      "anonymous_limits": {
+        "requests_per_minute": 50,
+        "requests_per_hour": 500,
+        "requests_per_day": 2000
+      },
+      "coordinate_note": "Published airport reference point, not an independently located camera.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US",
+      "CA"
+    ],
+    "force_coordinate_role": "associated_feature",
+    "operator_hints": []
+  },
+  "ottawa_traffic_links": {
+    "source": {
+      "id": "ottawa_traffic_links",
+      "name": "City of Ottawa traffic camera metadata",
+      "url": "https://traffic.ottawa.ca/en/opendata",
+      "catalog_url": "https://traffic.ottawa.ca/map/service/camera",
+      "terms_url": "https://traffic.ottawa.ca/en/opendata",
+      "metadata_license": "City of Ottawa open-data reuse terms; Open Government Licence",
+      "license": "City of Ottawa open-data reuse terms; Open Government Licence",
+      "media_rights": "Image API requires a registered certificate. Only the public map is linked; no image endpoint requested or embedded.",
+      "rights_note": "Image API requires a registered certificate. Only the public map is linked; no image endpoint requested or embedded.",
+      "attribution": "Contains information licensed under the Open Government Licence — City of Ottawa. Camera owner retained per record. Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "coordinate_note": "The provider documents map coordinates as intersection centres, not camera poles.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "traffic.ottawa.ca"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "CA"
+    ],
+    "force_coordinate_role": "associated_feature",
+    "operator_hints": []
+  }
+}

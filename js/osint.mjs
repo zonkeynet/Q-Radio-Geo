@@ -91,9 +91,14 @@ export const EMBASSIES = {
 // ---------- 🚨 Security sites (+ police and cameras live) ----------
 const SEC_COLORS = { PRISON: '--approx', MILITARY: '--red', BORDER: '--accent-3', POLICE: '--accent-2', CAMERA: '--accent' };
 // Police stations and cameras: an OpenStreetMap snapshot in tiles (scripts/build_surveillance.mjs), fetched from
-// this site for the area in view, nearest tiles first, up to SURV_MAX points at once.
-const SURV = 'data/surveillance/', SURV_MAX = 80000;
-let survIndex = null;
+// this site for the area in view, nearest tiles first (until each kind has SURV_CAP points or SURV_LOAD points are
+// read), then at most SURV_CAP points of each kind, the nearest to the view centre. Zoomed out, the tile index alone
+// gives one bubble per tile and kind, sized by its count; a tap zooms in.
+const SURV = 'data/surveillance/';
+export const SURV_CAP = 12000;
+const SURV_LOAD = 3 * SURV_CAP;
+export const SURV_TIMEOUT_MS = 60000; // tiles of a few MB through Tor
+let survIndex = null, survOverview = null;
 const survTiles = new Map(); // tile key -> Promise of items; the oldest tiles are dropped past 80
 const camera = ([id, lat, lng, survType, camType, zone, where, direction, operator, name]) => ({ id: `n${id}`, kind: 'CAMERA', live: true, lat, lng,
     name: name || '', survType: survType || undefined, camType: camType || undefined, zone: zone || where || undefined, direction: direction || undefined, operator: operator || undefined });
@@ -102,23 +107,66 @@ function survTile([s, w, size]) {
     const key = `${size}_${s}_${w}`;
     if (!survTiles.has(key)) {
         if (survTiles.size >= 80) survTiles.delete(survTiles.keys().next().value);
-        survTiles.set(key, loadJSON(`${SURV}${key}.json`).then(t => [...(t.c || []).map(camera), ...(t.p || []).map(police)])
+        survTiles.set(key, loadJSON(`${SURV}${key}.json`, undefined, { timeout: SURV_TIMEOUT_MS }).then(t => [...(t.c || []).map(camera), ...(t.p || []).map(police)])
             .catch(e => { survTiles.delete(key); throw e; }));
     }
     return survTiles.get(key);
 }
+const loadSurvIndex = () => survIndex ??= loadJSON(`${SURV}index.json`, undefined, { timeout: SURV_TIMEOUT_MS }).catch(e => { survIndex = null; throw e; });
+// Altitude that frames a tile and lands closer than the live-load threshold (20° of latitude in view).
+const tileZoom = size => Math.min(.28, Math.max(.1, size * 3 / 55));
+/** One summary per tile and kind from the index ([s, w, size, cameras, police]): no point is fetched. */
+export function surveillanceOverview(index) {
+    const items = [];
+    for (const tile of Array.isArray(index?.tiles) ? index.tiles : []) {
+        const [s, w, size, cameras, policeCount] = tile;
+        if (![s, w, size].every(Number.isFinite) || size <= 0) continue;
+        for (const [kind, count] of [['CAMERA', cameras], ['POLICE', policeCount]]) {
+            if (!Number.isInteger(count) || count <= 0) continue;
+            items.push({ id: `tile:${size}_${s}_${w}:${kind}`, kind, live: true, cluster: true, count, tile: size,
+                lat: s + size / 2, lng: w + size / 2, zoom: tileZoom(size), name: '' });
+        }
+    }
+    return items;
+}
+const clusterSize = n => n >= 20000 ? 16 : n >= 5000 ? 13 : n >= 1000 ? 10 : n >= 100 ? 8 : 6;
+/** At most `cap` items of each kind, the nearest to (lat, lng) first; whether any were left out. */
+export function nearestPerKind(items, lat, lng, cap = SURV_CAP) {
+    const k = Math.cos(lat * Math.PI / 180), byKind = new Map();
+    for (const it of items) { if (!byKind.has(it.kind)) byKind.set(it.kind, []); byKind.get(it.kind).push(it); }
+    let cut = false;
+    const kept = [];
+    for (const list of byKind.values()) {
+        if (list.length > cap) {
+            cut = true;
+            const d = it => (it.lat - lat) ** 2 + ((it.lng - lng) * k) ** 2;
+            list.sort((a, b) => d(a) - d(b)).length = cap;
+        }
+        kept.push(...list);
+    }
+    return { items: kept, cut };
+}
 async function loadSurveillance(b, base, signal) {
-    survIndex ??= loadJSON(`${SURV}index.json`).catch(e => { survIndex = null; throw e; });
-    const index = await survIndex, lat = (b.s + b.n) / 2, lng = (b.w + b.e) / 2, k = Math.cos(lat * Math.PI / 180);
+    const index = await loadSurvIndex(), lat = (b.s + b.n) / 2, lng = (b.w + b.e) / 2, k = Math.cos(lat * Math.PI / 180);
     const far = ([s, w, size]) => Math.hypot(s + size / 2 - lat, (w + size / 2 - lng) * k);
     const hits = index.tiles.filter(([s, w, size]) => s < b.n && s + size > b.s && w < b.e && w + size > b.w).sort((x, y) => far(x) - far(y));
     const chosen = [];
-    for (let i = 0, total = 0; i < hits.length && (total < SURV_MAX || !chosen.length); i++) { chosen.push(hits[i]); total += hits[i][3] + hits[i][4]; }
+    for (let i = 0, cams = 0, pol = 0; i < hits.length && ((cams < SURV_CAP || pol < SURV_CAP) && cams + pol < SURV_LOAD || !chosen.length); i++) {
+        chosen.push(hits[i]); cams += hits[i][3]; pol += hits[i][4];
+    }
     const lists = await Promise.all(chosen.map(survTile));
     if (signal.aborted) throw new DOMException('Replaced by a newer request', 'AbortError');
-    const items = lists.flat().filter(it => it.lat >= b.s && it.lat <= b.n && it.lng >= b.w && it.lng <= b.e);
-    const complete = chosen.length === hits.length;
-    return { items: [...base, ...items], complete, note: `${complete ? 'for the area in view' : 'nearest the view center (zoom in for all)'} · OpenStreetMap of ${index.generated_at.slice(0, 10)}` };
+    const inView = lists.flat().filter(it => it.lat >= b.s && it.lat <= b.n && it.lng >= b.w && it.lng <= b.e);
+    const { items, cut } = nearestPerKind(inView, lat, lng);
+    const complete = chosen.length === hits.length && !cut;
+    return { items: [...base, ...items], complete, note: `${complete ? 'for the area in view' : `nearest the view center, at most ${SURV_CAP.toLocaleString('en')} of each kind (zoom in for all)`} · OpenStreetMap of ${index.generated_at.slice(0, 10)}` };
+}
+async function surveillanceSummary(base) {
+    const index = await loadSurvIndex();
+    survOverview ??= surveillanceOverview(index);
+    const tiles = new Set(survOverview.map(it => it.id.split(':')[1])).size;
+    return { items: [...base, ...survOverview],
+        note: `Zoomed out: ${tiles.toLocaleString('en')} areas with ${Number(index.cameras || 0).toLocaleString('en')} cameras and ${Number(index.police || 0).toLocaleString('en')} police stations · OpenStreetMap of ${String(index.generated_at).slice(0, 10)}. Tap a bubble to zoom in.` };
 }
 const secGroup = it => /MILITARY|NAVAL/.test(it.kind) ? 'MILITARY' : /BORDER/.test(it.kind) ? 'BORDER' : it.kind;
 export const SECURITY = {
@@ -135,23 +183,27 @@ export const SECURITY = {
         test: (it, v) => secGroup(it) === v }],
     palette: Object.values(SEC_COLORS),
     colorOf: it => SEC_COLORS[secGroup(it)],
-    sizeOf: it => it.kind === 'CAMERA' ? 4 : 5.5,
-    nameOf: it => it.name || (it.kind === 'CAMERA' ? `Camera${it.camType ? ` (${it.camType})` : ''}` : it.kind.charAt(0) + it.kind.slice(1).toLowerCase()),
+    sizeOf: it => it.cluster ? clusterSize(it.count) : it.kind === 'CAMERA' ? 4 : 5.5,
+    nameOf: it => it.cluster ? `${it.count.toLocaleString('en')} ${it.kind === 'CAMERA' ? 'surveillance cameras' : 'police stations'} in this area`
+        : it.name || (it.kind === 'CAMERA' ? `Camera${it.camType ? ` (${it.camType})` : ''}` : it.kind.charAt(0) + it.kind.slice(1).toLowerCase()),
     placeOf: it => it.host,
-    subOf: it => [it.kind.toLowerCase(), it.operator, it.host].filter(Boolean).join(' · '),
+    subOf: it => it.cluster ? 'Area summary · tap to zoom in' : [it.kind.toLowerCase(), it.operator, it.host].filter(Boolean).join(' · '),
     badgeOf: it => it.kind, shortBadge: it => ({ PRISON: 'PRIS', POLICE: 'POL', CAMERA: 'CAM', 'BORDER CONTROL': 'BORD' })[it.kind] || 'MIL',
-    describe: it => `${it.name || it.kind.toLowerCase()}\n${[it.kind.toLowerCase(), it.operator].filter(Boolean).join(' · ')}`,
-    facts: it => [['Type', it.kind.toLowerCase()], ['Operator', it.operator], ['Detail', it.detail], ['Access', it.access],
+    describe: it => it.cluster ? `${SECURITY.nameOf(it)}\nTap to zoom in and show them`
+        : `${it.name || it.kind.toLowerCase()}\n${[it.kind.toLowerCase(), it.operator].filter(Boolean).join(' · ')}`,
+    facts: it => it.cluster ? [['Points', it.count.toLocaleString('en')], ['Area', `${it.tile}° × ${it.tile}° tile`], ['Source', 'OpenStreetMap']]
+        : [['Type', it.kind.toLowerCase()], ['Operator', it.operator], ['Detail', it.detail], ['Access', it.access],
         ['Surveillance', it.survType], ['Camera', it.camType], ['Direction', it.direction], ['Zone', it.zone], ['Phone', it.phone], ['Host country', it.host],
         ['Source', 'OpenStreetMap']],
-    actions: it => [{ label: 'OPENSTREETMAP ↗', href: osmUrl(it.id), secondary: true }],
+    actions: it => it.cluster ? [] : [{ label: 'OPENSTREETMAP ↗', href: osmUrl(it.id), secondary: true }],
     note: OSM_CREDIT,
     titleOf: v => ({ all: 'Security sites', PRISON: 'Prisons & detention', MILITARY: 'Military sites', BORDER: 'Border controls', POLICE: 'Police', CAMERA: 'Surveillance cameras' })[v.kind],
     stats: items => `${items.filter(it => !it.live).length.toLocaleString('en')} PRISONS, MILITARY & BORDER SITES`,
     live: {
         label: 'Show police & cameras in view',
         note: 'Loaded from this site (an OpenStreetMap snapshot): no other server learns which area you view.',
-        load: loadSurveillance
+        load: loadSurveillance,
+        overview: surveillanceSummary // zoomed out: one bubble per tile from the index
     },
     links: [['Surveillance research', [
         ['EFF Atlas of Surveillance (US)', 'https://atlasofsurveillance.org/'],

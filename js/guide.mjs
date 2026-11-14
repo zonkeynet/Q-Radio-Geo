@@ -7,6 +7,7 @@ const SEEN = 'qradio.guideSeen';
 
 // One line per layer, keyed by mode id.
 const ABOUT = {
+    webcams: 'Worldwide webcam feeds and published links. HLS video, periodic snapshots and external pages have separate filters. Each record shows its source, usage terms and coordinate precision; video checks retain their original date. Choose Play, Load or View Web Link to continue.',
     news: 'Headlines from 40+ outlets placed where they happen (renewed every 10 minutes), with live earthquakes, disaster alerts and natural events. A ticker runs above the player; the layer refreshes every 2 minutes.',
     radio: '38,000+ radio stations with direct streams. Pick a city dot, then a station; the shortcuts on the right jump to big cities.',
     qcast: 'People on air from the QP1NG app, found live on Nostr. Stations that allow it play here with every second checked against their signature; Tor-only ones show how to reach them.',
@@ -44,6 +45,7 @@ const SOURCES = [
     ['USGS, GDACS, NASA EONET', 'earthquakes, disaster alerts, natural events (live)', 'public data', 'https://earthquake.usgs.gov'],
     ['40+ news outlets (RSS)', 'headlines, summaries and links', '© each outlet, linked to the original', null],
     ['Broadcasters, via the iptv-org index', 'live TV streams', 'streams from each broadcaster; index public domain', 'https://github.com/iptv-org/iptv'],
+    ['Webcam publishers (81 sources, OpenStreetMap and Wikidata among them)', 'public webcam feeds and links', 'each source\'s terms, on every card; OpenStreetMap ODbL 1.0, Wikidata CC0', null],
     ['globe.gl, three.js, hls.js', 'software, bundled with the site', 'MIT, MIT, Apache 2.0', 'https://github.com/vasturiano/globe.gl']
 ];
 
@@ -114,7 +116,9 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
         mirrors.appendChild(li);
     }
     const db = node('p');
-    db.append('Offline SQLite database of every layer, for the Q-P1NG app: ', ...dbFiles.flatMap(([text, href], i) => [i ? ' and ' : '', link(text, href)]), '.');
+    db.append('Offline SQLite database of every layer, for the Q-P1NG app: ', ...dbFiles.filter(f => !f[2]).flatMap(([text, href], i) => [i ? ' and ' : '', link(text, href)]), '.');
+    // Files with their own terms (the webcam catalogue: ODbL and CC BY-SA parts) say them next to the link.
+    const dbNotes = dbFiles.filter(f => f[2]).map(([text, href, notice]) => { const p = node('p'); p.append(link(text, href), `: ${notice}`); return p; });
 
     const pages = [
         ['Start', section('What it is', node('p', '', 'Q-P1NG Globe puts the world\'s radio, signals, news and open-source intelligence on one 3D globe: tens of thousands of radio stations, SDR receivers, repeaters, aviation and maritime aids, live news and TV, conflict, migration, censorship, Tor and public Wi-Fi. No account, no ads, no trackers.')),
@@ -140,7 +144,7 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
             'Your preferences (theme, layer, consents) stay in this browser; nothing is sent anywhere.',
             'For sensitive research use Tor Browser or a VPN you trust. Tor Browser\'s Safest level turns JavaScript off, which the globe needs.',
             'Places in headlines are read from the text, and open data can be incomplete or out of date: check the source before relying on it.']))],
-        ['Sources', section('Sources and licences', sources, db)]
+        ['Sources', section('Sources and licences', sources, db, ...dbNotes)]
     ];
     pages.forEach(([name, ...content], i) => {
         const tab = Object.assign(node('button', 'guide-tab', name), { type: 'button' });
