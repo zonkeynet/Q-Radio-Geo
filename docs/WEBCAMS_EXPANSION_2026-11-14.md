@@ -158,7 +158,7 @@ Un link primario privato rimuove il record; un riferimento privato viene tolto d
 | Percorso di dispositivo | 19 |
 | **Totale** | **180** (171 OSM, 9 Wikidata; nessuna fonte ufficiale) |
 
-Il database SQLite completo (`db/qp1ng-webcams.sqlite.gz`) è un file generato e non è tracciato nel repository: vedi «Pubblicazione del database».
+Il database SQLite completo è pubblicato in `db/qp1ng-webcams.sqlite.gz`: vedi «Pubblicazione del database».
 
 ## Catalogo del globo: webcam visibili prima
 
@@ -221,15 +221,9 @@ Sovrapposizioni lasciate: 597 camere USGS HIVIS hanno anche un link OSM; 36 came
 
 ## Pubblicazione del database
 
-`db/qp1ng-webcams.sqlite.gz` (circa 29 MB) non fa parte del sito né del mirror IPFS: è in `.gitignore`, GitHub Pages pubblica solo i file tracciati e `.github/workflows/ipfs.yml` lo esclude comunque. Si pubblica come allegato della release GitHub con tag fisso `webcams-db`, così il link della guida resta stabile:
+`db/qp1ng-webcams.sqlite.gz` (circa 30 MB) è tracciato nel repository e pubblicato dal sito e dal mirror IPFS come gli altri due database (`db/` è escluso solo dal riscaldamento del gateway: si carica a richiesta). La guida (scheda Sources) lo collega a `db/qp1ng-webcams.sqlite.gz` e riporta le licenze: record e collegamenti OpenStreetMap ODbL 1.0, metadati Illinois DOT CC BY-SA 2.0, Wikidata CC0, le altre fonti secondo la tabella `sources`; nessuna licenza copre immagini e video collegati.
 
-`https://github.com/zonkeynet/Q-Radio-Geo/releases/download/webcams-db/qp1ng-webcams.sqlite.gz`
-
-1. Ricostruire offline (comando sotto) e verificare i test.
-2. Prima volta: GitHub → Releases → *Draft a new release* → tag `webcams-db` (nuovo, sul commit pubblicato) → allegare `db/qp1ng-webcams.sqlite.gz` → *Publish release*. Con la CLI: `gh release create webcams-db db/qp1ng-webcams.sqlite.gz --title "Webcam catalogue database" --notes "..."`.
-3. Aggiornamenti: sostituire l'allegato (`gh release upload webcams-db db/qp1ng-webcams.sqlite.gz --clobber`, oppure eliminare e ricaricare l'allegato dalla pagina della release).
-
-Nella guida (scheda Sources) il link indica che scarica da github.com e riporta le licenze: record e collegamenti OpenStreetMap ODbL 1.0, metadati Illinois DOT CC BY-SA 2.0, Wikidata CC0, le altre fonti secondo la tabella `sources`; nessuna licenza copre immagini e video collegati.
+Ogni versione resta nella storia git: ricostruire e committare il database solo quando il catalogo cambia in modo significativo (nuove fonti, esclusioni, correzioni di dati), non per ogni piccola modifica. Prima di ogni commit va scansionato (credenziali, DNS dinamico, percorsi di dispositivo, fonti escluse): `tests/test_webcams_privacy.py` lo fa sul file pubblicato.
 
 ## Riproduzione offline
 

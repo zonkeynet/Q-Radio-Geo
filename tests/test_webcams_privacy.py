@@ -188,20 +188,36 @@ class PublishedCatalogTest(unittest.TestCase):
 
 
 class PublishingTest(unittest.TestCase):
-    """The full webcam database is a release download: never tracked, never served, never mirrored."""
+    """The webcam database is published in db/ like the other databases, so its history is public."""
 
-    def test_database_stays_out_of_the_site_and_the_ipfs_mirror(self):
+    def test_database_is_tracked_and_mirrored_like_the_others(self):
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
-        self.assertIn("db/qp1ng-webcams.sqlite.gz", ignore)
+        self.assertNotIn("db/qp1ng-webcams.sqlite.gz", ignore)
         workflow = (ROOT / ".github" / "workflows" / "ipfs.yml").read_text(encoding="utf-8")
-        self.assertIn(r"db/qp1ng-webcams\.sqlite", workflow)
-        try:
-            tracked = subprocess.run(["git", "ls-files", "db/"], cwd=ROOT, capture_output=True, text=True, timeout=60)
-        except (OSError, subprocess.SubprocessError):
-            self.skipTest("git unavailable")
-        if tracked.returncode:
-            self.skipTest("not a git checkout")
-        self.assertNotIn("db/qp1ng-webcams.sqlite.gz", tracked.stdout.split())
+        self.assertNotIn("qp1ng-webcams", workflow)
+        self.assertIn("WARM_SKIP: '^(data/surveillance/|db/)'", workflow, "databases load on demand, not when warming")
+
+    def test_published_database_holds_no_private_or_excluded_record(self):
+        path = ROOT / "db" / "qp1ng-webcams.sqlite.gz"
+        if not path.exists():
+            self.skipTest("no database in this checkout")
+        with tempfile.TemporaryDirectory() as folder:
+            plain = Path(folder) / "w.sqlite"
+            plain.write_bytes(gzip.decompress(path.read_bytes()))
+            db = sqlite3.connect(plain)
+            try:
+                self.assertEqual(db.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+                rows = [json.loads(r[0]) for r in db.execute("SELECT record_json FROM public_webcams")]
+                urls = [r[0] for r in db.execute("SELECT url FROM published_urls")]
+                providers = {r[0] for r in db.execute("SELECT id FROM sources")}
+            finally:
+                db.close()
+        rules = M.load_exclusions()["rules"]
+        self.assertEqual([r["id"] for r in rows if M.exclusion_rule(r, rules)], [])
+        self.assertFalse({"nsw_transport", "kentucky_kytc"} & providers)
+        self.assertEqual([(r["id"], hit) for r in rows for hit in M.private_strings(r, M.community_source(r["provider"]))], [])
+        self.assertEqual([u for u in urls if M.private_url_reason(u)], [])
+        self.assertEqual(M.media_page_records(rows), [])
 
 
 if __name__ == "__main__":

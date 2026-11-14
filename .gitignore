@@ -1,11 +1,10 @@
 db/*.sqlite
 db/*.tmp
 __pycache__/
-# Generated webcam database: not part of the site or its IPFS mirror.
-db/qp1ng-webcams.sqlite.gz
 # Webcam build audit: only the import report, the privacy-filter ledger and the rejected records are kept.
 reports/webcams/*
 !reports/webcams/import_report.json
 !reports/webcams/privacy_filter.json
 !reports/webcams/rejected_records.json
 !reports/webcams/exclusions.json
+!reports/webcams/duplicates.json

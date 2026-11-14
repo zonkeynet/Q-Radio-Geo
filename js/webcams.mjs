@@ -12,10 +12,9 @@ export const WEBCAM_LOAD_TIMEOUT_MS = 60000; // the catalogue files through Tor
 // Every HLS provider today (Caltrans, Statens vegvesen) serves them all from the manifest's host: the probes of
 // 2026-11-13 saw 402 playlist and segment requests, none elsewhere.
 const EXTRA_MEDIA_HOSTS = Object.freeze({});
-// The full SQLite catalogue is a GitHub release asset, not part of the site or of its IPFS mirror.
-export const WEBCAM_DB = Object.freeze({ name: 'qp1ng-webcams.sqlite.gz (GitHub release)',
-    href: 'https://github.com/zonkeynet/Q-Radio-Geo/releases/download/webcams-db/qp1ng-webcams.sqlite.gz',
-    notice: 'Webcam catalogue, every record and link (downloaded from github.com, which sees your IP address). Licences differ by source and none covers the whole file: OpenStreetMap records and the proximity links to OpenStreetMap cameras are © OpenStreetMap contributors under ODbL 1.0 (a database made from them must stay under ODbL); Illinois DOT camera metadata is CC BY-SA 2.0 (attribution, and adaptations under the same licence); Wikidata is CC0; every other source keeps the terms in the database\'s sources table. No licence covers the linked images or video, which stay with their owners.' });
+// The full SQLite catalogue, served from this site like the other databases.
+export const WEBCAM_DB = Object.freeze({ name: 'qp1ng-webcams.sqlite.gz', href: 'db/qp1ng-webcams.sqlite.gz',
+    notice: 'Webcam catalogue, every record and link. Licences differ by source and none covers the whole file: OpenStreetMap records and the proximity links to OpenStreetMap cameras are © OpenStreetMap contributors under ODbL 1.0 (a database made from them must stay under ODbL); Illinois DOT camera metadata is CC BY-SA 2.0 (attribution, and adaptations under the same licence); Wikidata is CC0; every other source keeps the terms in the database\'s sources table. No licence covers the linked images or video, which stay with their owners.' });
 // Links over plain HTTP say so wherever a card shows or opens them.
 const isHttp = url => typeof url === 'string' && /^http:/i.test(url);
 const linkLabel = (label, url) => isHttp(url) ? `${label} · UNENCRYPTED` : label;

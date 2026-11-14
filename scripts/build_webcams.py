@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 import sqlite3
 import time
+import unicodedata
 import warnings
 from urllib.parse import unquote_plus, urlsplit, urlunsplit
 from urllib.request import Request, HTTPRedirectHandler, build_opener
@@ -390,6 +391,91 @@ def repair_media_page(raw, rule, log=None):
         if page:
             raw["official_page"] = page
     return raw
+
+
+# Duplicates. A community link (OSM, Wikidata) adds nothing when an official record within the matching
+# radius already carries every link it has (same page, so same operator site). And a page-only official
+# record gives way to the viewable record of the same operator for the same camera, for the provider pairs
+# below, when the names match; its page then stays on the viewable record as a reference.
+SAME_CAMERA_PAGE_PAIRS = {
+    # MLIT Kanto Regional Development Bureau cameras (Tone upstream river office) are also listed, as pages, on
+    # MLIT's national river-information site (www.river.go.jp, provider japan_mlit_rivers).
+    ("japan_mlit_rivers", "mlit_kanto_cctv"): "same MLIT camera listed on www.river.go.jp",
+}
+GENERIC_NAME_WORDS = ("水位", "ライブカメラ", "カメラ", "観測所", "CCTV")
+
+
+def link_key(url):
+    u = urlsplit(url)
+    return (u.hostname or "").lower() + u.path.rstrip("/") + ("?" + u.query if u.query else "")
+
+
+def record_links(item, provenance=False):
+    fields = ("official_page", "stream_url", "snapshot_url", *REFERENCE_FIELDS)
+    urls = [item.get(f) for f in fields] + ([item.get("source_page")] if provenance else [])
+    return {link_key(u) for u in urls if isinstance(u, str) and u}
+
+
+def name_tokens(name):
+    text = re.sub(r"\(.*?\)", " ", unicodedata.normalize("NFKC", str(name or "")))
+    for word in GENERIC_NAME_WORDS:
+        text = text.replace(word, " ")
+    return [t for t in re.split(r"[\s・,/\-]+", text) if len(t) >= 2]
+
+
+def same_name(a, b):
+    na, nb = unicodedata.normalize("NFKC", str(a or "")), unicodedata.normalize("NFKC", str(b or ""))
+    return any(t in nb for t in name_tokens(a)) or any(t in na for t in name_tokens(b))
+
+
+def drop_duplicates(items, radius):
+    """Remove the two kinds of duplicate above; returns kept items and one log entry per removed record."""
+    community = {x["id"] for x in items if community_source(x.get("provider"))}
+    grid = collections.defaultdict(list)
+    for x in items:
+        if x["id"] not in community:
+            grid[(round(x["lat"], 2), round(x["lng"], 2))].append(x)
+
+    def near(x):
+        cells = {(round(x["lat"] + dy, 2), round(x["lng"] + dx, 2)) for dy in (-.01, 0, .01) for dx in (-.01, 0, .01)}
+        found = [(distance_m(x["lat"], x["lng"], o["lat"], o["lng"]), o) for c in cells for o in grid.get(c, []) if o is not x]
+        return sorted(((d, o) for d, o in found if d <= radius), key=lambda pair: (pair[0], pair[1]["id"]))
+
+    gone, log = set(), []
+    for x in sorted(items, key=lambda i: i["id"]):  # page-only official record -> viewable record, same camera
+        if x["id"] in community or x["format"] != "official_page":
+            continue
+        for d, v in near(x):
+            if (x["provider"], v["provider"]) in SAME_CAMERA_PAGE_PAIRS and v["format"] in ("hls", "snapshot") \
+                    and v["id"] not in gone and same_name(x["name"], v["name"]):
+                if v.get("reference_url") not in (None, x["official_page"]):
+                    break  # nowhere to keep its page: keep the record (uncertain)
+                v["reference_url"] = x["official_page"]
+                gone.add(x["id"])
+                log.append({"id": x["id"], "provider": x["provider"], "superseded_by": v["id"], "distance_m": round(d, 1),
+                            "rule": "page-duplicate-of-viewable", "note": SAME_CAMERA_PAGE_PAIRS[(x["provider"], v["provider"])]})
+                break
+    for x in sorted(items, key=lambda i: i["id"]):  # community link -> official record with every one of its links
+        if x["id"] not in community:
+            continue
+        own = record_links(x)
+        for d, o in near(x):
+            if o["id"] not in gone and own and own <= record_links(o, provenance=True):
+                gone.add(x["id"])
+                log.append({"id": x["id"], "provider": x["provider"], "superseded_by": o["id"], "distance_m": round(d, 1),
+                            "rule": "community-duplicate-of-official"})
+                break
+    return [x for x in items if x["id"] not in gone], log
+
+
+def duplicate_summary(log, radius):
+    return {"radius_m": radius, "records_removed": len(log),
+            "by_rule": dict(sorted(collections.Counter(e["rule"] for e in log).items())),
+            "by_provider_and_official_source": dict(sorted(collections.Counter(
+                f"{e['provider']} -> {e['superseded_by'].split(':', 1)[0]}" for e in log).items())),
+            "note": "A community record goes only when an official record within the radius carries every one of its "
+                    "links; page-only official records go only for reviewed same-operator provider pairs with matching "
+                    "names, their page kept as a reference. Anything uncertain is kept."}
 
 
 def exclusion_summary(exclusions, log):
@@ -1405,7 +1491,7 @@ def main():
         ap.error("--live-out needs --compact-web")
     outputs = [args.out, args.out.with_suffix(args.out.suffix + ".tmp"), *([args.live_out] if args.live_out else []), args.db,
                args.db.with_suffix(args.db.suffix + ".tmp"), args.db.with_suffix(args.db.suffix + ".gz")]
-    outputs += [args.audit_dir / name for name in ("import_report.json", "source_fetches.json", "rejected_records.json", "probe_evidence.json", "probe_parse_warnings.json", "webcams.geojson", "webcams.csv", "osm_candidate_links.csv", "shared_url_groups.json", "published_links.csv", "country_counts.json", "snapshot_access_evidence.json", "privacy_filter.json", "exclusions.json")]
+    outputs += [args.audit_dir / name for name in ("import_report.json", "source_fetches.json", "rejected_records.json", "probe_evidence.json", "probe_parse_warnings.json", "webcams.geojson", "webcams.csv", "osm_candidate_links.csv", "shared_url_groups.json", "published_links.csv", "country_counts.json", "snapshot_access_evidence.json", "privacy_filter.json", "exclusions.json", "duplicates.json")]
     protect_baseline(args.osm_db, outputs + [p.with_suffix(p.suffix + ".tmp") for p in outputs])
     stamp = args.generated_at or utcnow()
     if args.fetch:
@@ -1429,6 +1515,9 @@ def main():
     exclusion_log += excluded
     rejected += [{"source": e["provider"], "provider": e["provider"], "provider_id": e["id"].split(":", 1)[-1],
                   "reason": f"Excluded: {e['rule']} (scripts/webcam_exclusions.json)"} for e in excluded]
+    items, duplicates = drop_duplicates(items, args.radius)
+    rejected += [{"source": e["provider"], "provider": e["provider"], "provider_id": e["id"].split(":", 1)[-1],
+                  "reason": f"Duplicate of {e['superseded_by']} ({e['rule']})"} for e in duplicates]
     stray = media_page_records(items)
     if stray:
         raise ValueError(f"{len(stray)} records still give a stream or media file as their page, e.g. {stray[:3]}")
@@ -1498,6 +1587,7 @@ def main():
         "identity_merges_performed": 0, "original_osm_rows_modified": 0,
         "privacy_filter": privacy_summary(privacy_log),
         "exclusions": exclusion_summary(exclusions, exclusion_log),
+        "duplicates": duplicate_summary(duplicates, args.radius),
         "scope": "; ".join(scope) + ". Only these approved sources are included; this is not a complete worldwide catalog.",
         "scope_providers": [s["id"] for s in sources],
         "scope_countries": sorted({x["country"] for x in items}),
@@ -1517,6 +1607,7 @@ def main():
     write_json(args.audit_dir / "snapshot_access_evidence.json", snapshot_audit)
     write_json(args.audit_dir / "privacy_filter.json", {**privacy_summary(privacy_log), "entries": privacy_log})
     write_json(args.audit_dir / "exclusions.json", {**exclusion_summary(exclusions, exclusion_log), "entries": exclusion_log})
+    write_json(args.audit_dir / "duplicates.json", {**duplicate_summary(duplicates, args.radius), "entries": duplicates})
     write_json(args.audit_dir / "shared_url_groups.json", shared_urls)
     write_json(args.audit_dir / "country_counts.json", report["country_counts"])
     write_json(args.audit_dir / "webcams.geojson", {"type": "FeatureCollection", "features": [geojson_feature(x) for x in items]})

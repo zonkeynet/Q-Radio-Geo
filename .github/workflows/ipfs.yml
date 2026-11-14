@@ -48,8 +48,7 @@ jobs:
       - name: Collect the site (the files GitHub Pages serves, without build scripts)
         run: |
           mkdir ../site
-          # The webcam database is a GitHub release asset (docs/WEBCAMS_EXPANSION_2026-11-14.md): never part of the mirror.
-          git ls-files -z | grep -zvE '^(scripts/|\.github/|\.gitignore$|CNAME$|db/qp1ng-webcams\.sqlite)' | xargs -0 cp --parents -t ../site
+          git ls-files -z | grep -zvE '^(scripts/|\.github/|\.gitignore$|CNAME$)' | xargs -0 cp --parents -t ../site
           du -sh ../site
       - name: Pack it as a CAR
         id: car

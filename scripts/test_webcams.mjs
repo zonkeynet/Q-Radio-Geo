@@ -533,9 +533,9 @@ test('webcam files wait up to a minute (Tor), and the database is a release down
         globalThis.fetch = prior.fetch; globalThis.setTimeout = prior.setTimeout;
         if (prior.document === undefined) delete globalThis.document; else globalThis.document = prior.document;
     }
-    assert.match(WEBCAM_DB.href, /^https:\/\/github\.com\/zonkeynet\/Q-Radio-Geo\/releases\/download\/webcams-db\/qp1ng-webcams\.sqlite\.gz$/);
-    assert.match(WEBCAM_DB.notice, /ODbL 1\.0/); assert.match(WEBCAM_DB.notice, /CC BY-SA 2\.0/); assert.match(WEBCAM_DB.notice, /github\.com, which sees your IP address/);
+    assert.equal(WEBCAM_DB.href, 'db/qp1ng-webcams.sqlite.gz', 'served from this site like the other databases');
+    assert.match(WEBCAM_DB.notice, /ODbL 1\.0/); assert.match(WEBCAM_DB.notice, /CC BY-SA 2\.0/); assert.doesNotMatch(WEBCAM_DB.notice, /github/i);
     const app = readFileSync(new URL('../js/app.mjs', import.meta.url), 'utf8');
     assert.match(app, /\[WEBCAM_DB\.name, WEBCAM_DB\.href, WEBCAM_DB\.notice\]/);
-    assert.doesNotMatch(app, /db\/qp1ng-webcams/, 'the site never links a database it does not serve');
+    assert.match(app, /\['qp1ng-surveillance\.sqlite\.gz', 'db\/qp1ng-surveillance\.sqlite\.gz'\]/);
 });
