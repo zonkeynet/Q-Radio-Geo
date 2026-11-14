@@ -1,0 +1,72 @@
+[
+ {
+  "id": 16055,
+  "slug": "border-crossing-dojran",
+  "link": "https://roads.org.mk/en/video-kamera/border-crossing-dojran/",
+  "title": {
+   "rendered": "Border Crossing “Dojran“"
+  },
+  "lang": "en",
+  "translations": {
+   "en": 16055,
+   "sq": 16054,
+   "mk": 16052
+  }
+ },
+ {
+  "id": 16054,
+  "slug": "vendkalimi-kufitar-dojran",
+  "link": "https://roads.org.mk/sq/video-kamera/vendkalimi-kufitar-dojran/",
+  "title": {
+   "rendered": "Vendkalimi kufitar “Dojran“"
+  },
+  "lang": "sq",
+  "translations": {
+   "sq": 16054,
+   "mk": 16052,
+   "en": 16055
+  }
+ },
+ {
+  "id": 16052,
+  "slug": "dojran",
+  "link": "https://roads.org.mk/video-kamera/dojran/",
+  "title": {
+   "rendered": "Граничен премин “Дојран“"
+  },
+  "lang": "mk",
+  "translations": {
+   "mk": 16052,
+   "sq": 16054,
+   "en": 16055
+  }
+ },
+ {
+  "id": 12757,
+  "slug": "toll-plaza-kadrifakovo",
+  "link": "https://roads.org.mk/en/video-kamera/toll-plaza-kadrifakovo/",
+  "title": {
+   "rendered": "Toll plaza &#8220;Kadrifakovo&#8221;"
+  },
+  "lang": "en",
+  "translations": {
+   "en": 12757,
+   "sq": 12674,
+   "mk": 12181
+  }
+ },
+ {
+  "id": 12738,
+  "slug": "toll-plaza-stobi",
+  "link": "https://roads.org.mk/en/video-kamera/toll-plaza-stobi/",
+  "title": {
+   "rendered": "Toll Plaza &#8220;Stobi&#8221;"
+  },
+  "lang": "en",
+  "translations": {
+   "en": 12738,
+   "sq": 12655,
+   "mk": 12138
+  }
+ }
+]

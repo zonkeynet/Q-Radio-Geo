@@ -1,0 +1,8 @@
+Stations_id von_datum bis_datum Stationshoehe geoBreite geoLaenge Stationsname Bundesland Abgabe
+----------- --------- --------- ------------- --------- --------- ----------------------------------------- ---------- ------
+01975 19360101 20261113             11     53.6332    9.9881 Hamburg-Fuhlsbüttel                      Hamburg                                  Frei
+02290 17810101 20261113            977     47.8009   11.0108 Hohenpeißenberg                          Bayern                                   Frei
+03015 19060401 20261113             98     52.2085   14.1180 Lindenberg                               Brandenburg                              Frei
+03016 19700601 19880430            760     47.5980    9.8878 Lindenberg/Allgäu                        Bayern                                   Frei
+04271 19470101 20261113              5     54.1803   12.0808 Rostock-Warnemünde                       Mecklenburg-Vorpommern                   Frei
+05142 19360901 20261113              1     53.7445   14.0698 Ueckermünde                              Mecklenburg-Vorpommern                   Frei

@@ -22,10 +22,11 @@ const VIEWS = {
 };
 // Budgets: about 10% over the figures of 2026-11-14 (gzip level 6, like GitHub Pages): default view 42 files,
 // 2.68 MB; #layer=webcams 39 files, 1.42 MB; default texture 297 kB. Before this work: 41 files, 2.97 MB; 42 files,
-// 3.68 MB (the radio catalogue too); 715 kB.
+// 3.68 MB (the radio catalogue too); 715 kB. Webcams raised with main's 24,027 viewable cameras (9fc5bee): 39 files,
+// 1.72 MB, budget 1.90 MB.
 const BUDGET = {
     default: { files: 46, gzipBytes: 2_950_000 },
-    webcams: { files: 43, gzipBytes: 1_560_000 },
+    webcams: { files: 43, gzipBytes: 1_900_000 },
     texture: { bytes: 330_000 } // the default theme's bundled texture (images are not compressed), when map imagery is unreachable
 };
 const gz = p => gzipSync(read(p), { level: 6 }).length;

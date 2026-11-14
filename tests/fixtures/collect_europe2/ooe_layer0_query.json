@@ -1,0 +1,40 @@
+{
+ "displayFieldName": "STATIONSNAME",
+ "fieldAliases": {
+  "STATIONSADRESSE": "STATIONSADRESSE",
+  "STATIONSNAME": "STATIONSNAME",
+  "STRASSE": "STRASSE",
+  "KM": "KM"
+ },
+ "geometryType": "esriGeometryPoint",
+ "spatialReference": {
+  "wkid": 4326,
+  "latestWkid": 4326
+ },
+ "features": [
+  {
+   "attributes": {
+    "STATIONSADRESSE": 73,
+    "STATIONSNAME": "Gaflenz",
+    "STRASSE": "B121",
+    "KM": "32,2"
+   },
+   "geometry": {
+    "x": 14.744629717264841,
+    "y": 47.902474952079864
+   }
+  },
+  {
+   "attributes": {
+    "STATIONSADRESSE": 32,
+    "STATIONSNAME": "Steyreggerbrücke",
+    "STRASSE": "B3",
+    "KM": "236,8000"
+   },
+   "geometry": {
+    "x": 14.344379462118146,
+    "y": 48.28720133123047
+   }
+  }
+ ]
+}

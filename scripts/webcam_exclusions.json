@@ -1,7 +1,7 @@
 {
   "version": 1,
   "updated": "2026-11-14",
-  "note": "Records left out of the webcam catalogue for legal or safety reasons, applied by scripts/build_webcams.py at every build (reports/webcams/exclusions.json lists what each rule removed). Adding or changing a rule needs a reason and evidence; a rule is lifted only by removing it here. Match semantics: countries = the record's country code; areas = outlines as [lng, lat] rings, applied to the listed countries ('*' = any); hosts = any URL anywhere in the record on that host or a subdomain; providers = whole source; keep_hosts = records whose own page is on one of these hosts stay.",
+  "note": "Records left out of the webcam catalogue for legal, safety or reachability reasons, applied by scripts/build_webcams.py at every build (reports/webcams/exclusions.json lists what each rule removed). Adding or changing a rule needs a reason and evidence; a rule is lifted only by removing it here. Match semantics: countries = the record's country code; areas = outlines as [lng, lat] rings, applied to the listed countries ('*' = any); hosts = any URL anywhere in the record on that host or a subdomain; providers = whole source; keep_hosts = records whose own page is on one of these hosts stay.",
   "rules": [
     {
       "id": "ua-martial-law",
@@ -68,6 +68,34 @@
       "match": {"providers": ["kentucky_kytc"]},
       "reason": "The only stated basis for publishing these KYTC camera names and positions was the CC0 statement on KYTC's web map item (modified 2025-02-06). Road511's licence registry reports that KYTC confirmed on 2026-08-16 that the camera data is not CC0 (not verifiable here, but newer). Without another basis the records are left out; the policy now reads 'terms not established; links only'.",
       "evidence": ["https://api.road511.com/api/v1/data-sources", "https://www.arcgis.com/home/item.html?id=0666efd2054343b080b5c2f0924ef2ae"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "hak-terms",
+      "action": "remove_record",
+      "match": {"hosts": ["hak.hr"]},
+      "reason": "HAK (Hrvatski autoklub) terms: without HAK's prior written consent its content may not be downloaded, reproduced, distributed or published beyond the terms, nor included in other products. Community links to HAK camera pages and its raw cam.asp images are left out.",
+      "evidence": ["https://www.hak.hr/hak/uvjeti-koristenja/"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "inforoute-link-permission",
+      "action": "remove_record",
+      "match": {"hosts": ["inforoute74.fr", "inforoute04.fr", "inforoute15.fr", "itinisere.fr", "inforoute.alsace.eu", "inforoute67.fr",
+                          "inforoute68.fr", "inforoute25.fr", "inforoute39.fr", "inforoute09.fr", "inforoute66.fr", "inforoute43.fr",
+                          "inforoute48.fr", "inforoute12.fr", "inforoute90.fr", "inforoute01.fr", "inforoute-massif-central.fr",
+                          "inforoute.ha-py.fr"]},
+      "reason": "The departments on the Inforoute platform (74, 04, 15, 38, Alsace, 25, 39, 09, 66, 43, 48, 12, 90, 01, Massif Central) and Hautes-Pyrénées limit use to private consultation and require prior written authorisation for any link to their sites.",
+      "evidence": ["https://www.inforoute74.fr/mentions-legales.php", "https://inforoute.alsace.eu/mentions-legales.php",
+                   "https://inforoute.ha-py.fr/mentions-legales/"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "vienna-viewer-expired-certificate",
+      "action": "remove_record",
+      "match": {"hosts": ["dyn2.verkehrsauskunft.at"]},
+      "reason": "The ITS Vienna Region webcam viewer and its image folder serve an expired TLS certificate, so a browser refuses every link; the research found no city HTTPS page for these cameras to link instead. Lift when the host has a valid certificate.",
+      "evidence": ["https://dyn2.verkehrsauskunft.at/itswebcamviewer/SingleScreen.aspx?camname=itscam40&noITS=true"],
       "decided": "2026-11-14"
     },
     {

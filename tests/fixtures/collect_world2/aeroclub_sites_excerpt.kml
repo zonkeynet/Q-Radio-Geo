@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Aero Club of East Africa </name>
+    <description>Kenyawebcam Maps</description>
+    <Style id="icon-1899-DB4436-labelson">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+    </Style>
+    <Style id="icon-1899-DB4436-labelson-nodesc">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Folder>
+<name>Kenyawebcams</name>
+<Placemark>
+        <name>Campi ya kanzi </name>
+        
+        <styleUrl>#icon-1899-DB4436-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            37.892189,-2.776944,0
+          </coordinates>
+        </Point>
+      </Placemark>
+<Placemark>
+        <name>Satao</name>
+        
+        <styleUrl>#icon-1899-DB4436-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            38.5567331,-3.3984886,0
+          </coordinates>
+        </Point>
+      </Placemark>
+<Placemark>
+        <name>Wilson</name>
+        
+        <styleUrl>#icon-1899-DB4436-labelson</styleUrl>
+        <Point>
+          <coordinates>
+            36.809137,-1.322499,0
+          </coordinates>
+        </Point>
+      </Placemark>
+<Placemark>
+        <name>Tatu City</name>
+        
+        <styleUrl>#icon-1899-DB4436-labelson</styleUrl>
+        
+        <Point>
+          <coordinates>
+            36.9228638,-1.1405775,0
+          </coordinates>
+        </Point>
+      </Placemark>
+</Folder>
+<Folder><name>Untitled layer</name></Folder>
+</Document>
+</kml>

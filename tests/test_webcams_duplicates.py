@@ -64,6 +64,21 @@ class SameCameraPageTest(unittest.TestCase):
         self.assertEqual(kept[0]["reference_url"], rivers["official_page"])
         self.assertEqual((log[0]["rule"], log[0]["superseded_by"]), ("page-duplicate-of-viewable", kanto["id"]))
 
+    def test_a_viewable_river_record_of_the_same_camera_also_gives_way(self):
+        rivers = self.rivers()
+        rivers.update(format="snapshot", snapshot_url="https://cam.river.go.jp/cam/now/221259001.jpg")
+        kept, log = M.drop_duplicates([self.kanto(), rivers], 100)
+        self.assertEqual([x["provider"] for x in kept], ["mlit_kanto_cctv"])
+
+    def test_cache_busters_do_not_hide_a_duplicate(self):
+        img = "https://www.land-oberoesterreich.gv.at/webcam/a/32/KAM2"
+        official = rec("ooe_land_webcams", "32-2", 48.3, 14.3, "snapshot", snapshot_url=img)
+        osm = rec("osm_webcams", "node-9-a", 48.3002, 14.3, official_page="https://www.openstreetmap.org/node/9",
+                  reference_url=img + "?1676214323")
+        osm["official_page"] = None  # only the image reference, as after the media-as-page repair
+        kept, log = M.drop_duplicates([official, osm], 100)
+        self.assertEqual([x["id"] for x in kept], ["ooe_land_webcams:32-2"])
+
     def test_names_must_match_and_only_reviewed_pairs_apply(self):
         self.assertEqual(M.drop_duplicates([self.kanto(), self.rivers(name="烏川合流点")], 100)[1], [])
         surrey = rec("surrey", "1", 49.0, -122.75, name="No 99 Hwy And 8 Ave", official_page="https://www.surrey.ca/cams/1")

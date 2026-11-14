@@ -1,0 +1,1 @@
+e("GmapMap",{staticStyle:{width:"100%",height:"100%"},attrs:{options:t.mapOptions,center:{lat:32.617298,lng:44.036298},zoom:17,"map-type-id":"roadmap"}},[e("gmap-marker",{attrs:{position:{lat:32.617298,lng:44.036298}}})],1)

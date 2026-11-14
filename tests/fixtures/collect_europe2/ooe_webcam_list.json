@@ -1,0 +1,38 @@
+[
+ {
+  "STATIONSADRESSE": 73,
+  "STATIONSNAME": "Gaflenz",
+  "SEEHOEHE": 507,
+  "STRASSE": "B121",
+  "KM": "32,2",
+  "GEM_NAME": "Gaflenz",
+  "KAM1_Freigabe": 1,
+  "KAM2_Freigabe": 1,
+  "KAM3_Freigabe": 0,
+  "KAM4_Freigabe": 0
+ },
+ {
+  "STATIONSADRESSE": 32,
+  "STATIONSNAME": "Steyreggerbrücke",
+  "SEEHOEHE": 259,
+  "STRASSE": "B3",
+  "KM": "236,8000",
+  "GEM_NAME": "Steyregg",
+  "KAM1_Freigabe": 1,
+  "KAM2_Freigabe": 1,
+  "KAM3_Freigabe": 1,
+  "KAM4_Freigabe": 1
+ },
+ {
+  "STATIONSADRESSE": 614,
+  "STATIONSNAME": "Haid, Kreisverkehr Abzweigung Traun L563",
+  "SEEHOEHE": 274,
+  "STRASSE": "B139",
+  "KM": "12,913",
+  "GEM_NAME": "Ansfelden",
+  "KAM1_Freigabe": 1,
+  "KAM2_Freigabe": 1,
+  "KAM3_Freigabe": 1,
+  "KAM4_Freigabe": 1
+ }
+]

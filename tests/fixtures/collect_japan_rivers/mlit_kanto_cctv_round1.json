@@ -1,0 +1,82 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-11-14T08:03:13Z",
+ "sources": [
+  {
+   "id": "mlit_kanto_cctv"
+  }
+ ],
+ "items": [
+  {
+   "provider": "mlit_kanto_cctv",
+   "provider_id": "tonejo-cam1",
+   "id": "mlit_kanto_cctv:tonejo-cam1",
+   "name": "利根川 八斗島水位",
+   "lat": 36.264722,
+   "lng": 139.197778,
+   "country": "JP",
+   "region": "群馬県",
+   "rights_status": "official_public_feed",
+   "format": "snapshot",
+   "stream_url": null,
+   "observed_at": "2026-11-14T07:55:21Z",
+   "health": {
+    "status": "unverified"
+   },
+   "provider_in_service": null,
+   "snapshot_url": "https://www.ktr.mlit.go.jp/tonejo/cctv/cameraimage/cam1_640.jpg",
+   "official_page": "https://www.ktr.mlit.go.jp/tonejo/cctv/camview.htm?stname=cam1",
+   "source_page": "https://www.ktr.mlit.go.jp/tonejo/cctv/list_index.html",
+   "source_catalog": "https://www.ktr.mlit.go.jp/tonejo/cctv/cameraimage/cameradb.json",
+   "coordinate_role": "camera_location",
+   "coordinate_reference_system": "EPSG:4326",
+   "coordinate_source": "https://www.ktr.mlit.go.jp/tonejo/cctv/cameraimage/cameradb.json",
+   "coordinate_note": "Official DMS position from the office's camera database; matches river.go.jp (EPSG:4326).",
+   "river": "利根川",
+   "river_position": "左岸181.5km",
+   "address": "群馬県伊勢崎市",
+   "station_name": "八斗島水位観測所",
+   "office": "利根川上流河川事務所",
+   "minimum_refresh_seconds": 600,
+   "provider_notice": "出典：関東地方整備局ウェブサイト（利根川上流河川事務所 河川ライブカメラ映像 https://www.ktr.mlit.go.jp/tonejo/cctv/camview.htm?stname=cam1）を加工して作成（QGlobeが名称・位置等を正規化・編集）。国土交通省が作成したものではありません。",
+   "attribution": "出典：関東地方整備局ウェブサイト（利根川上流河川事務所 河川ライブカメラ映像 https://www.ktr.mlit.go.jp/tonejo/cctv/camview.htm?stname=cam1）を加工して作成（QGlobeが名称・位置等を正規化・編集）。国土交通省が作成したものではありません。",
+   "operator": "国土交通省 関東地方整備局 利根川上流河川事務所"
+  },
+  {
+   "provider": "mlit_kanto_cctv",
+   "provider_id": "C01753",
+   "id": "mlit_kanto_cctv:C01753",
+   "name": "国道298号 新善町地下道 (上り)",
+   "lat": 35.84804,
+   "lng": 139.78592,
+   "country": "JP",
+   "region": "埼玉県",
+   "rights_status": "official_public_feed",
+   "format": "snapshot",
+   "stream_url": null,
+   "observed_at": "2026-11-14T07:55:21Z",
+   "health": {
+    "status": "unverified"
+   },
+   "provider_in_service": null,
+   "snapshot_url": "https://www.ktr.mlit.go.jp/river/cctv/C01753.jpg",
+   "official_page": "https://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shinzen_town-underpass(u).html",
+   "source_page": "https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.html",
+   "source_catalog": "https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.kml",
+   "coordinate_role": "station_location",
+   "coordinate_reference_system": "EPSG:4326",
+   "coordinate_source": "https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.kml",
+   "coordinate_note": "Official KML placemark of the camera site '新善町地下道', shared by 2 cameras (up/down lanes).",
+   "road": "R298",
+   "kilometre_post": "R298 上り 16.84kp",
+   "address": "埼玉県草加市新善町",
+   "direction": "上り",
+   "site": "新善町地下道",
+   "office": "北首都国道事務所",
+   "minimum_refresh_seconds": 600,
+   "provider_notice": "出典：関東地方整備局ウェブサイト（北首都国道事務所 国道298号ライブカメラ https://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shinzen_town-underpass(u).html）を加工して作成（QGlobeが名称・位置等を正規化・編集）。国土交通省が作成したものではありません。",
+   "attribution": "出典：関東地方整備局ウェブサイト（北首都国道事務所 国道298号ライブカメラ https://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shinzen_town-underpass(u).html）を加工して作成（QGlobeが名称・位置等を正規化・編集）。国土交通省が作成したものではありません。",
+   "operator": "国土交通省 関東地方整備局 北首都国道事務所"
+  }
+ ]
+}
