@@ -18,6 +18,18 @@ const tilesReachable = tiles => {
     return tileProbes.get(tiles.url);
 };
 const DOT_ALTITUDE = .004;
+// Bundled textures (scripts/build_textures.py): WebP where the browser has it, about half the bytes of the JPEG/PNG
+// originals for the same look, and the 2048-pixel version where the 4096 one shows nothing more: phone-sized screens
+// (the globe is then at most about 700 device pixels across at the default view), little memory, or a GPU that
+// would scale it down anyway. Browsers that cannot write WebP get the originals (some can read it: they lose bytes,
+// nothing else).
+const WEBP = (() => { try { return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp'); } catch { return false; } })();
+export function textureFile(path, { webp = WEBP, small = false } = {}) {
+    if (!webp || !/^assets\/textures\/[a-z-]+\.(jpg|png)$/.test(path)) return path;
+    return path.replace(/\.(jpg|png)$/, small && !path.includes('topology') ? '-2k.webp' : '.webp');
+}
+export const smallTextures = ({ screenSide = Math.min(screen.width, screen.height), memory = navigator.deviceMemory, maxTexture = 16384 } = {}) =>
+    screenSide <= 500 || (memory !== undefined && memory <= 2) || maxTexture < 4096;
 const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#ffffff';
 
 const LONG_PRESS_MS = 450;
@@ -78,6 +90,8 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
     const renderer = world.renderer();
     const pixelRatio = Math.min(window.devicePixelRatio || 1, lite ? 1 : 1.5);
     renderer.setPixelRatio(pixelRatio);
+    const small = smallTextures({ maxTexture: renderer.capabilities?.maxTextureSize || 16384 });
+    const texture = path => path && textureFile(path, { small });
     const resize = () => { world.width(container.clientWidth).height(container.clientHeight); renderer.setPixelRatio(pixelRatio); wake?.(); };
     const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(container); resize();
 
@@ -246,10 +260,10 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
     const textures = new Map(), loading = new Set();
     let themeToken = 0, themeId = null, current = null, activeTiles = null, tintTimer = null;
     function paint() {
-        const texture = current.image && !activeTiles ? textures.get(current.image) : null;
-        material.map = texture || null;
+        const loaded = current.image && !activeTiles ? textures.get(texture(current.image)) : null;
+        material.map = loaded || null;
         // Until its imagery arrives a textured theme shows a dark sphere, not a white one.
-        material.color = new Color(texture ? current.tint || '#ffffff' : current.base || '#0a0f18');
+        material.color = new Color(loaded ? current.tint || '#ffffff' : current.base || '#0a0f18');
         material.needsUpdate = true;
         wake();
     }
@@ -297,7 +311,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
     function useGlobeTexture(theme) {
         clearInterval(tintTimer); tintTimer = null;
         if (activeTiles) { world.globeTileEngineUrl(null); world.globeTileEngineClearCache(); activeTiles = null; }
-        if (theme.image) loadTexture(theme.image);
+        if (theme.image) loadTexture(texture(theme.image));
         paint();
     }
     /** Call after the page colours have switched (applyThemeCss): dot colours are read from them. */
@@ -305,7 +319,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         // Solid globe with land geometry avoids textures, bump maps and remote imagery in lite mode.
         if (lite) theme = { ...theme, tiles: null, image: null, bump: null, land: theme.land || '#1b5360', landDots: false };
         const token = ++themeToken; themeId = id; current = theme;
-        world.atmosphereColor(theme.atmosphere).atmosphereAltitude(theme.atmosphereAltitude).bumpImageUrl(theme.bump || null);
+        world.atmosphereColor(theme.atmosphere).atmosphereAltitude(theme.atmosphereAltitude).bumpImageUrl(texture(theme.bump) || null);
         wake();
         applyDotColors();
         roundDots();
@@ -342,7 +356,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });
-            return { ...navigation.getSnapshot(), points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
+            return { ...navigation.getSnapshot(), points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, texture: current?.image ? texture(current.image) : null, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
         },
         destroy() { abort.abort(); clearTimeout(hoverTimer); clearTimeout(pressTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); },
         /** Frames drawn so far (diagnostics and tests of the idle loop). */

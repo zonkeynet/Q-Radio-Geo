@@ -36,6 +36,8 @@ test('the shell holds everything the page loads before its data, and nothing lar
     const bytes = manifest.shell.reduce((n, p) => n + manifest.files[p][1], 0);
     assert.ok(bytes < 6e6, `shell ${bytes} bytes`);
     for (const path of ['data/stations.json', 'data/places.json', 'data/webcams-live.json', 'data/webcams.json']) assert.ok(!manifest.shell.includes(path), path);
+    // The default theme's fallback texture, as js/globe.mjs picks it on any screen of a WebP browser.
+    for (const path of ['assets/textures/earth-night.webp', 'assets/textures/earth-night-2k.webp']) assert.ok(manifest.shell.includes(path), path);
 });
 
 // ---------- the worker's routing, run in a sandbox ----------

@@ -23,13 +23,13 @@ const CHECK = process.argv.includes('--check');
 /** Files the worker may keep: the page, its code, styles, images and data. Not db/ (downloads), tests, docs or scripts. */
 export const IN_SCOPE = /^(index\.html|manifest\.webmanifest|app-config\.json|(assets|js|vendor|data)\/.+)$/;
 /** Stored at install, so a repeat visit needs no file from the network: the page, code, styles, icons, the default
- * theme's bundled texture and the small start-up data. Large data (places, stations, layers, tiles) is kept when the
+ * theme's bundled texture (both WebP sizes, js/globe.mjs textureFile) and the small start-up data. Large data (places, stations, layers, tiles) is kept when the
  * page first asks for it. */
 export const SHELL = [
     /^index\.html$/, /^manifest\.webmanifest$/, /^app-config\.json$/,
     /^assets\/(app|native-app)\.css$/, /^assets\/icons\/(icon\.svg|icon-192\.png|apple-touch-icon\.png)$/,
     /^js\/[a-z0-9.-]+\.m?js$/, /^vendor\/globe\.gl-[0-9.]+\.min\.js$/,
-    /^assets\/textures\/earth-night\.jpg$/,
+    /^assets\/textures\/earth-night(-2k)?\.webp$/,
     /^data\/(countries|summary)\.json$/
 ];
 export const hash = bytes => createHash('sha256').update(bytes).digest('hex').slice(0, 16);

@@ -43,6 +43,18 @@ try {
             await ready(page);
             await page.waitForFunction(() => /STATIONS/.test(document.getElementById('statsDisplay').textContent), null, { timeout: 30000 });
         });
+        await step('bundled textures in WebP (2048 px on a phone screen), and the bump map of the satellite theme', async () => {
+            // Map imagery is blocked here, so the themes fall back to the bundled textures.
+            await page.waitForFunction(() => performance.getEntriesByName('qglobe:texture-ready').length > 0, null, { timeout: 30000 });
+            assert.equal(await page.evaluate(() => QRadioGlobe.diagnostics().texture), 'assets/textures/earth-night-2k.webp');
+            // The theme menu, clicked from the page (the app's header may hide the button).
+            const theme = id => page.evaluate(id => { document.getElementById('btnTheme').click(); document.querySelector(`#themeMenu .theme-option[data-id="${id}"]`).click(); }, id);
+            await theme('satellite');
+            await page.waitForFunction(() => QRadioGlobe.diagnostics().texture === 'assets/textures/earth-blue-marble-2k.webp' && QRadioGlobe.diagnostics().textured, null, { timeout: 30000 });
+            await page.waitForFunction(() => performance.getEntriesByType('resource').some(e => e.name.endsWith('assets/textures/earth-topology.webp')), null, { timeout: 30000 });
+            await theme('tactical');
+            await page.waitForFunction(() => QRadioGlobe.diagnostics().texture === 'assets/textures/earth-night-2k.webp' && QRadioGlobe.diagnostics().textured, null, { timeout: 30000 });
+        });
         await step('global search and a station card', async () => {
             await page.locator('#searchInput').fill('rome');
             await page.locator('#searchResults .search-item').first().waitFor({ timeout: 20000 });
