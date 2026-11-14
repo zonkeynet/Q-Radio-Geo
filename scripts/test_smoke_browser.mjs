@@ -12,7 +12,8 @@ import { startServer, MIRROR } from './lib/static_server.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES].filter(Boolean) }));
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+// QGLOBE_SITE=<dir>: test an exported copy of the site instead of this checkout.
+const root = resolve(process.env.QGLOBE_SITE || resolve(dirname(fileURLToPath(import.meta.url)), '..'));
 // Requests the page makes by itself, blocked here: theme imagery probe, the news layer's headlines and feeds (USGS,
 // GDACS, NASA EONET), the user-radio relays.
 const AUTOMATIC = new Set(['gibs.earthdata.nasa.gov', 'raw.githubusercontent.com', 'earthquake.usgs.gov', 'www.gdacs.org', 'eonet.gsfc.nasa.gov',

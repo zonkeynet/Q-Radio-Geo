@@ -60,6 +60,34 @@
 <!-- Service worker for fast repeat visits and offline use (on globe.qp1ng.com only; see sw.js). -->
 <script defer src="./js/sw-register.js"></script>
 <script type="module" src="./js/app.mjs"></script>
+<!-- modulepreload: scripts/build_preload.mjs writes this list, every module js/app.mjs imports -->
+<link rel="modulepreload" href="./js/catalog.mjs">
+<link rel="modulepreload" href="./js/core.mjs">
+<link rel="modulepreload" href="./js/aliases.mjs">
+<link rel="modulepreload" href="./js/native-app.mjs">
+<link rel="modulepreload" href="./js/icons.mjs">
+<link rel="modulepreload" href="./js/player.mjs">
+<link rel="modulepreload" href="./js/qcast-player.mjs">
+<link rel="modulepreload" href="./js/qcast-protocol.mjs">
+<link rel="modulepreload" href="./js/qcast-crypto.mjs">
+<link rel="modulepreload" href="./js/globe.mjs">
+<link rel="modulepreload" href="./js/themes.mjs">
+<link rel="modulepreload" href="./js/directory.mjs">
+<link rel="modulepreload" href="./js/sdr.mjs">
+<link rel="modulepreload" href="./js/repeaters.mjs">
+<link rel="modulepreload" href="./js/aviation.mjs">
+<link rel="modulepreload" href="./js/morse.mjs">
+<link rel="modulepreload" href="./js/maritime.mjs">
+<link rel="modulepreload" href="./js/osint.mjs">
+<link rel="modulepreload" href="./js/migration.mjs">
+<link rel="modulepreload" href="./js/connectivity.mjs">
+<link rel="modulepreload" href="./js/news.mjs">
+<link rel="modulepreload" href="./js/tv.mjs">
+<link rel="modulepreload" href="./js/guide.mjs">
+<link rel="modulepreload" href="./js/qcast.mjs">
+<link rel="modulepreload" href="./js/qcast-nostr.mjs">
+<link rel="modulepreload" href="./js/webcams.mjs">
+<!-- /modulepreload -->
 </head><body>
 
     <!-- Splash Loader -->

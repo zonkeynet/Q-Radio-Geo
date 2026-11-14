@@ -2,7 +2,8 @@
 // which of them it stores at install (the app shell); sw.js carries the manifest's own hash, so any published change
 // makes browsers install the new worker, which fetches only the files whose hash changed.
 //
-//   node scripts/build_sw.mjs            rewrite sw-manifest.json and the MANIFEST_HASH line of sw.js
+//   node scripts/build_sw.mjs            rewrite the modulepreload list of index.html (scripts/build_preload.mjs),
+//                                        then sw-manifest.json and the MANIFEST_HASH line of sw.js
 //   node scripts/build_sw.mjs --check    exit 1 if either is out of date (scripts/test_sw.mjs runs this)
 //   node scripts/build_sw.mjs --root DIR a copy of the site outside git (the browser test's versions)
 //
@@ -13,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { updatedIndex } from './build_preload.mjs';
 
 const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null : process.argv[i + 1]; };
 const ROOT = resolve(arg('--root') || join(dirname(fileURLToPath(import.meta.url)), '..'));
@@ -83,11 +85,14 @@ export function workerSource(root, version) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+    // The page lists its modules for preloading: that list first, since the manifest hashes the page.
+    const index = updatedIndex(ROOT), indexStale = readFileSync(join(ROOT, 'index.html'), 'utf8').replace(/\r\n/g, '\n') !== index;
+    if (indexStale && !CHECK) writeFileSync(join(ROOT, 'index.html'), index);
     const { manifest, text, version } = buildManifest(ROOT);
     const worker = workerSource(ROOT, version);
     const path = join(ROOT, 'sw-manifest.json');
     const sameText = (a, b) => a.replace(/\r\n/g, '\n') === b.replace(/\r\n/g, '\n');
-    const stale = [];
+    const stale = indexStale ? ['index.html (modulepreload list)'] : [];
     if (!existsSync(path) || !sameText(readFileSync(path, 'utf8'), text)) stale.push('sw-manifest.json');
     if (!sameText(readFileSync(join(ROOT, 'sw.js'), 'utf8'), worker)) stale.push('sw.js');
     if (CHECK) {
