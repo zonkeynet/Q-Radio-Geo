@@ -24,8 +24,13 @@ const text = (value, limit = 240) => String(value ?? '').replace(/[\u0000-\u001f
 const countryFilter = { key: 'country', label: 'Country', options: [{ id: 'all', name: 'All countries' }], test: (c, v) => c.country === v };
 let countryNames;
 try { countryNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch { /* Older WebViews use country codes. */ }
+const countryNameCache = new Map();
 function countryName(code) {
-    try { return countryNames?.of(code) || code; } catch { return code; }
+    if (countryNameCache.has(code)) return countryNameCache.get(code);
+    let name;
+    try { name = countryNames?.of(code) || code; } catch { name = code; }
+    if (countryNameCache.size < 1000) countryNameCache.set(code, name);
+    return name;
 }
 
 // Privacy filter, the same rules as scripts/build_webcams.py (tests/webcam_privacy_vectors.json holds the
@@ -56,9 +61,16 @@ const DEVICE_PATH_PATTERN = /\/axis-cgi\/|\/axis-media\/|\/cgi-bin\/|nph-zms|\/g
 const COMMUNITY_PROVIDERS = new Set(['osm_webcams', 'wikidata_webcams']);
 const isCommunity = (camera, source) => COMMUNITY_PROVIDERS.has(camera?.provider) || source?.provenance_type === 'community_directory';
 
+const dynamicDnsCache = new Map(); // host -> answer; a few thousand hosts across the catalogue
 function dynamicDnsHost(host) {
-    for (let h = host; h; h = h.slice(h.indexOf('.') + 1 || h.length)) if (DYNAMIC_DNS_SUFFIXES.has(h)) return true;
-    return DYNAMIC_DNS_PATTERN.test(host);
+    let answer = dynamicDnsCache.get(host);
+    if (answer !== undefined) return answer;
+    answer = false;
+    for (let h = host; h; h = h.slice(h.indexOf('.') + 1 || h.length)) if (DYNAMIC_DNS_SUFFIXES.has(h)) { answer = true; break; }
+    answer ||= DYNAMIC_DNS_PATTERN.test(host);
+    if (dynamicDnsCache.size >= 20000) dynamicDnsCache.clear();
+    dynamicDnsCache.set(host, answer);
+    return answer;
 }
 function devicePath(path, query) {
     path = path.toLowerCase();
@@ -99,20 +111,47 @@ export function privateUrlReason(value, { community = false, query = true } = {}
     return null;
 }
 
+// While a catalogue is prepared, each (URL, options) answer is computed once: terms and licence pages repeat for every
+// camera of a source, and each camera's page and media links are checked again for its reference links.
+let urlAnswers = null;
 /** Only public hostnames, matching the native viewer's policy. No URL is requested here.
  *  community: the record comes from OpenStreetMap/Wikidata, so device endpoints are refused too.
  *  query: false only for URLs a provider's own manifest names (its session tokens are not ours to publish). */
-export function webcamUrl(value, { allowHttp = false, allowFragment = false, community = false, query = true } = {}) {
+export function webcamUrl(value, options = {}) {
+    if (!urlAnswers || typeof value !== 'string') return checkWebcamUrl(value, options);
+    const { allowHttp = false, allowFragment = false, community = false, query = true } = options;
+    const key = `${allowHttp ? 1 : 0}${allowFragment ? 1 : 0}${community ? 1 : 0}${query ? 1 : 0}${value}`;
+    let answer = urlAnswers.get(key);
+    if (answer === undefined) urlAnswers.set(key, answer = checkWebcamUrl(value, options));
+    return answer;
+}
+const SPECIAL_USE_NAMES = ['localhost', 'local', 'lan', 'internal', 'home', 'test', 'invalid', 'onion', 'lcl', 'localdomain', 'intranet', 'corp', 'home.arpa'];
+const REFUSED_SITES = ['insecam.org', 'opentopia.com', 'shodan.io'];
+/** The host rules of webcamUrl (public name, not a special-use name, not a literal address, not a refused site): true
+ * when the host is refused. Depends on the host alone, so answered once per host (a few thousand in the catalogue). */
+const hostAnswers = new Map();
+function refusedHost(h) {
+    let refused = hostAnswers.get(h);
+    if (refused !== undefined) return refused;
+    refused = h.endsWith('.') || h.includes(':') || !h.includes('.') || !/[a-z]/.test(h)
+        || SPECIAL_USE_NAMES.some(s => h === s || h.endsWith(`.${s}`))
+        || h.startsWith('0x') || h.split('.').every(p => /^(?:0x[0-9a-f]+|[0-9]+)$/.test(p))
+        || REFUSED_SITES.some(s => h === s || h.endsWith(`.${s}`));
+    if (hostAnswers.size >= 20000) hostAnswers.clear();
+    hostAnswers.set(h, refused);
+    return refused;
+}
+// While a catalogue is prepared: the path of each accepted URL, so reference links need not parse it again.
+let urlPaths = null;
+function checkWebcamUrl(value, { allowHttp = false, allowFragment = false, community = false, query = true } = {}) {
     if (typeof value !== 'string' || value.length > 8192 || /[\u0000-\u0020\\]/.test(value)) return null;
     if (/^https?:\/\/[^/?#]*%/i.test(value)) return null;
     try {
         const u = new URL(value), h = u.hostname.toLowerCase();
         if (u.protocol !== 'https:' && !(allowHttp && u.protocol === 'http:')) return null;
-        if (u.username || u.password || u.port === '0' || (!allowFragment && u.hash) || h.endsWith('.') || h.includes(':') || !h.includes('.') || !/[a-z]/.test(h)) return null;
-        if (['localhost', 'local', 'lan', 'internal', 'home', 'test', 'invalid', 'onion', 'lcl', 'localdomain', 'intranet', 'corp', 'home.arpa'].some(s => h === s || h.endsWith(`.${s}`))) return null;
-        if (h.startsWith('0x') || h.split('.').every(p => /^(?:0x[0-9a-f]+|[0-9]+)$/.test(p))) return null;
-        if (['insecam.org', 'opentopia.com', 'shodan.io'].some(s => h === s || h.endsWith(`.${s}`))) return null;
+        if (u.username || u.password || u.port === '0' || (!allowFragment && u.hash) || refusedHost(h)) return null;
         if (privateUrlReason(u, { community, query })) return null;
+        urlPaths?.set(u.href, u.pathname);
         return u.href;
     } catch { return null; }
 }
@@ -130,7 +169,7 @@ function referenceLinks(camera, community = isCommunity(camera)) {
         const url = pageUrl(raw.url, community);
         if (!url || excluded.has(url)) continue;
         const supplied = typeof raw.purpose === 'string' ? raw.purpose : '';
-        const path = new URL(url).pathname.toLowerCase();
+        const path = (urlPaths?.get(url) ?? new URL(url).pathname).toLowerCase();
         const purpose = ['hls', 'hls_reference_only'].includes(supplied) || path.endsWith('.m3u8') ? 'hls_reference_only'
             : ['snapshot', 'image', 'snapshot_reference_only', 'image_reference_only'].includes(supplied) || /\.(?:jpe?g|png|gif|webp)$/.test(path) ? 'snapshot_reference_only'
             : ['clip', 'clip_reference_only'].includes(supplied) || /\.(?:mp4|webm|mov|m4v)$/.test(path) ? 'clip_reference_only'
@@ -198,6 +237,10 @@ export function expandLiveCatalog(json) {
 }
 
 export function prepareWebcams(json) {
+    urlAnswers = new Map(); urlPaths = new Map();
+    try { return prepareItems(json); } finally { urlAnswers = null; urlPaths = null; }
+}
+function prepareItems(json) {
     if (json?.schema_version === 3) json = expandLiveCatalog(json);
     if (![1, 2].includes(json?.schema_version) || !Array.isArray(json.items)) return [];
     const sources = new Map((Array.isArray(json.sources) ? json.sources : []).filter(s => s && typeof s.id === 'string').map(s => [s.id, s]));

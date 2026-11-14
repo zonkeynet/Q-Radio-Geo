@@ -5,7 +5,7 @@ import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer } from './player.mjs';
 import { createGlobe } from './globe.mjs';
 import { THEMES, themeById, savedThemeId, applyThemeCss } from './themes.mjs';
-import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory, indexItems } from './directory.mjs';
+import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory } from './directory.mjs';
 import { SDR } from './sdr.mjs';
 import { REPEATERS } from './repeaters.mjs';
 import { AVIATION } from './aviation.mjs';
@@ -56,7 +56,7 @@ const dirLayer = () => ({
 });
 /** Load timings (performance marks, read by the measurement scripts): each mark once, after the next frame is drawn.
  * qglobe:globe-ready: the catalogue is loaded and the globe drawn; qglobe:layer-ready: the layer of the link, of the
- * last visit or the default one is shown. */
+ * last visit or the default one is shown; qglobe:live-ready: the first live load (police and cameras in view) is shown. */
 const marked = new Set();
 function markReady(name) {
     if (marked.has(name)) return;
@@ -403,7 +403,7 @@ async function loadLive(def) {
         st.liveFails = 0;
         if (!complete) st.liveTried = { ...area.need, partial: true }; // capped: any new view loads again
         const kept = new Map(st.items.filter(it => it.live).map(it => [it.id, it])); // an open card stays open
-        st.items = indexItems(def, loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it));
+        st.items = loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it);
         st.liveAt = Date.now();
         st.liveStatus = overview ? note : def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC${note ? `; ${note}` : ''}.`
             : `${(st.items.length - st.base.length).toLocaleString('en')} loaded ${note || (area.cut ? `within ${def.live.boxKm / 2} km of the view center` : 'for the area in view')}${liveTabOn(def) ? '; they follow the view' : ''}.`;
@@ -413,6 +413,7 @@ async function loadLive(def) {
             globe?.setLayer(dirLayer()); renderTicker(); updateStats();
             const linked = pendingPick?.mode === def.id && st.items.find(it => String(it.id) === pendingPick.id);
             if (linked) selectDir(linked, { fly: false });
+            markReady('qglobe:live-ready'); // timing of the first live load (police and cameras in view, catalogue links)
         }
     } catch (e) {
         if (liveRun === run) {
@@ -422,7 +423,7 @@ async function loadLive(def) {
             // Items that carry their own end (user radio) go when it passes, even while no fresh data arrives.
             const kept = def.live.prune ? def.live.prune(st.items) : st.items;
             if (kept.length !== st.items.length) {
-                st.items = indexItems(def, kept);
+                st.items = kept;
                 if (dir() === def) { renderDirSidebar(); explorer.use(def, st.items, st.values); globe?.setLayer(dirLayer()); renderTicker(); updateStats(); }
             }
         }
@@ -626,8 +627,10 @@ function syncLink() {
     if (location.hash !== hash) history.replaceState(null, '', hash);
 }
 const readLink = () => { const p = new URLSearchParams(location.hash.slice(1)); return p.has('layer') || p.has('view') ? p : null; };
-/** Opens what a link describes: the layer, the view, the filters, then the card or station. Unknown values are ignored. */
-async function applyLink(p) {
+/** Opens what a link describes: the layer, the view, the filters, then the card or station. Unknown values are ignored.
+ * justShown: the page has just shown the link's layer (start), so with neither a view nor a filter to change nothing
+ * needs drawing again (the list and the globe of 24,000 webcams took a quarter of a second more on a phone). */
+async function applyLink(p, { justShown = false } = {}) {
     const layer = p.get('layer');
     if (layer && layer !== mode && (layer === 'radio' || DIRECTORIES[layer])) await setMode(layer);
     if (layer && layer !== mode) return; // unknown, or its data did not load
@@ -639,9 +642,10 @@ async function applyLink(p) {
         if (s) selectPlace(catalog.byId.get(s.place_id), s.id, { fly: !hasView });
         return;
     }
-    const d = dir(), values = state().values;
+    const d = dir(), values = state().values, before = JSON.stringify(values);
     for (const f of d.filters) { const v = p.get(f.key); values[f.key] = v && f.options.some(o => o.id === v) ? v : 'all'; }
-    setFilter(d.filters[0].key, values[d.filters[0].key]);
+    if (!justShown || hasView || JSON.stringify(values) !== before) setFilter(d.filters[0].key, values[d.filters[0].key]);
+    else liveIfWanted(); // all setFilter would add to what the layer has just drawn
     const id = p.get('id');
     if (!id) return;
     const it = state().items.find(x => String(x.id) === id);
@@ -944,7 +948,7 @@ async function start() {
         ready = true; $('btnRandom').disabled = false;
         markReady('qglobe:globe-ready');
         // Then what the link adds: its view, filters, card or station (unless its layer could not be loaded).
-        if (link && !PICK_MODE && mode === first) await applyLink(link);
+        if (link && !PICK_MODE && mode === first) await applyLink(link, { justShown: true });
         linked = true;
         markReady('qglobe:layer-ready');
         window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
@@ -954,7 +958,9 @@ async function start() {
         $('globeNotice').textContent = String(e.message); $('globeNotice').hidden = false;
     } finally { $('loaderSplash').hidden = true; }
     globalThis.QRadioGlobe = Object.freeze({
-        diagnostics: () => ({ ready, mode: config?.streamMode, places: catalog?.places.length || 0, stations: catalog?.stations.length || 0, worker: Boolean(catalog?.worker), playerState: player.state, ...globe?.diagnostics() })
+        diagnostics: () => ({ ready, mode: config?.streamMode, places: catalog?.places.length || 0, stations: catalog?.stations.length || 0, worker: Boolean(catalog?.worker), playerState: player.state, ...globe?.diagnostics() }),
+        // The area in view, as the live loads compute it and as globe.gl's raycast does (tests compare them).
+        viewBounds: () => ({ sphere: globe?.viewBounds() ?? null, raycast: globe?.viewBoundsByRaycast() ?? null })
     });
     document.addEventListener('visibilitychange', () => {
         if (!globe) return;

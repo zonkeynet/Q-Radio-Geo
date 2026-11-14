@@ -92,6 +92,28 @@ try {
                 .filter(e => e.tagName === 'DIALOG' || e.currentSrc || e.getAttribute('src') || e.srcObject).map(e => e.outerHTML.slice(0, 120)));
             assert.deepEqual(media, [], `no media element or open viewer: ${JSON.stringify(media)}`);
         });
+        await step('a tap on a camera of the globe opens its card', async () => {
+            // The card above flew the view to its camera, now in the middle of the globe. Minimize the list, tap there:
+            // the tap selects the nearest camera, which opens the list again with its card.
+            await page.waitForTimeout(1200);
+            await page.locator('#drawerFold').click();
+            await page.waitForFunction(() => document.getElementById('countryDrawer').dataset.sheet === 'peek');
+            const box = await page.locator('#globeViz canvas').first().boundingBox();
+            await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+            await page.waitForFunction(() => document.getElementById('countryDrawer').dataset.sheet !== 'peek', null, { timeout: 10000 });
+            const card = page.locator('#countryCitiesList .dir-card');
+            await card.waitFor();
+            assert.match(await card.innerText(), /VIEW SNAPSHOT|OPEN VIDEO|PLAY IN APP|VIEW WEB LINK/);
+        });
+        await step('the view area agrees with globe.gl\'s raycast (live loads use it)', async () => {
+            for (const view of ['51.507,-0.128,0.150', '35.680,139.760,0.400', '-33.900,151.200,0.080', '0.000,0.000,2.200']) {
+                await page.evaluate(v => { location.hash = `#layer=webcams&view=${v}`; }, view);
+                await page.waitForTimeout(800);
+                const { sphere, raycast } = await page.evaluate(() => QRadioGlobe.viewBounds());
+                assert.equal(sphere === null, raycast === null, `${view}: sky in one only`);
+                if (sphere) for (const k of ['s', 'n', 'w', 'e']) assert.ok(Math.abs(sphere[k] - raycast[k]) < .3, `${view} ${k}: ${sphere[k]} vs ${raycast[k]}`);
+            }
+        });
         await step('security bubbles view (cameras zoomed out)', async () => {
             await page.evaluate(() => { location.hash = '#layer=security&kind=CAMERA&view=30.000,0.000,2.50'; });
             await page.locator('#countryCitiesList .dir-item-name', { hasText: 'surveillance cameras in this area' }).first().waitFor({ timeout: 60000 });

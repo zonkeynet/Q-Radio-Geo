@@ -340,10 +340,32 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         });
     }
     /** Lat/lng box of the area in view, or null when the view shows sky or crosses the antimeridian. */
+    /** Where the screen point (x, y) of a width x height view meets the globe: the camera's ray, as THREE's
+     * Raycaster.setFromCamera builds it, against the globe's sphere. globe.gl's toGlobeCoords raycasts the whole scene
+     * instead (the globe's 11,000 triangles and every layer), and viewBounds needs 25 points every second while a live
+     * tab (police, cameras) follows the view: seconds of CPU on a phone. Null for the sky. */
+    function screenToGlobe(x, y, width, height) {
+        const camera = world.camera(), m = camera.matrixWorld.elements, p = camera.projectionMatrixInverse.elements;
+        const apply = (e, [a, b, c]) => {
+            const w = e[3] * a + e[7] * b + e[11] * c + e[15];
+            return [(e[0] * a + e[4] * b + e[8] * c + e[12]) / w, (e[1] * a + e[5] * b + e[9] * c + e[13]) / w, (e[2] * a + e[6] * b + e[10] * c + e[14]) / w];
+        };
+        const o = [m[12], m[13], m[14]], q = apply(m, apply(p, [x / width * 2 - 1, -(y / height) * 2 + 1, .5]));
+        let d = [q[0] - o[0], q[1] - o[1], q[2] - o[2]];
+        const len = Math.hypot(...d);
+        d = d.map(v => v / len);
+        const b = o[0] * d[0] + o[1] * d[1] + o[2] * d[2], c = o[0] ** 2 + o[1] ** 2 + o[2] ** 2 - radius * radius, disc = b * b - c;
+        if (!(disc >= 0)) return null;
+        const t = -b - Math.sqrt(disc);
+        if (t < 0) return null;
+        const g = world.toGeoCoords({ x: o[0] + t * d[0], y: o[1] + t * d[1], z: o[2] + t * d[2] });
+        return { lat: g.lat, lng: g.lng };
+    }
     function viewBounds() {
         const rect = renderer.domElement.getBoundingClientRect(), points = [];
+        world.camera().updateMatrixWorld(); // a view set just now (a link's) may not have been drawn yet
         for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
-            const c = world.toGlobeCoords(rect.width * i / 4, rect.height * j / 4);
+            const c = screenToGlobe(rect.width * i / 4, rect.height * j / 4, rect.width, rect.height);
             if (!c) return null;
             points.push(c);
         }
@@ -353,6 +375,18 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
     }
     return {
         world, navigation, setTheme, setLayer, viewBounds, select, markPick,
+        /** The globe.gl way of viewBounds, for checking that both agree (scripts/test_smoke_browser.mjs). */
+        viewBoundsByRaycast() {
+            const rect = renderer.domElement.getBoundingClientRect(), points = [];
+            for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+                const c = world.toGlobeCoords(rect.width * i / 4, rect.height * j / 4);
+                if (!c) return null;
+                points.push(c);
+            }
+            const lats = points.map(p => p.lat), lngs = points.map(p => p.lng);
+            const w = Math.min(...lngs), e = Math.max(...lngs);
+            return e - w > 180 ? null : { s: Math.min(...lats), n: Math.max(...lats), w, e };
+        },
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });

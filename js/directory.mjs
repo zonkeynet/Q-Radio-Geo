@@ -14,26 +14,48 @@ function km(a, b) {
     return 12742 * Math.asin(Math.sqrt(h));
 }
 
-/** Gives items the fields searchDirectory reads (also for items loaded live). */
+/** Gives items the fields searchDirectory reads, once per item: searchDirectory calls it, so a layer opens without it. */
 export function indexItems(def, items) {
     for (const it of items) if (it.search === undefined) { it.search = normalize(def.searchText(it)); it.compact = compactOf(it.search); }
     return items;
 }
 /** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. */
 export function loadDirectory(def) {
-    def.loading ??= loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout }).then(json => indexItems(def, def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng))))
+    def.loading ??= loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout }).then(json => def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)))
         .catch(e => { def.loading = null; throw e; });
     return def.loading;
 }
 export const initialValues = def => Object.fromEntries(def.filters.map(f => [f.key, 'all']));
 export const applyFilters = (def, items, values) => items.filter(it => def.filters.every(f => values[f.key] === 'all' || f.test(it, values[f.key])));
-/** How many items each option of a filter would show, given the other filters. */
-export const optionCount = (def, items, values, key, option) => applyFilters(def, items, { ...values, [key]: option }).length;
+/** How many items each option of a filter would show, given the other filters: the same numbers as
+ * applyFilters(def, items, { ...values, [key]: option }).length, counted for every option of the filter in one pass
+ * over the items the other filters keep (24,000 webcams by 100 countries took seconds on a phone otherwise), and kept
+ * until the items or the filter values change. */
+const counted = new WeakMap(); // items -> { values signature, filter key -> Map(option -> count) }
+export function optionCount(def, items, values, key, option) {
+    const signature = `${def.id}|${def.filters.map(f => values[f.key]).join('|')}`;
+    let memo = counted.get(items);
+    if (memo?.signature !== signature) counted.set(items, memo = { signature, byKey: new Map() });
+    if (!memo.byKey.has(key)) {
+        const filter = def.filters.find(f => f.key === key), others = def.filters.filter(f => f.key !== key && values[f.key] !== 'all');
+        const pool = others.length ? items.filter(it => others.every(f => f.test(it, values[f.key]))) : items;
+        const counts = new Map();
+        for (const o of filter?.options || []) {
+            if (o.id === 'all') { counts.set(o.id, pool.length); continue; }
+            let n = 0;
+            for (const it of pool) if (filter.test(it, o.id)) n++;
+            counts.set(o.id, n);
+        }
+        memo.byKey.set(key, counts);
+    }
+    return memo.byKey.get(key).get(option) ?? applyFilters(def, items, { ...values, [key]: option }).length;
+}
 /** Every word must appear, in any order ("racon genova"); Italian country names count as their English
  * name ("francia italia"); a phrase typed without spaces also matches. def.searchOrder breaks ties. */
 export function searchDirectory(def, items, values, input) {
     const q = normalize(input), qc = compactOf(q), words = q.split(/\s+/).filter(Boolean);
     if (q.length < 2) return [];
+    indexItems(def, items);
     const alias = w => COUNTRY_ALIASES[w] ? normalize(COUNTRY_ALIASES[w]) : null;
     const has = (it, w) => it.search.includes(w) || (alias(w) !== null && it.search.includes(alias(w)));
     const rank = it => (it.search.startsWith(q) ? 0 : it.search.startsWith(words[0]) ? 1 : 2) - (def.featured?.(it) ? .5 : 0);
@@ -45,6 +67,16 @@ export function typeBadge(text, colorVar, className = 'dir-type') {
     b.style.setProperty('--type-color', `var(${colorVar})`);
     return b;
 }
+
+/** The list's order: the mode's own (news: newest first), else featured first, then nearest to `center`; with each
+ * item's distance, computed once rather than in every comparison (the same order, a fraction of the time). */
+export function listOrder(def, items, center) {
+    const distance = new Map();
+    if (def.listOrder) return { sorted: [...items].sort(def.listOrder), distance };
+    const keyed = items.map(it => { const d = km(center, it); distance.set(it, d); return { it, featured: def.featured?.(it) ? 1 : 0, d }; });
+    return { sorted: keyed.sort((a, b) => b.featured - a.featured || a.d - b.d).map(k => k.it), distance };
+}
+export { km as distanceKm };
 
 // Sections of a list sorted by distance from the view (a mode can define its own with def.sectionOf).
 const DISTANCE_SECTIONS = [[50, 'Within 50 km'], [300, 'Within 300 km'], [1000, 'Within 1,000 km'], [Infinity, 'Further away']];
@@ -114,15 +146,16 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
     }
     function render() {
         const center = getCenter(), list_ = shown();
-        // Nearest to the view first, unless the mode orders its list itself (news: newest first).
-        const sorted = [...list_].sort(def.listOrder || ((a, b) => (def.featured?.(b) ? 1 : 0) - (def.featured?.(a) ? 1 : 0) || km(center, a) - km(center, b)));
+        // Nearest to the view first, unless the mode orders its list itself (news: newest first). Each item's distance
+        // is computed once, not in every comparison: the same order, a fraction of the time for 24,000 webcams.
+        const { sorted, distance } = listOrder(def, list_, center);
         title.replaceChildren(icon(def.id, 'icon title-icon'), def.titleOf(values));
         meta.textContent = `${list_.length.toLocaleString('en')} ${def.noun} · ${def.listOrder ? 'newest first' : 'nearest to the view first'}`;
         drawer.hidden = false;
         list.replaceChildren(); list.scrollTop = 0;
         if (selected) list.append(card(selected));
         const sectionOf = def.sectionOf || (def.listOrder ? null
-            : it => def.featured?.(it) ? '★ Featured' : DISTANCE_SECTIONS.find(([limit]) => km(center, it) < limit)[1]);
+            : it => def.featured?.(it) ? '★ Featured' : DISTANCE_SECTIONS.find(([limit]) => (distance.get(it) ?? km(center, it)) < limit)[1]);
         const sections = new Map();
         if (sectionOf) for (const it of sorted) { const s = sectionOf(it); sections.set(s, (sections.get(s) || 0) + 1); }
         let offset = 0, current = null;
