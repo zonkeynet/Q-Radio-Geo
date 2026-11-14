@@ -539,3 +539,10 @@ test('webcam files wait up to a minute (Tor), and the database is a release down
     assert.match(app, /\[WEBCAM_DB\.name, WEBCAM_DB\.href, WEBCAM_DB\.notice\]/);
     assert.match(app, /\['qp1ng-surveillance\.sqlite\.gz', 'db\/qp1ng-surveillance\.sqlite\.gz'\]/);
 });
+
+test('a source can give each camera a notice naming its own page (PDL credit)', () => {
+    const [camera] = prepareWebcams({ schema_version: 2, sources: [{ id: 'rivers', record_notice: '出典：川の防災情報（{official_page}）を加工して作成' }],
+        items: [item({ id: 'rivers:1', provider: 'rivers', format: 'snapshot', official_page: 'https://www.river.go.jp/kawabou/pc/tm?scamId=1' })] });
+    assert.equal(camera.provider_notice, '出典：川の防災情報（https://www.river.go.jp/kawabou/pc/tm?scamId=1）を加工して作成');
+    assert.match(Object.fromEntries(WEBCAMS.facts(camera))['Provider notice'], /scamId=1/);
+});

@@ -10,8 +10,8 @@ Integrated (viewable snapshots, Public Data License 1.0):
                        The other office pages give route/kilometre posts or place names only: their
                        cameras cannot be placed and are counted, not integrated.
 Held (policy fragments, no items): mlit_kyushu_road_cameras (no office publishes coordinates),
-  japan_mlit_rivers_snapshot_upgrade, mlit_regional_bureaus_other, mlit_dpf_cctv,
-  jcg_mics_livecamera, nexco_central_ihighway, nexco_east_driveplaza, nexco_west_ihighway.
+  mlit_dpf_cctv. Round 2 moved the other Japanese holds (river snapshot upgrade, other MLIT bureaus,
+  JCG, NEXCO) to collect_japan_rivers.py, which writes them with the round-2 reasons.
 
 Network only through webcam_fetch.PoliteClient (robots.txt, >= 1 s per host, HTTPS, refusals
 recorded). Run without arguments' --offline to fetch; --offline rebuilds every output from the
@@ -179,38 +179,11 @@ def held(source_id, name, url, reason, until, evidence):
                         "source": {"id": source_id, "name": name, "url": url}, "reviewed_at": REVIEWED_AT}}
 
 
-HELD = {}
+HELD = {}  # round 2: the other Japanese holds are written by collect_japan_rivers.py
 for _entry in [
-    held("japan_mlit_rivers_snapshot_upgrade", "MLIT 川の防災情報 river cameras — snapshot upgrade of the existing "
-         "page-only provider japan_mlit_rivers", "https://www.river.go.jp/kawabou/pcfull",
-         "The river.go.jp terms allow reuse, but the still-image endpoint was not found (the JS bundle is over the 64 KiB "
-         "sample) and the site bars periodic automated collection. The existing page-only policy japan_mlit_rivers is "
-         "unchanged; this id only tracks the upgrade.",
-         "A documented still-image URL per camera, user-tap fetch only (no polling), prefecture-owned cameras checked "
-         "separately; scheduled refresh only through the FRICS distribution.",
-         ["https://www.river.go.jp/kawabou/kwb_apend/html/caution.html"]),
-    held("mlit_regional_bureaus_other", "MLIT other regional bureaus' live cameras (Hokkaido, Tohoku, Hokuriku, Chubu, "
-         "Kinki, Chugoku, Shikoku, Okinawa)", "https://www.mlit.go.jp/",
-         "Not verified: no bureau copyright page or image was checked in the research round.",
-         "Per bureau: read the copyright page (PDL1.0 or not), one image check, and a camera list with official "
-         "coordinates.", []),
     held("mlit_dpf_cctv", "MLIT Data Platform CCTV common-format dataset", "https://www.mlit-data.jp/",
          "The DPF API needs a registered API key; provider-level rights not checked.",
          "The user's decision to register, then each data provider's rules.", ["https://www.mlit-data.jp/"]),
-    held("jcg_mics_livecamera", "Japan Coast Guard 'Umi no Anzen Joho' lighthouse and port live cameras",
-         "https://www6.kaiho.mlit.go.jp/livecamera.html",
-         "Pages exist but the JCG site terms were not located or read; coordinates not yet checked.",
-         "Read the JCG site policy (PDL1.0 or not) and find official camera positions.",
-         ["https://www6.kaiho.mlit.go.jp/livecamera.html"]),
-    held("nexco_central_ihighway", "NEXCO Central expressway live cameras (iHighway)", "https://www.c-ihighway.jp/",
-         "Partially verified: the site returned 403 to the research client and no terms were read.",
-         "Terms read and a camera list with coordinates reachable without bypassing the block.", []),
-    held("nexco_east_driveplaza", "NEXCO East expressway live cameras (ドラぷら)", "https://www.driveplaza.com/traffic/camera/",
-         "Partially verified: area pages exist, but no reuse terms were found or read.",
-         "Terms read and a camera list with coordinates.", ["https://www.driveplaza.com/traffic/camera/"]),
-    held("nexco_west_ihighway", "NEXCO West expressway live cameras (iHighway)", "https://ihighway.jp/pcsite/",
-         "Partially verified: single-page app shell only; terms not located.",
-         "Terms read and a camera list with coordinates.", []),
 ]:
     HELD.update(_entry)
 

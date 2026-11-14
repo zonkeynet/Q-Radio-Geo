@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "crs": {"type": "name", "properties": {"name": "EPSG:4326"}}, "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [139.5988972, 35.9289694]}, "properties": {"id": 302817010, "name": "日進上", "name_kana": "", "ofc_cd": 11, "sys_id": 3, "sys_cam_id": "28170010", "pause": 0, "date_type": 1, "cam_kind": 2, "own_cd": 2817}}]}

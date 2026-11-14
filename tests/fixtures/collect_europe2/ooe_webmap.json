@@ -1,0 +1,14 @@
+{
+ "operationalLayers": [
+  {
+   "title": "Kameras für Webcam - Portal ASFINAG - Webcams ASFINAG",
+   "url": "https://utility.arcgis.com/usrsvcs/servers/441efaca8d354d8e83da964594fcaaa1/rest/services/AON/aon_Layer/MapServer/1",
+   "layerType": "ArcGISFeatureLayer"
+  },
+  {
+   "title": "Kameras für Webcam - Portal Land OÖ - Webcams",
+   "url": "https://utility.arcgis.com/usrsvcs/servers/596e2315fad741a7b83c81f58c1fdb88/rest/services/AON/aon_Layer/MapServer/0",
+   "layerType": "ArcGISFeatureLayer"
+  }
+ ]
+}

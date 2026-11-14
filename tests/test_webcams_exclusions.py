@@ -38,7 +38,8 @@ class RulesFileTest(unittest.TestCase):
     def test_every_rule_has_a_reason_evidence_and_a_known_action(self):
         ids = [r["id"] for r in RULES]
         self.assertEqual(ids, ["ua-martial-law", "asfinag-terms", "nsw-livetraffic-terms", "kz-business-premises",
-                               "kytc-cc0-withdrawn", "a22-image-not-page", "media-url-not-page"])
+                               "kytc-cc0-withdrawn", "hak-terms", "inforoute-link-permission",
+                               "vienna-viewer-expired-certificate", "a22-image-not-page", "media-url-not-page"])
         for rule in RULES:
             self.assertTrue(rule["reason"].strip() and rule["evidence"], rule["id"])
             self.assertTrue(all(u.startswith("https://") for u in rule["evidence"]), rule["id"])
@@ -74,6 +75,15 @@ class RemovalTest(unittest.TestCase):
         self.assertEqual(removed_by(build(osm("https://www.asfinag.at/verkehr-sicherheit/webcams?id=1", 6))), "asfinag-terms")
         self.assertEqual(removed_by(build(osm("https://www.example.at/cams", 7, reference_url="https://webcams.asfinag.at/x"))), "asfinag-terms")
         self.assertIsNone(removed_by(build(osm("https://asfinag.at.example.org/cams", 8))))
+
+    def test_round_two_link_rules(self):
+        self.assertEqual(removed_by(build(osm("https://m.hak.hr/kamera.asp?g=5&k=37", 20, 45.8, 16.0, "HR"))), "hak-terms")
+        self.assertEqual(removed_by(build(osm("https://www.inforoute04.fr/", 21, 44.1, 6.2, "FR"))), "inforoute-link-permission")
+        self.assertEqual(removed_by(build(osm("https://inforoute.ha-py.fr/", 22, 43.2, 0.1, "FR"))), "inforoute-link-permission")
+        self.assertEqual(removed_by(build(osm("https://dyn2.verkehrsauskunft.at/itswebcamviewer/SingleScreen.aspx?camname=c1",
+                                              23, 48.2, 16.4, "AT"))), "vienna-viewer-expired-certificate")
+        self.assertIsNone(removed_by(build(osm("https://inforoute.hautes-alpes.fr/", 24, 44.6, 6.1, "FR"))),
+                          "Hautes-Alpes is not among the departments that require permission")
 
     def test_whole_sources_and_business_premises(self):
         self.assertEqual(removed_by({"provider": "nsw_transport", "lat": -33.8, "lng": 151.2, "country": "AU"}), "nsw-livetraffic-terms")
@@ -113,6 +123,14 @@ class MediaPageTest(unittest.TestCase):
             item = build(osm(url, 11, 51.0, 10.0, "DE"))
             self.assertEqual(item[field], url)
             self.assertEqual(item["official_page"], "https://www.openstreetmap.org/node/11")
+
+    def test_image_endpoints_without_an_extension_are_no_pages(self):
+        for url in ("https://www.land-oberoesterreich.gv.at/webcam/a/32/KAM2?1676214323",
+                    "https://api.dopravniinfo.cz/CameraImage.ashx?camera=2146",
+                    "https://www.meteo.be/services/web2016/getWebcamImage.php?target=MontRigi1&lang=nl"):
+            item = build(osm(url, 25, 48.3, 14.3, "AT"))
+            self.assertEqual(item["official_page"], "https://www.openstreetmap.org/node/25", url)
+            self.assertEqual(item["reference_url"], url)
 
     def test_a_private_media_page_still_removes_the_record(self):
         with self.assertRaises(M.PrivacyFiltered):

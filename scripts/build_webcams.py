@@ -214,6 +214,9 @@ EXCLUSION_ACTIONS = ("remove_record", "image_page_to_reference", "media_page_to_
 MEDIA_EXTENSIONS = (".m3u8", ".m3u", ".mpd", ".ts", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp",
                     ".mjpg", ".mjpeg", ".mp4", ".m4v", ".webm", ".mov", ".flv")
 MEDIA_REPORTED_FORMATS = frozenset({"hls", "dash", "mjpeg", "mp4", "jpeg", "jpg", "image", "snapshot", "rtsp"})
+# Image endpoints without a file extension, found given as pages (round-2 research): Land Oberösterreich
+# /webcam/a/{id}/KAM{n}, ŘSD CameraImage.ashx, RMI getWebcamImage.php, HAK cam.asp.
+MEDIA_PATH_PATTERN = re.compile(r"/webcam/a/[^/]+/kam\d+$|/cameraimage\.ashx$|/getwebcamimage\.php$|/cam\.asp$")
 
 
 def media_url(value, row=None):
@@ -224,7 +227,7 @@ def media_url(value, row=None):
         path = urlsplit(value.strip()).path.lower()
     except ValueError:
         return False
-    if path.endswith(MEDIA_EXTENSIONS):
+    if path.endswith(MEDIA_EXTENSIONS) or MEDIA_PATH_PATTERN.search(path):
         return True
     return bool(row) and str(row.get("reported_media_format") or "").lower() in MEDIA_REPORTED_FORMATS and value in (
         row.get("reference_url"), row.get("stream_url"), row.get("snapshot_url"))
@@ -394,9 +397,9 @@ def repair_media_page(raw, rule, log=None):
 
 
 # Duplicates. A community link (OSM, Wikidata) adds nothing when an official record within the matching
-# radius already carries every link it has (same page, so same operator site). And a page-only official
-# record gives way to the viewable record of the same operator for the same camera, for the provider pairs
-# below, when the names match; its page then stays on the viewable record as a reference.
+# radius already carries every link it has (same page, so same operator site). And for the reviewed provider
+# pairs below, the first provider's record of a camera gives way to the second provider's viewable record of the
+# same camera when the names match; its page then stays on the viewable record as a reference.
 SAME_CAMERA_PAGE_PAIRS = {
     # MLIT Kanto Regional Development Bureau cameras (Tone upstream river office) are also listed, as pages, on
     # MLIT's national river-information site (www.river.go.jp, provider japan_mlit_rivers).
@@ -405,9 +408,14 @@ SAME_CAMERA_PAGE_PAIRS = {
 GENERIC_NAME_WORDS = ("水位", "ライブカメラ", "カメラ", "観測所", "CCTV")
 
 
+CACHE_BUSTER = re.compile(r"^(?:\d{6,}|(?:v|t|ts|_|time|timestamp)=\d+)$")
+
+
 def link_key(url):
+    """A URL for comparison: host case, trailing slash and a bare cache-buster query do not count."""
     u = urlsplit(url)
-    return (u.hostname or "").lower() + u.path.rstrip("/") + ("?" + u.query if u.query else "")
+    query = "" if CACHE_BUSTER.match(u.query or "") else u.query
+    return (u.hostname or "").lower() + u.path.rstrip("/") + ("?" + query if query else "")
 
 
 def record_links(item, provenance=False):
@@ -442,8 +450,9 @@ def drop_duplicates(items, radius):
         return sorted(((d, o) for d, o in found if d <= radius), key=lambda pair: (pair[0], pair[1]["id"]))
 
     gone, log = set(), []
-    for x in sorted(items, key=lambda i: i["id"]):  # page-only official record -> viewable record, same camera
-        if x["id"] in community or x["format"] != "official_page":
+    firsts = {a for a, _ in SAME_CAMERA_PAGE_PAIRS}
+    for x in sorted(items, key=lambda i: i["id"]):  # same camera from a reviewed provider pair -> the viewable record
+        if x["id"] in community or x["provider"] not in firsts:
             continue
         for d, v in near(x):
             if (x["provider"], v["provider"]) in SAME_CAMERA_PAGE_PAIRS and v["format"] in ("hls", "snapshot") \
@@ -458,7 +467,7 @@ def drop_duplicates(items, radius):
     for x in sorted(items, key=lambda i: i["id"]):  # community link -> official record with every one of its links
         if x["id"] not in community:
             continue
-        own = record_links(x)
+        own = record_links(x) - ({link_key(x["source_page"])} if x.get("source_page") else set())
         for d, o in near(x):
             if o["id"] not in gone and own and own <= record_links(o, provenance=True):
                 gone.add(x["id"])
@@ -1280,7 +1289,7 @@ LIVE_TABLE_FIELDS = frozenset({
 # Source fields the viewer reads (prepareWebcams); the rest stays in the full catalog.
 LIVE_SOURCE_FIELDS = ("id", "name", "terms_url", "license_url", "license", "metadata_license",
                       "coordinate_reference_system", "coordinate_crs", "provider_notice", "requires_catalog_refresh",
-                      "minimum_refresh_seconds", "media_rights", "attribution", "provenance_type")
+                      "minimum_refresh_seconds", "media_rights", "attribution", "provenance_type", "record_notice")
 
 
 def viewable(row):

@@ -1,0 +1,11 @@
+[
+ {
+  "id": 67,
+  "modified": "2026-06-17T13:09:53",
+  "link": "https://roads.org.mk/patna-mreza/video-kameri/",
+  "content": {
+   "rendered": "<div class=\"jet-map\" data-markers=\"[{&quot;id&quot;: 16055, &quot;latLang&quot;: {&quot;lat&quot;: 41.170533000000006, &quot;lng&quot;: 22.744729}, &quot;label&quot;: false, &quot;custom_marker&quot;: false}, {&quot;id&quot;: 16054, &quot;latLang&quot;: {&quot;lat&quot;: 41.170543, &quot;lng&quot;: 22.744729}, &quot;label&quot;: false, &quot;custom_marker&quot;: false}, {&quot;id&quot;: 16052, &quot;latLang&quot;: {&quot;lat&quot;: 41.170623000000006, &quot;lng&quot;: 22.744678999999998}, &quot;label&quot;: false, &quot;custom_marker&quot;: false}, {&quot;id&quot;: 12757, &quot;latLang&quot;: {&quot;lat&quot;: 41.8088298, &quot;lng&quot;: 22.058314099999997}, &quot;label&quot;: false, &quot;custom_marker&quot;: false}]\"></div>",
+   "protected": false
+  }
+ }
+]
