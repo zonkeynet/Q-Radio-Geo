@@ -1,0 +1,116 @@
+{
+ "webcams": [
+  {
+   "webcamCode": "akunIsland-N",
+   "webcamName": "Akun Island - N",
+   "latitude": 54.146948,
+   "longitude": -165.60517,
+   "bearingDeg": 350,
+   "externalUrl": "http://avcams.faa.gov/viewsite.php?bookmark=74IBZOLY",
+   "faaInd": "Y",
+   "vName": "Akutan",
+   "lastImageTimestamp": 1743400286,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/akunIsland-N/current.jpg"
+  },
+  {
+   "webcamCode": "akutan_aksd",
+   "webcamName": "Akutan [AKS, 720 ft]",
+   "latitude": 54.11047,
+   "longitude": -165.6969,
+   "bearingDeg": 290,
+   "externalUrl": null,
+   "faaInd": "N",
+   "vName": "Akutan",
+   "lastImageTimestamp": 1794639600,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/akutan_aksd/current.jpg"
+  },
+  {
+   "webcamCode": "anchorage-S",
+   "webcamName": "Anchorage - S",
+   "latitude": 61.21539,
+   "longitude": -149.89641,
+   "bearingDeg": 170,
+   "externalUrl": null,
+   "faaInd": "Y",
+   "vName": null,
+   "lastImageTimestamp": 1794642371,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/anchorage-S/current.jpg"
+  },
+  {
+   "webcamCode": "shasta-snowcrest",
+   "webcamName": "CalVO Shasta (Snowcrest, West)",
+   "latitude": 41.314,
+   "longitude": -122.313,
+   "bearingDeg": 0,
+   "externalUrl": "https://sc.snowcrest.net/images/camera/snowcam-high000M.jpg",
+   "faaInd": "N",
+   "vName": "Mount Shasta",
+   "lastImageTimestamp": 1794642404,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/shasta-snowcrest/current.jpeg"
+  },
+  {
+   "webcamCode": "rainier-mora-east",
+   "webcamName": "CVO Rainier (Paradise, Main Parking Lot)",
+   "latitude": 46.785891,
+   "longitude": -121.735462,
+   "bearingDeg": 0,
+   "externalUrl": "https://www.nps.gov/webcams-mora/east.jpg",
+   "faaInd": "N",
+   "vName": "Mount Rainier",
+   "lastImageTimestamp": 1794639967,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/rainier-mora-east/current.jpeg"
+  },
+  {
+   "webcamCode": "msh-dome",
+   "webcamName": "CVO St. Helens (JRO, Dome)",
+   "latitude": 46.27527,
+   "longitude": -122.21826,
+   "bearingDeg": 165,
+   "externalUrl": "https://cvo-valve.wr.usgs.gov/msh/jrocam/dome.jpeg",
+   "faaInd": "N",
+   "vName": "Mount St. Helens",
+   "lastImageTimestamp": 1794641568,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/msh-dome/current.jpeg"
+  },
+  {
+   "webcamCode": "kilauea-kw-cam",
+   "webcamName": "Kilauea - KW Cam",
+   "latitude": 19.421,
+   "longitude": -155.287,
+   "bearingDeg": 0,
+   "externalUrl": "https://volcanoes.usgs.gov/observatories/hvo/cams/panorama.php?cam=KWcam",
+   "faaInd": "N",
+   "vName": "Kilauea",
+   "lastImageTimestamp": 1794642721,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/kilauea-kw-cam/current.jpg"
+  },
+  {
+   "webcamCode": "kilauea-b1-cam",
+   "webcamName": "kilauea-b1-cam",
+   "latitude": 0,
+   "longitude": 0,
+   "bearingDeg": 0,
+   "externalUrl": null,
+   "faaInd": "N",
+   "vName": "Kilauea",
+   "lastImageTimestamp": 1794642721,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/kilauea-b1-cam/current.jpg"
+  },
+  {
+   "webcamCode": "korovin_kowe",
+   "webcamName": "Korovin [KOWE, 1877 ft]",
+   "latitude": 52.36459,
+   "longitude": -174.2526,
+   "bearingDeg": 73,
+   "externalUrl": "test",
+   "faaInd": "N",
+   "vName": "Korovin volcano",
+   "lastImageTimestamp": 1794639600,
+   "currentImageUrl": "https://volcview.wr.usgs.gov/ashcam-api/images/webcams/korovin_kowe/current.jpg"
+  }
+ ],
+ "meta": {
+  "webcamTotal": 9,
+  "note": "trimmed fixture"
+ }
+}

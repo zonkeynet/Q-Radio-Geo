@@ -1,0 +1,33 @@
+{
+ "objectIdFieldName": "OBJECTID",
+ "features": [
+  {
+   "attributes": {
+    "LiveHDURL": "https://ticcamvw02.lincoln.ne.gov/video.html?1E45N_HD",
+    "LiveSDURL": "https://ticcamvw02.lincoln.ne.gov/video.html?1E45N",
+    "PhotoURL": "https://ticcamvw.lincoln.ne.gov/accliveviewer/?cameraid=1E45N",
+    "OBJECTID": 3,
+    "Camera_Location": "1st St. & Superior St.",
+    "Camera_ID": "1E45N"
+   },
+   "geometry": {
+    "x": -96.71969331445686,
+    "y": 40.85715786102481
+   }
+  },
+  {
+   "attributes": {
+    "LiveHDURL": "https://ticcamvw02.lincoln.ne.gov/video.html?9E2S_HD",
+    "LiveSDURL": "https://ticcamvw02.lincoln.ne.gov/video.html?9E2S",
+    "PhotoURL": "https://ticcamvw.lincoln.ne.gov/accliveviewer/?cameraid=9E2S",
+    "OBJECTID": 6,
+    "Camera_Location": "9th St. & N St.",
+    "Camera_ID": "9E2S"
+   },
+   "geometry": {
+    "x": -96.70848382176312,
+    "y": 40.81250886676063
+   }
+  }
+ ]
+}

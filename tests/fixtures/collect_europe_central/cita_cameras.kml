@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+    <Document>
+        <name>cita_cameras</name>
+        <Style id="camera">
+            <IconStyle>
+                <Icon><href>https://www.cita.lu/images/kml/cams/cctv_0.png</href></Icon>
+                <scale>1.000000</scale>
+            </IconStyle>
+            <BalloonStyle>
+                <text>$[description]</text>
+            </BalloonStyle>
+            <LabelStyle>
+                <color>00000000</color>
+                <scale>0.000000</scale>
+            </LabelStyle>
+            <PolyStyle>
+                <color>ff000000</color>
+                <outline>0</outline>
+            </PolyStyle>
+        </Style>               
+        <Folder>
+            <name>Cameras</name>
+            <description>tous les caméras sur www.cita.lu</description>
+            
+            <Placemark id="camera_3">
+                <name>A6 - Camera 3</name>
+                <description><![CDATA[<iframe class="cam-frame" src="https://www.cita.lu/webcam/map/3" height="245" width="270" scrolling="no" ></iframe>]]>
+                </description>
+                <styleUrl>#camera</styleUrl>
+                <Style>
+                    <IconStyle>
+                        <Icon>
+				<href>https://www.cita.lu/images/kml/cams/cctv_185.png</href>
+			</Icon>
+                    </IconStyle>
+                </Style>
+                <Point>
+                    <coordinates>5.921276000000001,49.63694099999999,0</coordinates>
+                </Point>
+            </Placemark>
+            <Placemark id="camera_6006">
+                <name>A6 - Camera 6006</name>
+                <description><![CDATA[<iframe class="cam-frame" src="https://www.cita.lu/webcam/map/6006" height="245" width="270" scrolling="no" ></iframe>]]>
+                </description>
+                <styleUrl>#camera</styleUrl>
+                <Style>
+                    <IconStyle>
+                        <Icon>
+				<href>https://www.cita.lu/images/kml/cams/cctv_355.png</href>
+			</Icon>
+                    </IconStyle>
+                </Style>
+                <Point>
+                    <coordinates>5.962785,49.636012,0</coordinates>
+                </Point>
+            </Placemark>
+            <!--<Placemark id="camera_57">
+                <name>A3 - Camera 57</name>
+                <description><![CDATA[<iframe class="cam-frame" src="https://www.cita.lu/webcam/map/57" height="245" width="270" scrolling="no" ></iframe>]]>
+                </description>
+                <styleUrl>#camera</styleUrl>
+                <Style>
+                    <IconStyle>
+                        <Icon>
+                            <href>https://www.cita.lu/images/kml/cams/cctv_70.png</href>
+                        </Icon>
+                    </IconStyle>
+                </Style>
+                <Point>
+                    <coordinates>6.114897,49.525059,0</coordinates>
+                </Point>
+            </Placemark>
+            <Placemark id="camera_58">
+                <name>A3 - Camera 58</name>
+                <description><![CDATA[<iframe class="cam-frame" src="https://www.cita.lu/webcam/map/58" height="245" width="270" scrolling="no" ></iframe>]]>
+                </description>
+                <styleUrl>#camera</styleUrl>
+                <Style>
+                    <IconStyle>
+                        <Icon>
+                            <href>https://www.cita.lu/images/kml/cams/cctv_260.png</href>
+                        </Icon>
+                    </IconStyle>
+                </Style>
+                <Point>
+                    <coordinates>6.115066,49.525050,0</coordinates>
+                </Point>
+            </Placemark>-->
+        </Folder>
+    </Document>
+</kml>

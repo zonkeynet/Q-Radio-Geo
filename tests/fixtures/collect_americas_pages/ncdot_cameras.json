@@ -1,0 +1,62 @@
+{
+ "objectIdFieldName": "OBJECTID",
+ "features": [
+  {
+   "attributes": {
+    "OBJECTID": 1,
+    "CameraId": 5135,
+    "CameraStatus": "Active Streaming",
+    "Description": "CCTV10-I485-30.1O_I85",
+    "Division": null,
+    "Highway": "I-485",
+    "LocationName": "CCTV10-I485-30.1O_I85",
+    "Latitude": 35.35311,
+    "Longitude": -80.73711,
+    "County": "Mecklenburg",
+    "ImageStatus": "Recent"
+   },
+   "geometry": {
+    "x": -80.73711,
+    "y": 35.35311
+   }
+  },
+  {
+   "attributes": {
+    "OBJECTID": 2,
+    "CameraId": 5136,
+    "CameraStatus": "Active Streaming",
+    "Description": "CCTV10-I485-13.7I",
+    "Division": null,
+    "Highway": "I-485",
+    "LocationName": "CCTV10-I485-13.7I",
+    "Latitude": 35.3003,
+    "Longitude": -80.95637,
+    "County": "Mecklenburg",
+    "ImageStatus": "Recent"
+   },
+   "geometry": {
+    "x": -80.95637,
+    "y": 35.3003
+   }
+  },
+  {
+   "attributes": {
+    "OBJECTID": 555,
+    "CameraId": 5707,
+    "CameraStatus": "Inactive",
+    "Description": "CCTV05-I540-11W_SIXFORKS",
+    "Division": null,
+    "Highway": "I-540",
+    "LocationName": "CCTV05-I540-11W_SIXFORKS",
+    "Latitude": 35.91197,
+    "Longitude": -78.65146,
+    "County": "Wake",
+    "ImageStatus": "Unavailable"
+   },
+   "geometry": {
+    "x": -78.65146,
+    "y": 35.91197
+   }
+  }
+ ]
+}

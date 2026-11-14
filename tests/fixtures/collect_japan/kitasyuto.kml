@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+<Placemark>
+	<name>
+		幸魂大橋 和光側 下り
+	</name>
+	
+<description>
+		<![CDATA[
+			<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_sakitama-big_bridge(wako).html" target="_self">
+				R298 下り 0.09kp
+<br>				埼玉県和光市新倉5丁目
+<br>				<img	src="http://www.ktr.mlit.go.jp/river/cctv/C01770.jpg"
+					width="192"
+					alt="カメラ個別ページ">
+			</a>
+<br>			(静止画像です。
+<br>			 約10分間隔で更新しています。)
+		]]>
+	</description>
+
+	<styleUrl>
+		#PolyStyle_sakitama
+	</styleUrl>
+	
+<Point>
+		
+<coordinates>
+			139.62092,35.80338
+		</coordinates>
+	
+</Point>
+
+</Placemark>
+<Placemark>
+	<name>
+		辻地下道
+	</name>
+	<description>
+		<![CDATA[
+			<table>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_tsuji-underpass(u).html" target="_self">
+							R298 上り 5.62kp
+						</a>
+					</td>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_tsuji-underpass(d).html" target="_self">
+							R298 下り 5.68kp
+						</a>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_tsuji-underpass(u).html" target="_self">
+							埼玉県さいたま市南区辻1丁目
+						</a>
+					</td>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_tsuji-underpass(d).html" target="_self">
+							埼玉県さいたま市南区辻1丁目
+						</a>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_tsuji-underpass(u).html" target="_self">
+							<img src="http://www.ktr.mlit.go.jp/river/cctv/C01754.jpg" width="192" title="辻地下道 (上り)">
+						</a>
+					</td>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_tsuji-underpass(d).html" target="_self">
+							<img src="http://www.ktr.mlit.go.jp/river/cctv/C01755.jpg" width="192" title="辻地下道 (下り)">
+						</a>
+					</td>
+				</tr>
+			</table>
+			(静止画像です。 約10分間隔で更新しています。)
+		]]>
+	</description>
+	<styleUrl>
+		#PolyStyle_tsuji
+	</styleUrl>
+	<Point>
+		<coordinates>
+			139.66596,35.8357
+		</coordinates>
+	</Point>
+</Placemark>
+<Placemark>
+	<name>
+		潮郷橋
+	</name>
+	<description>
+		<![CDATA[
+			<table>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(d).html" target="_self">
+							R298 下り 22.08kp
+						</a>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(d).html" target="_self">
+							埼玉県八潮市八條
+						</a>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(d).html" target="_self">
+							<img src="http://www.ktr.mlit.go.jp/river/cctv/C05012.jpg" width="192" title="潮郷橋 (下り)">
+						</a>
+					</td>
+				</tr>
+			</table>
+			(静止画像です。 約10分間隔で更新しています。)
+		]]>
+	</description>
+	<styleUrl>
+		#PolyStyle_shiosato
+	</styleUrl>
+	<Point>
+		<coordinates>
+			139.84337,35.84457
+		</coordinates>
+	</Point>
+</Placemark>
+<Placemark>
+	<name>
+		潮郷橋
+	</name>
+	<description>
+		<![CDATA[
+			<table>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(d).html" target="_self">
+							R298 下り 22.08kp
+						</a>
+					</td>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(u).html" target="_self">
+							R298 上り 22.34kp
+						</a>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(d).html" target="_self">
+							埼玉県八潮市八條
+						</a>
+					</td>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(u).html" target="_self">
+							埼玉県三郷市天神1丁目
+						</a>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(d).html" target="_self">
+							<img src="http://www.ktr.mlit.go.jp/river/cctv/C05012.jpg" width="192" title="潮郷橋 (下り)">
+						</a>
+					</td>
+					<td>
+						<a href="http://www.ktr.mlit.go.jp/kitasyuto/public/CAM_shiosato-bridge(u).html" target="_self">
+							<img src="http://www.ktr.mlit.go.jp/river/cctv/C05013.jpg" width="192" title="潮郷橋 (上り)">
+						</a>
+					</td>
+				</tr>
+			</table>
+			(静止画像です。 約10分間隔で更新しています。)
+		]]>
+	</description>
+	<styleUrl>
+		#PolyStyle_shiosato
+	</styleUrl>
+	<Point>
+		<coordinates>
+			139.84337,35.84457
+		</coordinates>
+	</Point>
+</Placemark>
+</Document></kml>

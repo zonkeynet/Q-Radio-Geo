@@ -1,0 +1,34 @@
+[
+ {
+  "Name": "AV MARCOS FREIRE_OBRA MAX CAM 02",
+  "Description": "AV. MARCOS FREIRE 02 - Lateral da Obra Max (Briefcam) (Internet)",
+  "Latitude": "-24.004688",
+  "Longitude": "-46.428097",
+  "Server": "server-1",
+  "Id": "f04d630c410085f53cc92b13b1dba841"
+ },
+ {
+  "Name": "AV MARCOS FREIRE_OBRA MAX CAM 03",
+  "Description": "AV. MARCOS FREIRE 03 - Frente da Obra Max (Briefcam) (Internet)",
+  "Latitude": "-24.004688",
+  "Longitude": "-46.428097",
+  "Server": "server-1",
+  "Id": "4daac5ffa858e1bc4d1caa45d241401e"
+ },
+ {
+  "Name": "ESPACO KIDS CAICARA CAM 03",
+  "Description": "ESPACO KIDS CAIÇARA 03 - Área externa (Internet)",
+  "Latitude": "-24.052887",
+  "Longitude": "-46.528919",
+  "Server": "server-29",
+  "Id": "f752df9ef1b5e1423362aa55a240c785"
+ },
+ {
+  "Name": "NO_POSITION",
+  "Description": "Sem posição (Internet)",
+  "Latitude": "",
+  "Longitude": "",
+  "Server": "server-1",
+  "Id": "00000000000000000000000000000000"
+ }
+]

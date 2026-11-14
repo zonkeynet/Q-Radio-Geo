@@ -1,0 +1,123 @@
+<kml xmlns="http://earth.google.com/kml/2.2">
+  <Document>
+    <NetworkLinkControl>
+      <expires>onChange</expires>
+    </NetworkLinkControl>
+    <name>CCTV.kml</name>
+    <drawOrder>4</drawOrder>
+    <Style id="s_ylw-pushpin1">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>https://informo.madrid.es/informo/tmadrid/IMAGENES/ICO_CAM.gif</href>
+        </Icon>
+        <hotSpot x="0.2" y="0.2" xunits="fraction" yunits="fraction" />
+        <ListStyle />
+      </IconStyle>
+    </Style>
+    <Style id="s_ylw-pushpin0">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>https://informo.madrid.es/informo/tmadrid/IMAGENES/ICO_CAM.gif</href>
+        </Icon>
+        <hotSpot x="0.2" y="0.2" xunits="fraction" yunits="fraction" />
+        <ListStyle />
+      </IconStyle>
+    </Style>
+    <Style id="s_ylw-pushpin">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>https://informo.madrid.es/informo/tmadrid/IMAGENES/ICO_CAM.gif</href>
+        </Icon>
+        <hotSpot x="0.2" y="0.2" xunits="fraction" yunits="fraction" />
+        <ListStyle />
+      </IconStyle>
+    </Style>
+    <StyleMap id="m_ylw-pushpin">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#s_ylw-pushpin1</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#s_ylw-pushpin0</styleUrl>
+      </Pair>
+    </StyleMap>
+    <StyleMap id="m_ylw-pushpin0">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#s_ylw-pushpin1</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#s_ylw-pushpin0</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Placemark>
+      <description>&lt;div align=center&gt;&lt;img src=https://informo.madrid.es/cameras/Camara06303.jpg?v=32070  width=300 height=220/&gt;&lt;br/&gt;PLAZA DE CASTILLA (NORTE)&lt;/div&gt;</description>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <ExtendedData>
+        <Data name="Numero">
+          <Value>06303</Value>
+        </Data>
+        <Data name="Nombre">
+          <Value>PLAZA DE CASTILLA (NORTE)</Value>
+        </Data>
+      </ExtendedData>
+      <Point>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>-3.68894207537291,40.466063829633,10 </coordinates>
+      </Point>
+    </Placemark>
+<Placemark>
+      <description>&lt;div align=center&gt;&lt;img src=https://informo.madrid.es/cameras/Camara01301.jpg?v=15708  width=300 height=220/&gt;&lt;br/&gt;COLON&lt;/div&gt;</description>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <ExtendedData>
+        <Data name="Numero">
+          <Value>01301</Value>
+        </Data>
+        <Data name="Nombre">
+          <Value>COLON</Value>
+        </Data>
+      </ExtendedData>
+      <Point>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>-3.69051644920119,40.4256693358544,10 </coordinates>
+      </Point>
+    </Placemark>
+<Placemark>
+      <description>&lt;div align=center&gt;&lt;img src=https://informo.madrid.es/cameras/Camara06303.jpg?v=32070  width=300 height=220/&gt;&lt;br/&gt;PLAZA DE CASTILLA (NORTE)&lt;/div&gt;</description>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <ExtendedData>
+        <Data name="Otro">
+          <Value>06303</Value>
+        </Data>
+        <Data name="Nombre">
+          <Value>PLAZA DE CASTILLA (NORTE)</Value>
+        </Data>
+      </ExtendedData>
+      <Point>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>-3.68894207537291,40.466063829633,10 </coordinates>
+      </Point>
+    </Placemark>
+<Placemark>
+      <description>&lt;div align=center&gt;&lt;img src=https://example.org/cameras/Camara01301.jpg?v=15708  width=300 height=220/&gt;&lt;br/&gt;COLON&lt;/div&gt;</description>
+      <styleUrl>#m_ylw-pushpin</styleUrl>
+      <ExtendedData>
+        <Data name="Numero">
+          <Value>99999</Value>
+        </Data>
+        <Data name="Nombre">
+          <Value>COLON</Value>
+        </Data>
+      </ExtendedData>
+      <Point>
+        <altitudeMode>relativeToGround</altitudeMode>
+        <coordinates>-3.69051644920119,40.4256693358544,10 </coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

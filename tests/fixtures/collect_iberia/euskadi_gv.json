@@ -1,0 +1,29 @@
+jsonCallback([
+ {
+  "INDEX": "1",
+  "TITLE": "Iurreta",
+  "URLCAM": "https://www.trafikoa.eus/static/files/tr/camaras/819.jpg",
+  "LATWGS84": "43.18725",
+  "LONWGS84": "-2.673754",
+  "ROAD": "A-8",
+  "PK": "91.000"
+ },
+ {
+  "INDEX": "126",
+  "TITLE": "Lopidana (2)",
+  "URLCAM": "https://www.trafikoa.eus/static/files/tr/camaras/127 .jpg",
+  "LATWGS84": "42.8801",
+  "LONWGS84": "-2.707395",
+  "ROAD": "A-1",
+  "PK": "350.000"
+ },
+ {
+  "INDEX": "128",
+  "TITLE": "Abetxuko-Irun (2)",
+  "URLCAM": "https://www.trafikoa.eus/static/files/tr/camaras/128.jpg",
+  "LATWGS84": "48.87984",
+  "LONWGS84": "-2.677959",
+  "ROAD": "A-1",
+  "PK": "353.500"
+ }
+]);

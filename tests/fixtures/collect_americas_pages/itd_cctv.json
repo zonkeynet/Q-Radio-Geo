@@ -1,0 +1,37 @@
+{
+ "objectIdFieldName": "OBJECTID",
+ "features": [
+  {
+   "attributes": {
+    "OBJECTID": 2051,
+    "UniqueID": "CCTV 2-8",
+    "LocationName": "SH-8 Pullman/ Warbonnet",
+    "LocationAddress": "0.12 SH-8 - Pullman/ Warbonnet",
+    "Latitude": 46.732318,
+    "Longitude": -117.037444,
+    "City": "Moscow",
+    "County": "Latah",
+    "District": 2,
+    "ServiceLastUpdatedUTC": 1766025951000,
+    "ServiceLastUpdatedUTCOffset": "-06:00",
+    "GlobalID": "{5B2BB350-CD17-4D68-AF8A-578A85CF744E}"
+   }
+  },
+  {
+   "attributes": {
+    "OBJECTID": 2052,
+    "UniqueID": "CCTV 1-14",
+    "LocationName": "I-90/ EB Ramp/ NW Blvd",
+    "LocationAddress": "11.3 I-90 / 430.62 NW Blvd",
+    "Latitude": 47.698907,
+    "Longitude": -116.807515,
+    "City": "Coeur d'Alene",
+    "County": "Kootenai",
+    "District": 1,
+    "ServiceLastUpdatedUTC": 1766025951000,
+    "ServiceLastUpdatedUTCOffset": "-06:00",
+    "GlobalID": "{895590BB-C532-4272-AF4D-A71416965919}"
+   }
+  }
+ ]
+}

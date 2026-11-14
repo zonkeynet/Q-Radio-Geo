@@ -573,6 +573,8 @@ def normalize_extra_item(raw, observed_at, privacy_log=None):
     provider = raw.get("provider")
     if provider not in EXTRA_CATALOG_PROVIDERS:
         raise ValueError("Unapproved extra-catalog provider")
+    if PROVIDER_POLICIES[provider].get("status") == "held":
+        raise ValueError("Source is held until its conditions are met (see its policy)")
     if provider != "vegvesen":
         return normalize_world_item(raw, observed_at, privacy_log)
     if raw.get("rights_status") != "official_public_feed":
@@ -810,12 +812,21 @@ def load_extra_catalogs(paths, fallback_time, privacy_log=None, exclusions=None,
 
     The first approved adapter used {sources, items} without schema_version;
     absence denotes that version-1 shape. Any explicit different version fails.
+    A newer collection can replace a provider's records from an older input file
+    with "supersedes": [provider, ...]; it must declare that provider itself.
     """
     items, sources, provenance, rejected = [], {}, [], []
-    for path in paths:
-        path = Path(path)
-        body = path.read_bytes()
-        obj = json.loads(body)
+    docs = [(Path(path), Path(path).read_bytes()) for path in paths]
+    docs = [(path, body, json.loads(body)) for path, body in docs]
+    superseded = {}
+    for path, _, obj in docs:
+        for provider in (obj.get("supersedes") or []) if isinstance(obj, dict) else []:
+            declared_here = {x.get("id") for x in obj.get("sources", []) if isinstance(x, dict)}
+            if provider not in declared_here:
+                raise ValueError(f"{path.name} supersedes {provider!r} without declaring it")
+            if superseded.setdefault(provider, path.name) != path.name:
+                raise ValueError(f"Two input files supersede {provider!r}")
+    for path, body, obj in docs:
         if (not isinstance(obj, dict) or obj.get("schema_version", 1) != 1
                 or not isinstance(obj.get("sources"), list) or not isinstance(obj.get("items"), list)):
             raise ValueError(f"Unsupported extra-catalog schema: {path}")
@@ -840,6 +851,11 @@ def load_extra_catalogs(paths, fallback_time, privacy_log=None, exclusions=None,
         counts = collections.Counter(row.get("provider") if isinstance(row, dict) and isinstance(row.get("provider"), str)
                                      else "unknown" for row in obj["items"])
         for provider in sorted(declared):
+            if superseded.get(provider, path.name) != path.name:
+                provenance.append({"source": provider, "file": path.name, "kind": "superseded_input",
+                                   "superseded_by": superseded[provider], "records": 0,
+                                   "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "observed_at": file_time})
+                continue
             provenance.append({"source": provider, "file": path.name,
                                "kind": "normalized_extra_catalog", "input_schema_version": obj.get("schema_version", 1),
                                "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body),
@@ -847,6 +863,8 @@ def load_extra_catalogs(paths, fallback_time, privacy_log=None, exclusions=None,
                                "file_records": len(obj["items"]), "provider_records": dict(counts),
                                "observed_at": file_time})
         for index, raw in enumerate(obj["items"]):
+            if isinstance(raw, dict) and superseded.get(raw.get("provider"), path.name) != path.name:
+                continue  # replaced by a newer collection of the same provider
             try:
                 if not isinstance(raw, dict) or raw.get("provider") not in declared:
                     raise ValueError("Item provider is not an approved declared source")

@@ -186,6 +186,39 @@ Correzioni di campo: un URL di stream o file multimediale non è mai una pagina.
 
 Catalogo dopo il filtro privacy e le esclusioni: **61.924 record**, 79 fonti.
 
+## Nuove fonti del 14 novembre 2026 (pomeriggio)
+
+Raccolte dai collector `scripts/collect_{iberia,europe_central,italy,us_federal,latam,americas_pages,japan,apac_pages}.py` con `scripts/webcam_fetch.py`: robots.txt letto per primo (RFC 9309, wildcard compresi, anche sugli host di redirect), richieste sequenziali ≥1 s per host, User-Agent «Q-Globe webcam catalogue collector/1.0 (+https://globe.qp1ng.com)», nessuna chiave o login. Solo l'elenco delle camere, più un controllo di un'immagine o di un manifest (≤64 KiB, non conservato) per fornitore visualizzabile. Gli input normalizzati, le risposte grezze con ricevuta e i controlli sono fuori dal repository (`webcam-inputs-2026-11/`); un input più recente sostituisce i record di un fornitore con `"supersedes"`.
+
+Catalogo: **61.924 → 65.490 record**, visualizzabili 15.464 → 17.379, 111 fonti.
+
+| Fonte | Paese | Visualizzabili | Solo pagina | Controllo |
+| --- | --- | ---: | ---: | --- |
+| `madrid_traffic` (da solo pagina) | ES | 357 | – | 206 JPEG |
+| `malaga_traffic` | ES | 145 | – | 206 JPEG |
+| `madrid_calle30_cameras` | ES | 36 | – | 206 JPEG (1.750 byte: forse un segnaposto) |
+| `bizkaia` (da solo pagina, http → https) | ES | 91 | – | 206 JPEG |
+| `chmi` (da solo pagina) | CZ | 99 | – | 206 JPEG |
+| `geneva_sitg` (da solo pagina; non in tempo reale, ≥600 s) | CH | 9 | – | 206 JPEG |
+| `ingv_oe_tv_channels` (Etna, Eolie) | IT | 2 HLS | – | 200 #EXTM3U |
+| `venezia_cpsm_webcams` (≥1200 s, posizioni approssimate) | IT | 10 | – | 206 JPEG |
+| `usgs_hivis_nims` (pubblico dominio USGS, riletta la pagina copyright) | US, PR | 970 | – | 206 JPEG |
+| `usgs_volcview_ashcam` (solo camere USGS visualizzabili) | US | 11 | 77 | 206 JPEG |
+| `noaa_ndbc_buoycams` | US | 70 | 18 | 200 JPEG |
+| `noaa_glerl_metcams` | US | 39 | – | 206 JPEG |
+| `eso_chile_webcams` | CL | 13 | – | 206 JPEG |
+| `mlit_kanto_cctv` (PDL 1.0, solo uffici con coordinate) | JP | 63 | – | 206 JPEG |
+| `jma_volcano_cameras` (i fotogrammi datati scadono in circa un'ora: pagine delle camere) | JP | – | 91 | – |
+| `drivenc_ncdot`, `idaho_511_itd`, `lincoln_ne_traffic` | US | – | 1.155 + 82 + 69 | – |
+| `brazil_praia_grande_aovivo` | BR | – | 65 | – |
+| `foto_webcam_eu`, `cita_luxembourg`, `meteoswiss_weathercams` (immagini bloccate da robots.txt), `dir_centre_est_webcams`, `faroe_landsverk`, `traffic_wales_cctv`, `topr_pogoda_cams`, `attiki_odos_live`, `bretten_webcams`, `ua_bukovel_cams` | AT/DE/IT, LU, CH, FR, FO, GB, PL, GR, DE, UA | – | 312 + 94 + 36 + 31 + 27 + 17 + 12 + 6 + 2 + 2 | – |
+| `ras_suedtirol_webcams`, `genova_comune_webcams`, `meteotrentino_webcams`, `infoviaggiando_webcams`, `a22_autobrennero` | IT | – | 53 + 12 + 11 + 6 + 1 | – |
+| `hong_kong_observatory_weather_photos`, `aad_antarctic_webcams`, `south_africa_saao` (aggiornato) | HK, AQ, ZA | – | 23 + 3 + 6 | – |
+
+**In attesa** (`"status": "held"` in `scripts/webcam_source_policies.json`, con motivo; il builder rifiuta i loro record): DGT (conferma via e-mail), TfL (registrazione; la policy esistente resta), NSW (escluso, registrazione), Corea e Singapore (chiavi), Trafikverket (chiave), PhenoCam (licenza), New England Compass (relay), aggiornamento immagini MLIT fiumi, Windy, YouTube; Euskadi Gobierno Vasco (robots.txt di trafikoa.eus non raggiungibile), FGC (elenco solo su percorsi vietati da robots.txt), Valencia (connessione rifiutata), Andorra, ARSO (403), DWD, Amburgo, Orléans, Loire-Atlantique, Arpae, ASTM (410), ARPA FVG, ARPAV, MLIT Kyushu e altri uffici (nessuna coordinata), JCG, NEXCO, templi indiani, Muro del Pianto, Seoul, WA Main Roads, Taiwan, Taichung, El Salvador (solo YouTube), NYC e Panama (robots.txt non raggiungibile), CENAPRED (403), osservatori senza elenco o coordinate, FL511 e RIDOT (condizionali), le fonti a bassa confidenza (ASPI, promet.si, Visit Trentino, Serravalle, La Palma, Grenoble, RU).
+
+Sovrapposizioni lasciate: 597 camere USGS HIVIS hanno anche un link OSM; 36 camere Tone (MLIT Kanto) coincidono con record solo pagina `japan_mlit_rivers`; link OSM a foto-webcam.eu, RAS, Roundshot, Traffic Wales.
+
 ## Pubblicazione del database
 
 `db/qp1ng-webcams.sqlite.gz` (circa 29 MB) non fa parte del sito né del mirror IPFS: è in `.gitignore`, GitHub Pages pubblica solo i file tracciati e `.github/workflows/ipfs.yml` lo esclude comunque. Si pubblica come allegato della release GitHub con tag fisso `webcams-db`, così il link della guida resta stabile:
@@ -216,6 +249,7 @@ python3 scripts/build_webcams.py \
   --extra-catalog "$QGLOBE_INPUTS/round4/apac_global.json" \
   --extra-catalog "$QGLOBE_INPUTS/round4/europe.json" \
   --extra-catalog "$QGLOBE_INPUTS/round4/references.json" \
+  --extra-catalog "$QGLOBE_NEW_INPUTS/<fonte>.json" \
   --osm-db "$QGLOBE_OSM_DB" \
   --health "$QGLOBE_INPUTS/prior_video_checks.json" \
   --snapshot-checks "$QGLOBE_INPUTS/snapshot_sample_checks.json" \
@@ -229,5 +263,8 @@ python3 scripts/build_webcams.py \
 python3 -m unittest discover -s tests -p 'test_webcams*.py'
 node --test scripts/test_webcams.mjs scripts/test_native_app.mjs
 ```
+
+Per gli input del 14 novembre (pomeriggio) aggiungere un `--extra-catalog` per ogni file di `webcam-inputs-2026-11/` (variabile `QGLOBE_NEW_INPUTS`), più `--snapshot-checks` e `--health` per i file di `checks/`, e `--generated-at 2026-11-14T08:00:00+00:00`.
+
 
 `published_urls` deduplica gli indirizzi; `webcam_url_links` conserva i loro scopi e le associazioni. `webcam_streams` contiene solo HLS ammessi dal player. `snapshot_access_checks` conserva le verifiche immagini; `osm_candidate_links` solo candidati geografici. Per l'integrazione usare i campi dei diritti e gli stati datati, senza trasformare ogni URL in `is_live=true`.

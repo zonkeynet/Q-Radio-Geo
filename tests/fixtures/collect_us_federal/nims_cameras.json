@@ -1,0 +1,140 @@
+[
+ {
+  "camId": "IL_Lick_Creek_near_Woodside",
+  "nwisId": "05576100",
+  "camName": "Lick Creek near Woodside",
+  "camDesc": "Lick Creek near Woodside, IL",
+  "lat": "39.71553889",
+  "lng": "-89.7024444",
+  "stateAbrv": "IL",
+  "tz": "US/Central",
+  "newestImageDT": "2026-11-14T07:45:01.000Z",
+  "hideCam": false,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/IL_Lick_Creek_near_Woodside/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/IL_Lick_Creek_near_Woodside/",
+  "ingest": {
+   "period": "247",
+   "intr": 15,
+   "specificArr": []
+  }
+ },
+ {
+  "camId": "WI_KD1_FIELD",
+  "nwisId": "442405087414401",
+  "camName": "KD1 FIELD",
+  "camDesc": "Discovery Farms Partner Monitoring -  Waterway  near KD1 FIELD near Kewaunee, WI",
+  "lat": "44.40127778",
+  "lng": "-87.6955556",
+  "stateAbrv": "WI",
+  "tz": "US/Central",
+  "newestImageDT": "2026-11-13T22:00:03.000Z",
+  "hideCam": false,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/WI_KD1_FIELD/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/WI_KD1_FIELD/",
+  "ingest": {
+   "period": "daylight",
+   "intr": 60,
+   "specificArr": []
+  }
+ },
+ {
+  "camId": "NM_EAGLE_LAKE_(SOUTH_12)",
+  "nwisId": "332307105445130",
+  "camName": "EAGLE LAKE (SOUTH 12)",
+  "camDesc": "Eagle Lake (South 12)",
+  "lat": "33.3852611",
+  "lng": "-105.7473694",
+  "stateAbrv": "NM",
+  "tz": "US/Mountain",
+  "newestImageDT": "2024-08-29T14:45:06.000Z",
+  "hideCam": true,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/NM_EAGLE_LAKE_(SOUTH_12)/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/NM_EAGLE_LAKE_(SOUTH_12)/",
+  "ingest": {
+   "period": "247",
+   "intr": 5,
+   "specificArr": []
+  }
+ },
+ {
+  "camId": "PR_Isla_Verde_Camera_1",
+  "nwisId": "888888",
+  "camName": "Isla Verde Camera 1",
+  "camDesc": "CoastCam - Isla Verde, PR - Camera 1",
+  "lat": "18.44382",
+  "lng": "-66.01224",
+  "stateAbrv": "PR",
+  "tz": "America/Puerto_Rico",
+  "newestImageDT": "2026-11-13T22:00:03.000Z",
+  "hideCam": false,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/PR_Isla_Verde_Camera_1/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/PR_Isla_Verde_Camera_1/",
+  "ingest": {
+   "period": "daylight",
+   "intr": 60,
+   "hourlyStart": true,
+   "specificArr": [],
+   "daylightStartOffset": -30,
+   "daylightEndOffset": 30
+  }
+ },
+ {
+  "camId": "GU_Adelup_Point_CAMERA_1",
+  "nwisId": "888888",
+  "camName": "Adelup Point CAMERA 1",
+  "camDesc": "CoastCam - Adelup Point, Guam - CAMERA 1",
+  "lat": "13.48073628",
+  "lng": "144.7289428",
+  "stateAbrv": "GU",
+  "tz": "Pacific/Guam",
+  "newestImageDT": "2024-11-24T05:01:53.000Z",
+  "hideCam": false,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/GU_Adelup_Point_CAMERA_1/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/GU_Adelup_Point_CAMERA_1/",
+  "ingest": {
+   "period": "daylight",
+   "intr": 60,
+   "specificArr": [],
+   "daylightStartOffset": -30,
+   "daylightEndOffset": 30
+  }
+ },
+ {
+  "camId": "AC_JOHN",
+  "nwisId": "02563366",
+  "camName": "JOHN",
+  "camDesc": "UDUSDSD",
+  "lat": "-032536655",
+  "lng": "-0.3252555",
+  "stateAbrv": "AC",
+  "tz": "US/Central",
+  "hideCam": true,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/AC_JOHN/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/AC_JOHN/",
+  "ingest": {
+   "period": "247",
+   "intr": 60,
+   "specificArr": []
+  }
+ },
+ {
+  "camId": "NY_Test_Camera",
+  "nwisId": "989898",
+  "camName": "Test Camera",
+  "camDesc": "Used to test cameras",
+  "lat": "43.074153",
+  "lng": "-89.428001",
+  "stateAbrv": "NY",
+  "tz": "US/Eastern",
+  "newestImageDT": "2026-11-14T07:00:01.000Z",
+  "hideCam": true,
+  "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/NY_Test_Camera/",
+  "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/NY_Test_Camera/",
+  "ingest": {
+   "period": "247",
+   "intr": 60,
+   "hourlyStart": true,
+   "specificArr": []
+  }
+ }
+]

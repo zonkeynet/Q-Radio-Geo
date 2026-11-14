@@ -117,31 +117,52 @@
     "coordinate_role": "camera_location",
     "countries": [
       "GB"
-    ]
+    ],
+    "hold_note": "upgrade to viewable held: the TfL Transport Data Service licence applies from the user's free API-portal registration, which has not been made; the existing page_only policy stays as it is"
   },
   "madrid_traffic": {
     "source": {
       "id": "madrid_traffic",
-      "name": "Ayuntamiento de Madrid traffic cameras",
-      "url": "https://datos.gob.es/es/catalogo/l01280796-trafico-camaras1",
-      "terms_url": "https://creativecommons.org/licenses/by/4.0/legalcode.es",
+      "name": "Ayuntamiento de Madrid — Tráfico. Cámaras",
+      "url": "https://datos.madrid.es/en/dataset/202088-0-trafico-camaras",
+      "terms_url": "https://datos.madrid.es/pages/condiciones-generales-ayuntamiento-de-madrid",
       "metadata_license": "CC-BY-4.0",
-      "media_rights": "Dataset has CC BY 4.0; linked-photo terms not separately established. External links only.",
-      "attribution": "Ayuntamiento de Madrid, Tráfico. Cámaras, CC BY 4.0. Metadata normalized by QGlobe.",
-      "allowed_hosts": [],
+      "media_rights": "The CC BY 4.0 dataset 'Tráfico. Cámaras' embeds each camera image (informo.madrid.es/cameras/CamaraNNNNN.jpg) and states that an image capture is included every five minutes; the city's general conditions allow commercial and non-commercial reuse of information in any medium, citing the source. Images shown unmodified, never stored.",
+      "attribution": "Origen de los datos: Ayuntamiento de Madrid – Tráfico. Cámaras (datos.madrid.es), CC BY 4.0",
+      "allowed_hosts": [
+        "informo.madrid.es"
+      ],
       "license": "CC-BY-4.0",
-      "rights_status": "official_page_only",
-      "rights_note": "Dataset has CC BY 4.0; linked-photo terms not separately established. External links only.",
-      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+      "rights_status": "official_public_feed",
+      "rights_note": "The CC BY 4.0 dataset 'Tráfico. Cámaras' embeds each camera image (informo.madrid.es/cameras/CamaraNNNNN.jpg) and states that an image capture is included every five minutes; the city's general conditions allow commercial and non-commercial reuse of information in any medium, citing the source. Images shown unmodified, never stored.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "official_page_hosts": [
+        "datos.madrid.es"
+      ],
+      "minimum_refresh_seconds": 300,
+      "catalog_url": "https://datos.madrid.es/egob/catalogo/202088-0-trafico-camaras.kml",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://datos.madrid.es/pages/condiciones-generales-ayuntamiento-de-madrid",
+        "https://datos.madrid.es/en/dataset/202088-0-trafico-camaras",
+        "https://datos.madrid.es/egob/catalogo/202088-0-trafico-camaras.kml"
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
     },
-    "media_hosts": [],
+    "media_hosts": [
+      "informo.madrid.es"
+    ],
     "formats": [
-      "official_page"
+      "snapshot"
     ],
     "operator_hints": [],
     "coordinate_role": "camera_location",
     "countries": [
       "ES"
+    ],
+    "page_hosts": [
+      "datos.madrid.es"
     ]
   },
   "vigo_traffic": {
@@ -1510,21 +1531,28 @@
       "id": "south_africa_saao",
       "name": "South African Astronomical Observatory — public Sutherland webcams",
       "url": "https://www.saao.ac.za/explore/media/saao-live/",
+      "catalog_url": "https://www.saao.ac.za/explore/media/saao-live/",
       "terms_url": "https://www.saao.ac.za/explore/media/",
-      "metadata_license": "No explicit open media licence located; factual links to the official public outreach page only",
+      "metadata_license": "No explicit open media licence located; factual links to the official public outreach pages only",
       "media_rights": "Official page links only; in-app media reuse not authorized by this adapter.",
-      "attribution": "Public camera references: South African Astronomical Observatory / National Research Foundation; respective telescope operators.",
+      "attribution": "South African Astronomical Observatory (SAAO) / National Research Foundation (NRF); Las Cumbres Observatory (LCOGT); Southern African Large Telescope (SALT)",
       "allowed_hosts": [],
       "rights_status": "official_page_only",
-      "rights_note": "The observatory deliberately publishes webcam animations on its public outreach page. This adapter does not copy or embed clips. The published 1.0-m telescope coordinates identify the observing site, not the individual webcam mounts.",
-      "provider_notice": "The official page publishes webcam animations. These are not verified live streams. The marker identifies the Sutherland observing site, not a surveyed camera location.",
+      "rights_note": "The observatory deliberately publishes webcam animations on its public outreach page (only statement: 「Copyright NRF | SAAO 2019」) and all-sky images on the Sutherland weather page it embeds. This adapter does not copy or embed clips or images. The published 1.0-m telescope coordinates identify the observing site, not the webcams.",
+      "provider_notice": "The official pages publish webcam animations and all-sky images. These are not verified live streams. The marker identifies the Sutherland observing site, not a surveyed camera location.",
       "review_status": "reviewed_for_external_references_only",
-      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
-      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+      "reviewed_at": "2026-11-14",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "evidence": [
+        "https://www.saao.ac.za/explore/media/saao-live/",
+        "https://www.saao.ac.za/astronomers/sutherland/",
+        "https://suthweather.saao.ac.za/"
+      ]
     },
     "media_hosts": [],
     "page_hosts": [
-      "www.saao.ac.za"
+      "www.saao.ac.za",
+      "suthweather.saao.ac.za"
     ],
     "formats": [
       "official_page"
@@ -1539,58 +1567,58 @@
   "chmi": {
     "source": {
       "id": "chmi",
-      "name": "Český hydrometeorologický ústav — public webcam map",
+      "name": "Český hydrometeorologický ústav — webcam network",
       "url": "https://produkty.chmi.cz/webkamery/webcamMap.php",
-      "terms_url": "https://www.chmi.cz/-/jak-mohu-pou%C5%BE%C3%ADvat-otev%C5%99en%C3%A1-data-%C4%8Dhm%C3%BA-",
-      "metadata_license": "CHMI open-data policy: CC-BY-4.0. Camera-directory-specific scope not separately declared; factual links only.",
-      "license": "CHMI open-data policy: CC-BY-4.0. Camera-directory-specific scope not separately declared; factual links only.",
-      "media_rights": "The map includes other operators. No blanket rights to their images are asserted; no media embedded.",
-      "rights_note": "The map includes other operators. No blanket rights to their images are asserted; no media embedded.",
-      "rights_status": "official_page_only",
-      "attribution": "ČHMÚ and the operators identified on each original webcam page",
-      "allowed_hosts": [],
+      "catalog_url": "https://produkty.chmi.cz/webkamery/webcams.json",
+      "terms_url": "https://www.chmi.cz/vylou%C4%8Den%C3%AD-odpov%C4%9Bdnosti",
+      "metadata_license": "CC-BY-4.0 (ČHMÚ products on its websites)",
+      "license": "CC-BY-4.0 (ČHMÚ products on its websites)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "media_rights": "ČHMÚ applies CC BY 4.0 to the products on its websites and the webcam map carries the CC BY 4.0 badge; every camera in webcams.json carries a ČHMÚ branch code (pobocka), no third-party operator. The licence is site-wide, not webcam-specific: one confirmation e-mail to ČHMÚ is recommended before launch.",
+      "rights_note": "ČHMÚ applies CC BY 4.0 to the products on its websites and the webcam map carries the CC BY 4.0 badge; every camera in webcams.json carries a ČHMÚ branch code (pobocka), no third-party operator. The licence is site-wide, not webcam-specific: one confirmation e-mail to ČHMÚ is recommended before launch.",
+      "attribution": "Zdroj: ČHMÚ (Český hydrometeorologický ústav), CC BY 4.0",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "produkty.chmi.cz"
+      ],
       "official_page_hosts": [
         "produkty.chmi.cz"
       ],
-      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.chmi.cz/vylou%C4%8Den%C3%AD-odpov%C4%9Bdnosti",
+        "https://www.chmi.cz/-/jak-mohu-pou%C5%BE%C3%ADvat-otev%C5%99en%C3%A1-data-%C4%8Dhm%C3%BA-",
+        "https://produkty.chmi.cz/webkamery/webcamMap.php"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "minimum_refresh_seconds": 300,
       "raw_files": [
         {
-          "file": "raw/chmi_cameras.json",
+          "file": "raw/chmi/webcams.json",
           "url": "https://produkty.chmi.cz/webkamery/webcams.json",
-          "observed_at": "2026-11-14T02:35:12.147013+00:00",
+          "observed_at": "2026-11-14T07:33:58Z",
+          "status": 200,
           "sha256": "9e53f8eadc70fe3bd1af3767d956100834fdf2b8b3ae2637816232f1031ee6df",
           "bytes": 14702
-        },
-        {
-          "file": "raw/chmi_map.html",
-          "url": "https://produkty.chmi.cz/webkamery/webcamMap.php",
-          "observed_at": "2026-11-14T02:32:07.952498+00:00",
-          "sha256": "10de0eaf9a5aeea2423edc5492991655b3f053da9c9749fc76d4ee8916442764",
-          "bytes": 140673
-        },
-        {
-          "file": "raw/chmi_data_terms.html",
-          "url": "https://www.chmi.cz/-/jak-mohu-pou%C5%BE%C3%ADvat-otev%C5%99en%C3%A1-data-%C4%8Dhm%C3%BA-",
-          "observed_at": "2026-11-14T02:32:07.953249+00:00",
-          "sha256": "803b109538ac38831bfab046c2d27bb060b29e55fe052a1fe52c9e29a67ee518",
-          "bytes": 241102
         }
-      ],
-      "review_status": "reviewed_for_external_references_only",
-      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+      ]
     },
-    "media_hosts": [],
+    "media_hosts": [
+      "produkty.chmi.cz"
+    ],
     "page_hosts": [
       "produkty.chmi.cz"
     ],
     "formats": [
+      "snapshot",
       "official_page"
     ],
     "countries": [
       "CZ"
     ],
     "operator_hints": [],
-    "coordinate_role": "approximate"
+    "coordinate_role": "station_location"
   },
   "trafficwatchni": {
     "source": {
@@ -1670,65 +1698,59 @@
   "geneva_sitg": {
     "source": {
       "id": "geneva_sitg",
-      "name": "SITG Genève — caméras de surveillance du trafic",
+      "name": "SITG Genève — caméras de surveillance du trafic (INFOMOB_CAMERA)",
       "url": "https://sitg.ge.ch/donnees/infomob-camera",
+      "catalog_url": "https://vector.sitg.ge.ch/arcgis/rest/services/INFOMOB_CAMERA/FeatureServer/0/query?f=json&where=1%3D1&outFields=*&returnGeometry=true&outSR=4326",
       "terms_url": "https://sitg.ge.ch/ressources/conditions-utilisation-donnees",
-      "metadata_license": "SITG level A — open data, commercial reuse with source/extraction-date/transformation attribution",
-      "license": "SITG level A — open data, commercial reuse with source/extraction-date/transformation attribution",
-      "media_rights": "Dataset warns that imagery is not updated in real time. Only the official traffic map is linked.",
-      "rights_note": "Dataset warns that imagery is not updated in real time. Only the official traffic map is linked.",
-      "rights_status": "official_page_only",
-      "attribution": "Données SITG, extraction 2026-11-14; server transformation EPSG:21781 → EPSG:4326",
-      "allowed_hosts": [],
+      "metadata_license": "SITG niveau A — open data, commercial reuse with source/extraction-date/transformation attribution",
+      "license": "SITG niveau A — open data, commercial reuse with source/extraction-date/transformation attribution",
+      "license_url": null,
+      "media_rights": "The images are attributes of the level-A dataset itself (IMAGE_ALLER/IMAGE_RETOUR); level A allows copying, publishing and commercial use with source and extraction-date attribution. The dataset warns that the images are not updated in real time.",
+      "rights_note": "The images are attributes of the level-A dataset itself (IMAGE_ALLER/IMAGE_RETOUR); level A allows copying, publishing and commercial use with source and extraction-date attribution. The dataset warns that the images are not updated in real time.",
+      "attribution": "Données SITG (INFOMOB_CAMERA), extraction 2026-11-14; server transformation EPSG:2056 → EPSG:4326. Images: État de Genève.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "app2.ge.ch"
+      ],
       "official_page_hosts": [
         "ge.ch"
       ],
-      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://sitg.ge.ch/donnees/infomob-camera",
+        "https://sitg.ge.ch/ressources/conditions-utilisation-donnees"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "minimum_refresh_seconds": 600,
+      "provider_notice": "SITG: les images de ce jeu de données ne sont pas mises à jour en temps réel (images are not real time).",
       "raw_files": [
         {
-          "file": "raw/geneva_cameras.json",
+          "file": "raw/geneva_sitg/infomob_camera.json",
           "url": "https://vector.sitg.ge.ch/arcgis/rest/services/INFOMOB_CAMERA/FeatureServer/0/query?f=json&where=1%3D1&outFields=*&returnGeometry=true&outSR=4326",
-          "observed_at": "2026-11-14T02:35:54.185691+00:00",
+          "observed_at": "2026-11-14T07:33:59Z",
+          "status": 200,
           "sha256": "14f727816ab40b5a347c565c525186607500389d3c60004f8dee5a3d3ee2d602",
           "bytes": 3195
-        },
-        {
-          "file": "raw/geneva_count.json",
-          "url": "https://vector.sitg.ge.ch/arcgis/rest/services/INFOMOB_CAMERA/FeatureServer/0/query?f=json&where=1%3D1&returnCountOnly=true",
-          "observed_at": "2026-11-14T02:35:54.186441+00:00",
-          "sha256": "77225c1b889e1a23d33f5e7724a89deba869a0b481aff9fe90736b56532d0542",
-          "bytes": 11
-        },
-        {
-          "file": "raw/geneva_dataset.html",
-          "url": "https://sitg.ge.ch/donnees/infomob-camera",
-          "observed_at": "2026-11-14T02:32:07.953854+00:00",
-          "sha256": "e2f356aa8823b1e2d0282e583bd6aba0957c13bb6729dad6106dffdef79a173a",
-          "bytes": 232385
-        },
-        {
-          "file": "raw/geneva_terms.html",
-          "url": "https://sitg.ge.ch/ressources/conditions-utilisation-donnees",
-          "observed_at": "2026-11-14T02:35:19.215924+00:00",
-          "sha256": "a8221891daf0b493c84febf81e6a2c18a96b875c8eff20dd7731c4c21b1b9365",
-          "bytes": 138985
         }
-      ],
-      "review_status": "reviewed_for_external_references_only",
-      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+      ]
     },
-    "media_hosts": [],
+    "media_hosts": [
+      "app2.ge.ch"
+    ],
     "page_hosts": [
       "ge.ch"
     ],
     "formats": [
+      "snapshot",
       "official_page"
     ],
     "countries": [
       "CH"
     ],
     "operator_hints": [],
-    "coordinate_role": "approximate"
+    "coordinate_role": "camera_location",
+    "official_map_url": "https://ge.ch/terinfomobilite/"
   },
   "anglet": {
     "source": {
@@ -1905,7 +1927,8 @@
       "ES"
     ],
     "operator_hints": [],
-    "coordinate_role": "approximate"
+    "coordinate_role": "approximate",
+    "hold_note": "Snapshot upgrade of the 129 Gobierno Vasco rows (CC BY 4.0, Open Data Euskadi) held on 2026-11-14: www.trafikoa.eus robots.txt timed out, so no image was sampled. Retry with scripts/collect_iberia.py."
   },
   "vitoria": {
     "source": {
@@ -1971,20 +1994,22 @@
   "bizkaia": {
     "source": {
       "id": "bizkaia",
-      "name": "Diputación Foral de Bizkaia — public traffic camera metadata",
+      "name": "Diputación Foral de Bizkaia — cámaras de tráfico",
       "url": "https://www.opendatabizkaia.eus/es/catalogo/trafico/recurso/camaras-trafico",
-      "terms_url": "https://www.opendatabizkaia.eus/es/catalogo/trafico/recurso/camaras-trafico",
-      "metadata_license": "CC-BY-4.0 (metadata)",
-      "license": "CC-BY-4.0 (metadata)",
-      "media_rights": "Only entries that explicitly publish an image URL are retained. Image rights not inferred from metadata; directory link plus reference URL only.",
-      "rights_note": "Only entries that explicitly publish an image URL are retained. Image rights not inferred from metadata; directory link plus reference URL only.",
-      "rights_status": "official_page_only",
-      "attribution": "Diputación Foral de Bizkaia / Interbiak — CC-BY-4.0 metadata",
-      "allowed_hosts": [],
+      "terms_url": "https://www.opendatabizkaia.eus/es/info/aviso-legal",
+      "metadata_license": "CC-BY-4.0",
+      "license": "CC-BY-4.0",
+      "media_rights": "The CC BY 4.0 dataset 'Cámaras de tráfico' includes 'el enlace directo a la imagen de la cámara' as a declared field; the open-data legal notice allows commercial or non-commercial use citing the source. Published http image links are served over https by the same host (one sample verified). Images displayed unmodified, never stored.",
+      "rights_note": "The CC BY 4.0 dataset 'Cámaras de tráfico' includes 'el enlace directo a la imagen de la cámara' as a declared field; the open-data legal notice allows commercial or non-commercial use citing the source. Published http image links are served over https by the same host (one sample verified). Images displayed unmodified, never stored.",
+      "rights_status": "official_public_feed",
+      "attribution": "Fuente de los datos: www.opendatabizkaia.eus – Diputación Foral de Bizkaia, CC BY 4.0",
+      "allowed_hosts": [
+        "www.bizkaimove.eus"
+      ],
       "official_page_hosts": [
         "www.opendatabizkaia.eus"
       ],
-      "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
+      "reviewed_at": "2026-11-14",
       "raw_files": [
         {
           "file": "raw/bizkaia_cameras.json",
@@ -2001,15 +2026,24 @@
           "bytes": 48202
         }
       ],
-      "review_status": "reviewed_for_external_references_only",
-      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "catalog_url": "https://www.opendatabizkaia.eus/es/dump/a0222f71-1b4a-4285-924d-b62f888eabe1/camaras-trafico?format=json",
+      "evidence": [
+        "https://www.opendatabizkaia.eus/es/catalogo/trafico/recurso/camaras-trafico",
+        "https://www.opendatabizkaia.eus/es/info/aviso-legal",
+        "https://www.opendatabizkaia.eus/es/dump/a0222f71-1b4a-4285-924d-b62f888eabe1/camaras-trafico?format=json"
+      ]
     },
-    "media_hosts": [],
+    "media_hosts": [
+      "www.bizkaimove.eus"
+    ],
     "page_hosts": [
       "www.opendatabizkaia.eus"
     ],
     "formats": [
-      "official_page"
+      "snapshot"
     ],
     "countries": [
       "ES"
@@ -3078,5 +3112,2524 @@
     ],
     "force_coordinate_role": "associated_feature",
     "operator_hints": []
+  },
+  "a22_autobrennero": {
+    "source": {
+      "id": "a22_autobrennero",
+      "name": "Autostrada del Brennero (A22) — webcam page",
+      "url": "https://www.autobrennero.it/it/in-viaggio/webcam/",
+      "catalog_url": "https://www.autobrennero.it/it/in-viaggio/webcam/",
+      "terms_url": "https://www.autobrennero.it/it/la-societa/trasparenza/bilanci/",
+      "metadata_license": "None — all rights reserved",
+      "license": "None — all rights reserved",
+      "license_url": null,
+      "media_rights": "Images are the company's exclusive property; link to the shared page only.",
+      "rights_note": "Images are the company's exclusive property; link to the shared page only.",
+      "attribution": "Autostrada del Brennero S.p.A. (https://www.autobrennero.it/it/in-viaggio/webcam/)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.autobrennero.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.autobrennero.it/it/la-societa/trasparenza/bilanci/",
+        "https://www.autobrennero.it/it/in-viaggio/webcam/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/a22_autobrennero/webcam.html",
+          "url": "https://www.autobrennero.it/it/in-viaggio/webcam/",
+          "observed_at": "2026-11-14T07:40:05Z",
+          "status": 200,
+          "sha256": "6eae51072aaa133387c2e25fd9ac443b8686511050afb039758030a5573beecd",
+          "bytes": 213079
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.autobrennero.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature",
+    "official_map_url": "https://www.autobrennero.it/it/in-viaggio/webcam/"
+  },
+  "aad_antarctic_webcams": {
+    "source": {
+      "id": "aad_antarctic_webcams",
+      "name": "Australian Antarctic Division station webcams",
+      "url": "https://www.antarctica.gov.au/antarctic-operations/webcams/",
+      "catalog_url": "https://www.antarctica.gov.au/antarctic-operations/webcams/",
+      "terms_url": "https://www.antarctica.gov.au/about-us/copyright/",
+      "metadata_license": "No open licence; factual links to the official AAD webcam pages only",
+      "license": "Commonwealth of Australia copyright; personal, non-commercial use only",
+      "media_rights": "Official page links only: the AAD allows personal non-commercial use and forbids re-transmitting, distributing or commercialising the material without written approval.",
+      "rights_note": "「You are not permitted to re-transmit, distribute or commercialise the information or material」 without 「prior written approval from the Commonwealth.」 Positions are the station positions published on the AAD station pages.",
+      "attribution": "Australian Antarctic Division",
+      "provider_notice": "Opens the official Australian Antarctic Division webcam page. The marker is the research station, not a surveyed camera mount.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.antarctica.gov.au/about-us/copyright/",
+        "https://www.antarctica.gov.au/antarctic-operations/webcams/"
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.antarctica.gov.au"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "AQ"
+    ],
+    "operator_hints": [
+      "australian antarctic division"
+    ],
+    "coordinate_role": "station_location",
+    "force_coordinate_role": "station_location"
+  },
+  "andorra_mobilitat": {
+    "status": "held",
+    "held_reason": "The official webcam page lists no cameras or coordinates in its HTML (they are loaded by script from an unlisted source); no camera list endpoint is published. Images: all rights reserved, no framing.",
+    "held_until": "a published camera list with coordinates (page links only)",
+    "evidence": [
+      "https://www.mobilitat.ad/totes-les-cameres",
+      "https://www.govern.ad/ca/avis-legal"
+    ],
+    "source": {
+      "id": "andorra_mobilitat",
+      "name": "Govern d'Andorra — Mobilitat webcams",
+      "url": "https://www.mobilitat.ad/totes-les-cameres"
+    }
+  },
+  "arpa_fvg_webcam_directory": {
+    "status": "held",
+    "held_reason": "robots.txt not readable over HTTPS: https://www.meteo.fvg.it/robots.txt redirects to the http:// home page, which the client treats as unreachable (no crawling); the directory was not read (robots.txt disallows https://www.meteo.fvg.it/webcam_360.php)",
+    "held_until": "an HTTPS robots.txt allowing the page (or ARPA FVG's permission); Panomax page coordinates",
+    "evidence": [
+      "https://www.meteo.fvg.it/webcam_360.php",
+      "https://www.panomax.com/en/terms-of-use"
+    ],
+    "source": {
+      "id": "arpa_fvg_webcam_directory",
+      "name": "ARPA FVG OSMER webcam directory (Panomax)",
+      "url": "https://www.meteo.fvg.it/webcam_360.php"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "arpae_camera_coastal": {
+    "status": "held",
+    "held_reason": "snapshot route not confirmed: the official list (8 cameras) has url null on 8 rows and names no image route, so the single check had nothing to sample (no route guessed)",
+    "held_until": "the snapshot/TIMEX image route published by Arpae (or confirmed by e-mail), then one image check",
+    "evidence": [
+      "https://simc.arpae.it/stream_camera/api/cameras",
+      "https://www.arpae.it/it/note-legali-e-copyright"
+    ],
+    "source": {
+      "id": "arpae_camera_coastal",
+      "name": "Arpae Emilia-Romagna camERa coastal webcams",
+      "url": "https://simc.arpae.it/stream_camera/gis/map"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "arpav_webcams": {
+    "status": "held",
+    "held_reason": "no camera list endpoint (JS-rendered map; register)",
+    "held_until": "an official list with image URLs and coordinates",
+    "evidence": [
+      "https://www.arpa.veneto.it/note-legali"
+    ],
+    "source": {
+      "id": "arpav_webcams",
+      "name": "ARPAV Veneto webcam map",
+      "url": "https://www.arpa.veneto.it/dati-ambientali/dati-in-diretta/radar/webcam"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "arso_webcams": {
+    "status": "held",
+    "held_reason": "camera list could not be assembled: the webcam directory answered HTTP 403 for https://meteo.arso.gov.si/uploads/probase/www/observ/webcam/; only 6 cameras are linked from the home page and no machine-readable index exists",
+    "held_until": "an official camera index (or ARSO's confirmation by e-mail to gp.arso@gov.si) with station coordinates",
+    "evidence": [
+      "https://meteo.arso.gov.si/uploads/probase/www/observ/webcam/",
+      "https://meteo.arso.gov.si/uploads/meteo/help/en/notice.html"
+    ],
+    "source": {
+      "id": "arso_webcams",
+      "name": "ARSO meteorological station webcams (meteo.si)",
+      "url": "https://meteo.arso.gov.si/met/sl/"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "SI"
+    ]
+  },
+  "aspi_webcams": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://www.autostrade.it/it/webcam"
+    ],
+    "source": {
+      "id": "aspi_webcams",
+      "name": "Autostrade per l'Italia — webcam map",
+      "url": "https://www.autostrade.it/it/webcam"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "astm_group_webcams": {
+    "status": "held",
+    "held_reason": "9 of 9 webcam pages answered HTTP 410 Gone (nginx, robots.txt included) to the collector on 7 hosts; not retried with another agent; no coordinates (km markers only) in any case",
+    "held_until": "pages reachable for a declared crawler, and positions for the km markers",
+    "evidence": [
+      "https://www.satapweb.it/webcam-a4/",
+      "https://www.autoviapadana.it/webcam/",
+      "https://www.autostradadeifiori.it/webcam/",
+      "https://www.concessionideltirreno.it/webcam-a10/",
+      "https://www.concessionideltirreno.it/webcam-a12/",
+      "https://www.asticuneo.it/webcam/",
+      "https://www.salt.it/autocisa/webcam/",
+      "https://www.sitaf.it/webcam-a32/",
+      "https://www.sitaf.it/webcam-t4/"
+    ],
+    "source": {
+      "id": "astm_group_webcams",
+      "name": "ASTM group motorway webcams",
+      "url": "https://www.satapweb.it/webcam-a4/"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "attiki_odos_live": {
+    "source": {
+      "id": "attiki_odos_live",
+      "name": "Attiki Odos — live traffic cameras",
+      "url": "https://www.aodos.gr/en/live-streaming/",
+      "catalog_url": "https://www.aodos.gr/en/live-streaming/",
+      "terms_url": "https://www.aodos.gr/oroi_xrisis/",
+      "metadata_license": "All rights reserved",
+      "license": "All rights reserved",
+      "license_url": null,
+      "media_rights": "Reproduction, republication and transmission are prohibited; link only.",
+      "rights_note": "Reproduction, republication and transmission are prohibited; link only.",
+      "attribution": "Αττική Οδός / Attiki Odos",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.aodos.gr"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.aodos.gr/oroi_xrisis/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/attiki_odos_live/live-streaming.html",
+          "url": "https://www.aodos.gr/en/live-streaming/",
+          "observed_at": "2026-11-14T07:35:39Z",
+          "status": 200,
+          "sha256": "5c4b8176b64ffe595a106db9b6cf8778c881ff4e2da434298d2f31f59bb45d70",
+          "bytes": 83911
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.aodos.gr"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "GR"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate",
+    "official_map_url": "https://www.aodos.gr/en/live-streaming/"
+  },
+  "bellevue_wa_traffic": {
+    "status": "held",
+    "held_reason": "No documented camera list endpoint (list loaded by the map's script bundle).",
+    "held_until": "a documented list with positions",
+    "evidence": [
+      "https://bellevuewa.gov/city-government/departments/transportation/traffic-conditions"
+    ],
+    "source": {
+      "id": "bellevue_wa_traffic",
+      "name": "City of Bellevue traffic cameras",
+      "url": "https://trafficmap.bellevuewa.gov/"
+    }
+  },
+  "brazil_cet_sp_cameras": {
+    "status": "held",
+    "held_reason": "Conditional in the register: one rotating viewer without a per-camera list or positions, and no terms page located.",
+    "held_until": "a verified CET-SP camera endpoint and terms",
+    "evidence": [
+      "https://cameras.cetsp.com.br/"
+    ],
+    "source": {
+      "id": "brazil_cet_sp_cameras",
+      "name": "CET-SP São Paulo traffic cameras",
+      "url": "https://www.cetsp.com.br/consultas/cameras-cet.aspx"
+    }
+  },
+  "brazil_praia_grande_aovivo": {
+    "source": {
+      "id": "brazil_praia_grande_aovivo",
+      "name": "Praia Grande – Câmeras ao Vivo (Monitoramento)",
+      "url": "https://cameras.praiagrande.sp.gov.br/aovivo/",
+      "catalog_url": "https://cameras.praiagrande.sp.gov.br/aovivo/api",
+      "terms_url": "https://cameras.praiagrande.sp.gov.br/aovivo/",
+      "metadata_license": "No licence stated; factual camera list (name, position) from the city's public camera map, links only",
+      "license": "No licence stated; links only",
+      "media_rights": "No reuse licence for the images (Brazilian municipal works are not public domain): the record links to the city's public camera map, no image is fetched or embedded.",
+      "rights_note": "Two cameras at children's venues ('Espaço Kids') are left out.",
+      "attribution": "Prefeitura de Praia Grande – Monitoramento",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://cameras.praiagrande.sp.gov.br/aovivo/",
+        "https://cameras.praiagrande.sp.gov.br/aovivo/api"
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "cameras.praiagrande.sp.gov.br"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "BR"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "official_map_url": "https://cameras.praiagrande.sp.gov.br/aovivo/"
+  },
+  "bretten_webcams": {
+    "source": {
+      "id": "bretten_webcams",
+      "name": "Stadt Bretten — Webcams Marktplatz und Pfeiferturm",
+      "url": "https://www.bretten.de/stadt-rathaus-verwaltung/webcams-marktplatz-und-pfeiferturm",
+      "catalog_url": "https://www.bretten.de/stadt-rathaus-verwaltung/webcams-marktplatz-und-pfeiferturm",
+      "terms_url": "https://www.govdata.de/ (dataset 'webcams-bretten', Open Data Baden-Württemberg)",
+      "metadata_license": "CC-BY-4.0 on the metadata record (resource = link to the city page)",
+      "license": "CC-BY-4.0 on the metadata record (resource = link to the city page)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "media_rights": "The open licence covers the link record, not the images; page links only.",
+      "rights_note": "The open licence covers the link record, not the images; page links only.",
+      "attribution": "Stadt Bretten (CC BY 4.0 metadata)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.bretten.de"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.govdata.de/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/bretten_webcams/webcams.html",
+          "url": "https://www.bretten.de/stadt-rathaus-verwaltung/webcams-marktplatz-und-pfeiferturm",
+          "observed_at": "2026-11-14T07:35:41Z",
+          "status": 200,
+          "sha256": "78deef6939817b06af35b2c96967e7c0192963d4d8607dd733bff5d5dd0079b6",
+          "bytes": 103166
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.bretten.de"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "DE"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature"
+  },
+  "ccg_ice_monitoring_cameras": {
+    "status": "held",
+    "held_reason": "Single list page without camera positions or per-camera pages; Government of Canada terms bar commercial redistribution without permission.",
+    "held_until": "published camera positions and a per-camera page",
+    "evidence": [
+      "https://e-navigation.canada.ca/topics/cameras/index-en",
+      "https://www.canada.ca/en/transparency/terms.html"
+    ],
+    "source": {
+      "id": "ccg_ice_monitoring_cameras",
+      "name": "Canadian Coast Guard ice monitoring cameras",
+      "url": "https://e-navigation.canada.ca/topics/cameras/index-en"
+    }
+  },
+  "cenapred_popocatepetl": {
+    "status": "held",
+    "held_reason": "www.cenapred.unam.mx answered HTTP 403 on 2026-11-14 (not bypassed); gob.mx terms allow personal, non-commercial use only.",
+    "held_until": "a reachable camera page and terms allowing a link listing",
+    "evidence": [
+      "https://www.gob.mx/terminos"
+    ],
+    "source": {
+      "id": "cenapred_popocatepetl",
+      "name": "CENAPRED Popocatépetl volcano webcams",
+      "url": "https://www.cenapred.unam.mx/"
+    }
+  },
+  "chile_dgac_ifis_cameras": {
+    "status": "held",
+    "held_reason": "No DGAC website terms found; held as the brief directs.",
+    "held_until": "DGAC terms or written permission",
+    "evidence": [
+      "https://aipchile.dgac.gob.cl/camara/"
+    ],
+    "source": {
+      "id": "chile_dgac_ifis_cameras",
+      "name": "DGAC Chile IFIS aerodrome cameras",
+      "url": "https://aipchile.dgac.gob.cl/camara/"
+    }
+  },
+  "chile_sernageomin_rnvv": {
+    "status": "held",
+    "held_reason": "Single-page app with no camera list endpoint found; no terms.",
+    "held_until": "a documented camera list and terms",
+    "evidence": [
+      "https://rnvv.sernageomin.cl/"
+    ],
+    "source": {
+      "id": "chile_sernageomin_rnvv",
+      "name": "SERNAGEOMIN RNVV / OVDAS volcano cameras",
+      "url": "https://rnvv.sernageomin.cl/"
+    }
+  },
+  "cita_luxembourg": {
+    "source": {
+      "id": "cita_luxembourg",
+      "name": "CITA — caméras autoroute (Administration des Ponts et Chaussées)",
+      "url": "https://data.public.lu/fr/datasets/cita-cameras-autoroute/",
+      "catalog_url": "https://www.cita.lu/kml/cameras.kml",
+      "terms_url": "https://data.public.lu/fr/datasets/cita-cameras-autoroute/",
+      "metadata_license": "CC0-1.0 (dataset 'Cita : Caméras autoroute')",
+      "license": "CC0-1.0 (dataset 'Cita : Caméras autoroute')",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "media_rights": "CC0 covers the camera-location KML; the images on cita.lu are not separately licensed. Page links only.",
+      "rights_note": "CC0 covers the camera-location KML; the images on cita.lu are not separately licensed. Page links only.",
+      "attribution": "Administration des Ponts et Chaussées / CITA, data.public.lu (CC0). Camera pages on www.cita.lu.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.cita.lu"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://data.public.lu/fr/datasets/cita-cameras-autoroute/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/cita_luxembourg/cameras.kml",
+          "url": "https://www.cita.lu/kml/cameras.kml",
+          "observed_at": "2026-11-14T07:35:28Z",
+          "status": 200,
+          "sha256": "1254bb6d092a3ae93c8ec281b5911e00fb5b928d06957a3e46ae504d785c2fc9",
+          "bytes": 66933
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.cita.lu"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "LU"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "colombia_sgc_volcano_cameras": {
+    "status": "held",
+    "held_reason": "No camera list with coordinates: only a per-volcano image page (6 Galeras cameras confirmed, 37 nationally by SGC's own count); terms forbid copying or compiling content without written consent.",
+    "held_until": "an SGC camera list with positions, or SGC's written consent to list per-camera links",
+    "evidence": [
+      "https://www2.sgc.gov.co/Paginas/terminos-y-condiciones.aspx"
+    ],
+    "source": {
+      "id": "colombia_sgc_volcano_cameras",
+      "name": "Servicio Geológico Colombiano volcano webcams",
+      "url": "https://www2.sgc.gov.co/sgc/volcanes/VolcanGaleras/Paginas/imagenes-en-linea.aspx"
+    }
+  },
+  "costa_rica_ovsicori_cameras": {
+    "status": "held",
+    "held_reason": "Per-camera pages only, no published camera positions; all rights reserved.",
+    "held_until": "camera positions published by OVSICORI (or a documented volcano gazetteer accepted as associated_feature)",
+    "evidence": [
+      "https://www.ovsicori.una.ac.cr/"
+    ],
+    "source": {
+      "id": "costa_rica_ovsicori_cameras",
+      "name": "OVSICORI-UNA volcano cameras",
+      "url": "https://www.ovsicori.una.ac.cr/index.php/camaras"
+    }
+  },
+  "dgt_nap_cameras": {
+    "status": "held",
+    "held_reason": "Publisher confirmation pending: the dataset is CC BY on the national access point, but the linked aviso legal is generic; an e-mail to nap@dgt.es must confirm that the CC BY dataset licence covers the camera images (etraffic.dgt.es) before they are shown.",
+    "held_until": "written confirmation from nap@dgt.es that the CC BY licence covers the images",
+    "evidence": [
+      "https://nap.dgt.es/en/dataset/camaras-dgt-datex2-v3-7",
+      "https://www.dgt.es/contenido/aviso-legal/"
+    ],
+    "source": {
+      "id": "dgt_nap_cameras",
+      "name": "DGT traffic cameras (DATEX II v3.7 DevicePublication)",
+      "url": "https://nap.dgt.es/en/dataset/camaras-dgt-datex2-v3-7"
+    }
+  },
+  "dir_centre_est_webcams": {
+    "source": {
+      "id": "dir_centre_est_webcams",
+      "name": "DIR Centre-Est — webcams du réseau routier national",
+      "url": "https://www.webcams-dir.centre-est.developpement-durable.gouv.fr/",
+      "catalog_url": "https://www.webcams-dir.centre-est.developpement-durable.gouv.fr/",
+      "terms_url": "https://www.webcams-dir.centre-est.developpement-durable.gouv.fr/ (Mentions légales)",
+      "metadata_license": "No open licence (ministry site, all rights reserved)",
+      "license": "No open licence (ministry site, all rights reserved)",
+      "license_url": null,
+      "media_rights": "Media reuse is non-commercial only and third-party video needs an FTP agreement; 'Tout site public ou privé est autorisé à établir, sans autorisation préalable, un lien' (no framing). Page links only.",
+      "rights_note": "Media reuse is non-commercial only and third-party video needs an FTP agreement; 'Tout site public ou privé est autorisé à établir, sans autorisation préalable, un lien' (no framing). Page links only.",
+      "attribution": "DIR Centre-Est — webcams du réseau routier national (lien vers la page officielle)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.webcams-dir.centre-est.developpement-durable.gouv.fr"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.webcams-dir.centre-est.developpement-durable.gouv.fr/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/dir_centre_est_webcams/index.html",
+          "url": "https://www.webcams-dir.centre-est.developpement-durable.gouv.fr/",
+          "observed_at": "2026-11-14T07:35:33Z",
+          "status": 200,
+          "sha256": "31bf5a0e9d82f01b8ca51e10e0c70b1baebfcaba99de0b7418f8fc9d7aaf8932",
+          "bytes": 18460
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.webcams-dir.centre-est.developpement-durable.gouv.fr"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "FR"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "official_map_url": "https://www.webcams-dir.centre-est.developpement-durable.gouv.fr/"
+  },
+  "drivenc_ncdot": {
+    "source": {
+      "id": "drivenc_ncdot",
+      "name": "NCDOT DriveNC traffic cameras (NCDOT_Cameras layer)",
+      "url": "https://www.drivenc.gov/cctv",
+      "catalog_url": "https://services.arcgis.com/NuWFvHYDMVmmxMeM/arcgis/rest/services/NCDOT_Cameras/FeatureServer/0",
+      "terms_url": "https://www.ncdot.gov/about-us/how-we-operate/policy-process/Pages/terms-use.aspx",
+      "metadata_license": "No licence stated on the official NCDOT_Cameras ArcGIS item (owner TIMSApp.NCDOT.GOV); factual camera list, links only",
+      "license": "No licence stated on the official NCDOT_Cameras ArcGIS item (owner TIMSApp.NCDOT.GOV); factual camera list, links only",
+      "media_rights": "NCDOT grants copying and distribution of images 'for non-commercial use' only: no image is fetched or embedded; each record links to DriveNC's camera list.",
+      "rights_note": "DriveNC publishes no per-camera page outside its map; the camera list page is linked.",
+      "attribution": "North Carolina Department of Transportation (NCDOT) / DriveNC. Metadata normalized by QGlobe.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.ncdot.gov/about-us/how-we-operate/policy-process/Pages/terms-use.aspx",
+        "https://www.arcgis.com/home/item.html?id=eace738dc8d44ff99b2793459572d86e",
+        "https://services.arcgis.com/NuWFvHYDMVmmxMeM/arcgis/rest/services/NCDOT_Cameras/FeatureServer/0"
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.drivenc.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "official_map_url": "https://www.drivenc.gov/cctv"
+  },
+  "dwd_webcams": {
+    "status": "held",
+    "held_reason": "licence of the webcam directory not confirmed: CC BY 4.0 is documented only for the CDC area; the server README defers to the legal notice on www.dwd.de, whose robots.txt disallows all generic agents, so the clause cannot be read; no station coordinates in the directory",
+    "held_until": "the DWD terms for /weather/webcam read (CC BY 4.0 or GeoNutzV) and a station-coordinate join",
+    "evidence": [
+      "https://opendata.dwd.de/README.txt",
+      "https://opendata.dwd.de/climate_environment/CDC/Nutzungsbedingungen_German.pdf",
+      "https://www.dwd.de/EN/service/legal_notice/legal_notice_node.html"
+    ],
+    "source": {
+      "id": "dwd_webcams",
+      "name": "Deutscher Wetterdienst webcams (opendata.dwd.de/weather/webcam)",
+      "url": "https://opendata.dwd.de/weather/webcam/"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "DE"
+    ]
+  },
+  "el_salvador_marn_snet_cameras": {
+    "status": "held",
+    "held_reason": "The San Miguel camera on the official page is a YouTube live embed (https://www.youtube.com/embed/1wSx4q4xzFU?autoplay=1&mute=1), not an HTTPS JPEG/PNG or HLS image the app may load; no camera position is published.",
+    "held_until": "an official HTTPS JPEG/PNG or HLS URL for the camera and a published camera position",
+    "evidence": [
+      "https://www.snet.gob.sv/"
+    ],
+    "source": {
+      "id": "el_salvador_marn_snet_cameras",
+      "name": "MARN / SNET El Salvador — Cámara Volcán San Miguel",
+      "url": "https://www.snet.gob.sv/"
+    }
+  },
+  "eso_chile_webcams": {
+    "source": {
+      "id": "eso_chile_webcams",
+      "name": "ESO observatory webcams in Chile (Paranal VLT, ELT Cerro Armazones)",
+      "url": "https://www.eso.org/public/outreach/webcams/",
+      "catalog_url": "https://www.eso.org/public/outreach/webcams/",
+      "terms_url": "https://www.eso.org/public/outreach/copyright/",
+      "metadata_license": "CC-BY-4.0",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "media_rights": "'Feel free to embed these webcam images on other web pages: just use the URL of the product.' (ESO webcam page) and ESO images are CC BY 4.0 with a clear, visible credit (ESO copyright page, re-read 2026-11-14). No implied ESO endorsement; images showing an identifiable person may not be used commercially; ESO logo not licensed.",
+      "rights_note": "Landscape/telescope views only; the ELT West camera (not operational), ALMA (frozen since 2020), APEX, REM/La Silla (third-party hosts) and the Garching headquarters cameras are not included. Updates are irregular: show the image time.",
+      "attribution": "Credit: ESO (webcam images, CC BY 4.0) – link to https://www.eso.org/public/outreach/webcams/",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.eso.org"
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.eso.org/public/outreach/webcams/",
+        "https://www.eso.org/public/outreach/copyright/",
+        "https://www.eso.org/public/about-eso/travel/paranal/",
+        "https://www.eso.org/public/about-eso/travel/elt/"
+      ]
+    },
+    "media_hosts": [
+      "www.eso.org"
+    ],
+    "page_hosts": [
+      "www.eso.org"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "CL"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature"
+  },
+  "explore_org_livecams": {
+    "status": "held",
+    "held_reason": "No list or coordinates in the register; terms allow deep links but not automated harvesting.",
+    "held_until": "a hand-curated list with positions",
+    "evidence": [
+      "https://explore.org/terms-of-service"
+    ],
+    "source": {
+      "id": "explore_org_livecams",
+      "name": "explore.org live nature cams",
+      "url": "https://explore.org/livecams"
+    }
+  },
+  "faroe_landsverk": {
+    "source": {
+      "id": "faroe_landsverk",
+      "name": "Landsverk — Vevmyndatól (Faroese road webcams)",
+      "url": "https://www.landsverk.fo/fo-fo/borgari/vevmyndatol",
+      "catalog_url": "https://www.landsverk.fo/fo-fo/borgari/vevmyndatol",
+      "terms_url": "https://www.landsverk.fo/fo-fo/soela/vedurdatur",
+      "metadata_license": "None; Landsverk data is sold ('ein ávís upphædd skal gjaldast fyri allar dátur frá Landsverki')",
+      "license": "None; Landsverk data is sold ('ein ávís upphædd skal gjaldast fyri allar dátur frá Landsverki')",
+      "license_url": null,
+      "media_rights": "No reuse licence for the images; links to the official location pages only.",
+      "rights_note": "No reuse licence for the images; links to the official location pages only.",
+      "attribution": "Landsverk (www.landsverk.fo)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.landsverk.fo"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.landsverk.fo/fo-fo/soela/vedurdatur",
+        "https://www.landsverk.fo/fo-fo/borgari/vevmyndatol"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/faroe_landsverk/vevmyndatol.html",
+          "url": "https://www.landsverk.fo/fo-fo/borgari/vevmyndatol",
+          "observed_at": "2026-11-14T07:35:31Z",
+          "status": 200,
+          "sha256": "a1b3c430448c535c604c4605049c57ff521315086df421f85bbbeedcf1f71ac8",
+          "bytes": 41409
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.landsverk.fo"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "FO"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "fgc_tourism_webcams": {
+    "status": "held",
+    "held_reason": "robots.txt of dadesobertes.fgc.cat disallows /api/ and /explore/dataset/*/download for all agents: the 30 records can only be read from those paths (the explore page loads them through /api/).",
+    "held_until": "FGC publishes the list on a path robots.txt allows, or confirms automated reading of the export",
+    "evidence": [
+      "https://dadesobertes.fgc.cat/robots.txt",
+      "https://dadesobertes.fgc.cat/explore/dataset/webcams-actives-tim/"
+    ],
+    "source": {
+      "id": "fgc_tourism_webcams",
+      "name": "FGC — Webcams dels equipaments turístics",
+      "url": "https://dadesobertes.fgc.cat/explore/dataset/webcams-actives-tim/"
+    }
+  },
+  "fl511_fdot": {
+    "status": "held",
+    "held_reason": "Conditional in the register: FDOT third-party feed agreement for media; page listing deferred by the brief.",
+    "held_until": "FDOT feed agreement / confirmation",
+    "evidence": [
+      "https://www.arcgis.com/home/item.html?id=79023e7f3a4948cf80c91534e565cdcf"
+    ],
+    "source": {
+      "id": "fl511_fdot",
+      "name": "FL511 / FDOT traffic cameras",
+      "url": "https://fl511.com/cctv"
+    }
+  },
+  "foto_webcam_eu": {
+    "source": {
+      "id": "foto_webcam_eu",
+      "name": "foto-webcam.eu — high-resolution mountain webcams",
+      "url": "https://www.foto-webcam.eu/",
+      "catalog_url": "https://www.foto-webcam.eu/webcam/include/metadata.php",
+      "terms_url": "https://www.foto-webcam.eu/impressum/",
+      "metadata_license": "All rights reserved (operator copyright); links to the site and its subpages explicitly permitted",
+      "license": "All rights reserved (operator copyright); links to the site and its subpages explicitly permitted",
+      "license_url": null,
+      "media_rights": "Images may not be distributed, modified or copied without prior written consent; 'Links auf diese Website und deren Unterseiten sind generell gestattet und auch erwünscht.' Page links only.",
+      "rights_note": "Images may not be distributed, modified or copied without prior written consent; 'Links auf diese Website und deren Unterseiten sind generell gestattet und auch erwünscht.' Page links only.",
+      "attribution": "foto-webcam.eu; images © the respective camera operators (link to the camera page)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.foto-webcam.eu"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.foto-webcam.eu/impressum/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/foto_webcam_eu/metadata.json",
+          "url": "https://www.foto-webcam.eu/webcam/include/metadata.php",
+          "observed_at": "2026-11-14T07:35:30Z",
+          "status": 200,
+          "sha256": "accc617e7686dbf26b0f5dfaffa51db52e9248fb87042ac17efafe283dfcd1f3",
+          "bytes": 252720
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.foto-webcam.eu"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "AT",
+      "CH",
+      "DE",
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "genova_comune_webcams": {
+    "source": {
+      "id": "genova_comune_webcams",
+      "name": "Comune di Genova — webcam turistiche",
+      "url": "https://smart.comune.genova.it/node/30486",
+      "catalog_url": "https://smart.comune.genova.it/node/30486",
+      "terms_url": "https://www.comune.genova.it/note-legali",
+      "metadata_license": "CC-BY-4.0 for www.comune.genova.it content; scope over smart/strumenti subdomains not stated",
+      "license": "CC-BY-4.0 for www.comune.genova.it content; scope over smart/strumenti subdomains not stated",
+      "license_url": null,
+      "media_rights": "Licence scope over the webcam host is unconfirmed and the image host refuses direct requests; page links only (upgrade candidate if the Comune confirms).",
+      "rights_note": "Licence scope over the webcam host is unconfirmed and the image host refuses direct requests; page links only (upgrade candidate if the Comune confirms).",
+      "attribution": "Comune di Genova - Webcam turistiche (https://smart.comune.genova.it/node/30486)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "smart.comune.genova.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.comune.genova.it/note-legali",
+        "https://smart.comune.genova.it/node/30486"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/genova_comune_webcams/node-30486.html",
+          "url": "https://smart.comune.genova.it/node/30486",
+          "observed_at": "2026-11-14T07:40:02Z",
+          "status": 200,
+          "sha256": "6b6b18344d2081f84326287e1c902dd56c01076262db6f1137ad8d87779b89b4",
+          "bytes": 53208
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "smart.comune.genova.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature",
+    "official_map_url": "https://smart.comune.genova.it/node/30486"
+  },
+  "grenoble_metromobilite_cams": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://data.mobilites-m.fr/donnees"
+    ],
+    "source": {
+      "id": "grenoble_metromobilite_cams",
+      "name": "Métromobilité (Grenoble-Alpes) traffic cameras",
+      "url": "https://data.mobilites-m.fr/donnees"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "FR"
+    ]
+  },
+  "guatemala_insivumeh_cameras": {
+    "status": "held",
+    "held_reason": "No camera list: one page describes an embedded platform without camera names, URLs or positions; all rights reserved.",
+    "held_until": "a published camera list with positions",
+    "evidence": [
+      "https://insivumeh.gob.gt/camaras-de-vigilancia-volcanica/"
+    ],
+    "source": {
+      "id": "guatemala_insivumeh_cameras",
+      "name": "INSIVUMEH volcano surveillance cameras",
+      "url": "https://insivumeh.gob.gt/camaras-de-vigilancia-volcanica/"
+    }
+  },
+  "hamburg_verkehrskameras": {
+    "status": "held",
+    "held_reason": "no image or stream URL in the official API (OGC API Features, 18 items, properties ['anmerkung', 'lage']); the camera page shows a consent-gated embed only",
+    "held_until": "the official image/stream host published in the API or dataset (DL-DE-BY-2.0 already covers the images)",
+    "evidence": [
+      "https://api.hamburg.de/datasets/v1/verkehrskameras/collections/verkehr_kameras_internet/items?f=json&limit=100",
+      "https://metaver.de/trefferanzeige?cmd=doShowDocument&docuuid=6E28E698-F4FA-4231-A8C5-CC44441FF2A7"
+    ],
+    "source": {
+      "id": "hamburg_verkehrskameras",
+      "name": "Verkehrskameras Hamburg",
+      "url": "https://api.hamburg.de/datasets/v1/verkehrskameras"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "DE"
+    ]
+  },
+  "hong_kong_observatory_weather_photos": {
+    "source": {
+      "id": "hong_kong_observatory_weather_photos",
+      "name": "Hong Kong Observatory weather photos",
+      "url": "https://www.hko.gov.hk/en/wxinfo/ts/index_webcam.htm",
+      "catalog_url": "https://www.hko.gov.hk/en/wxinfo/ts/index_webcam.htm",
+      "terms_url": "https://www.hko.gov.hk/en/readme/readme.htm",
+      "metadata_license": "No open licence; factual links to the official HKO weather photo pages only",
+      "license": "HKSAR Government copyright (Hong Kong Observatory conditions of use)",
+      "media_rights": "Official page links only: HKO strictly prohibits commercial use of its materials without prior written authorisation, so this paid app neither embeds nor fetches the photos.",
+      "rights_note": "「the use of the Materials for commercial purposes is strictly prohibited unless …」 prior written authorisation of the Observatory. Robots: /wxinfo/ (the image path) is disallowed; the /en/wxinfo/ photo pages are not. Positions are HKO weather-station positions (station list), not surveyed camera mounts.",
+      "attribution": "Hong Kong Observatory",
+      "provider_notice": "Opens the official Hong Kong Observatory photo page. The marker is the HKO weather station the camera belongs to.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.hko.gov.hk/en/readme/readme.htm",
+        "https://www.hko.gov.hk/en/wxinfo/ts/index_webcam.htm",
+        "https://www.hko.gov.hk/en/cis/stn.htm",
+        "https://www.hko.gov.hk/robots.txt"
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.hko.gov.hk"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "HK"
+    ],
+    "operator_hints": [
+      "hong kong observatory"
+    ],
+    "coordinate_role": "station_location"
+  },
+  "houston_transtar": {
+    "status": "held",
+    "held_reason": "Camera list and map pages re-read 2026-11-14: road-by-road lists and an image map, no camera coordinates; TxDOT terms forbid linking to specific images (pages only).",
+    "held_until": "a published camera list with coordinates",
+    "evidence": [
+      "https://traffic.houstontranstar.org/disclaimer.aspx"
+    ],
+    "source": {
+      "id": "houston_transtar",
+      "name": "Houston TranStar traffic cameras",
+      "url": "https://traffic.houstontranstar.org/cctv/transtar/"
+    }
+  },
+  "idaho_511_itd": {
+    "source": {
+      "id": "idaho_511_itd",
+      "name": "Idaho Transportation Department CCTV sites (511 Idaho)",
+      "url": "https://511.idaho.gov/cctv",
+      "catalog_url": "https://gisp.itd.idaho.gov/server/rest/services/GDWarehouse/IntelligentTransportationSystems/MapServer/0",
+      "terms_url": "https://gisp.itd.idaho.gov/server/rest/services/GDWarehouse/IntelligentTransportationSystems/MapServer/info/iteminfo",
+      "metadata_license": "ITD Spatial Data Disclaimer (data provided 'as is'); factual list from the keyless ITD GIS layer, links only",
+      "license": "ITD Spatial Data Disclaimer (data provided 'as is'); factual list from the keyless ITD GIS layer, links only",
+      "media_rights": "No licence for images (the GIS layer has no image URLs; the 511 Idaho key was not used): each record links to 511 Idaho's camera list.",
+      "rights_note": "No licence for images (the GIS layer has no image URLs; the 511 Idaho key was not used): each record links to 511 Idaho's camera list.",
+      "attribution": "Idaho Transportation Department / 511 Idaho",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://gisp.itd.idaho.gov/server/rest/services/GDWarehouse/IntelligentTransportationSystems/MapServer/info/iteminfo?f=json",
+        "https://gisp.itd.idaho.gov/server/rest/services/GDWarehouse/IntelligentTransportationSystems/MapServer/0"
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "511.idaho.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location",
+    "official_map_url": "https://511.idaho.gov/cctv"
+  },
+  "india_temple_live_darshan": {
+    "status": "held",
+    "held_reason": "Pages exist but each trust's terms were not read; streams are YouTube embeds (outside HLS/snapshot).",
+    "held_until": "Terms read per trust and an official page per temple with its position.",
+    "evidence": [],
+    "source": {
+      "id": "india_temple_live_darshan",
+      "name": "India - official temple trust live darshan streams",
+      "url": "https://shrikashivishwanath.org/online/live_darshan"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "infoviaggiando_webcams": {
+    "source": {
+      "id": "infoviaggiando_webcams",
+      "name": "Infoviaggiando — north-east motorway webcams (Autostrade Alto Adriatico, CAV, A4 Holding)",
+      "url": "https://www.infoviaggiando.it/webcam",
+      "catalog_url": "https://www.infoviaggiando.it/webcam",
+      "terms_url": "https://www.infoviaggiando.it/it/disclaimer",
+      "metadata_license": "None — exclusive rights; reproduction (even partial), mirroring and framing prohibited without written authorization",
+      "license": "None — exclusive rights; reproduction (even partial), mirroring and framing prohibited without written authorization",
+      "license_url": null,
+      "media_rights": "The disclaimer forbids reproducing the site's content, photos and video; linking to the public page is not forbidden. Conservative reading: one shared-page record per road, no camera list copied.",
+      "rights_note": "The disclaimer forbids reproducing the site's content, photos and video; linking to the public page is not forbidden. Conservative reading: one shared-page record per road, no camera list copied.",
+      "attribution": "Infoviaggiando - Autostrade Alto Adriatico, CAV, Autostrada BS-PD (https://www.infoviaggiando.it/webcam)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.infoviaggiando.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.infoviaggiando.it/it/disclaimer"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/infoviaggiando_webcams/webcam.html",
+          "url": "https://www.infoviaggiando.it/webcam",
+          "observed_at": "2026-11-14T07:39:59Z",
+          "status": 200,
+          "sha256": "d0fc627b5a21a1f858c9ed7210f2f410b81742b7235fe6ac3016d6b5d2009b52",
+          "bytes": 70914
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.infoviaggiando.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature",
+    "official_map_url": "https://www.infoviaggiando.it/webcam"
+  },
+  "ingv_oe_tv_channels": {
+    "source": {
+      "id": "ingv_oe_tv_channels",
+      "name": "INGV Osservatorio Etneo — live TV channels (Etna, Isole Eolie)",
+      "url": "https://www.ct.ingv.it/sezioniesterne/StreamingEtna.php",
+      "catalog_url": "https://garr.tv/api/v1/video-channels/ingv_catania/videos?isLive=true",
+      "terms_url": "https://www.ct.ingv.it/sezioniesterne/StreamingEtna.php",
+      "metadata_license": "CC-BY-4.0",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "media_rights": "Live video explicitly licensed CC BY 4.0: licence field 'CC BY 4.0' on each garr.tv video and the CC BY 4.0 notice on the INGV streaming pages ('I dati e i risultati pubblicati su queste pagine sono distribuiti sotto licenza Creative Commons Attribution 4.0 International License'). Commercial use allowed.",
+      "rights_note": "Live video explicitly licensed CC BY 4.0: licence field 'CC BY 4.0' on each garr.tv video and the CC BY 4.0 notice on the INGV streaming pages ('I dati e i risultati pubblicati su queste pagine sono distribuiti sotto licenza Creative Commons Attribution 4.0 International License'). Commercial use allowed.",
+      "attribution": "INGV - Osservatorio Etneo, Etna's TV channel (EtnaTVChn), https://doi.org/10.13127/etna/tvchn, CC BY 4.0 (Aeolian: https://doi.org/10.13127/aeolian/tvchn)",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "garr.tv"
+      ],
+      "official_page_hosts": [
+        "www.ct.ingv.it"
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.ct.ingv.it/sezioniesterne/StreamingEtna.php",
+        "https://www.ct.ingv.it/sezioniesterne/StreamingEolie.php",
+        "https://garr.tv/api/v1/video-channels/ingv_catania/videos?isLive=true"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "provider_notice": "The channel may switch between INGV cameras; the marker is the volcano, not one camera.",
+      "raw_files": [
+        {
+          "file": "raw/ingv_oe_tv_channels/channel_live_videos.json",
+          "url": "https://garr.tv/api/v1/video-channels/ingv_catania/videos?isLive=true",
+          "observed_at": "2026-11-14T07:39:31Z",
+          "status": 200,
+          "sha256": "ea439135aeeb97e7d64970ee118cbdd82ef2ade10468f9d6d1ad5b033dca79e9",
+          "bytes": 7011
+        },
+        {
+          "file": "raw/ingv_oe_tv_channels/video_c6c70a03-e711-4eed-9835-1d02f5a5ec58.json",
+          "url": "https://garr.tv/api/v1/videos/c6c70a03-e711-4eed-9835-1d02f5a5ec58",
+          "observed_at": "2026-11-14T07:39:32Z",
+          "status": 200,
+          "sha256": "20b72060c7061802448dc03be6519140df8b00fbbf59efd8bb584b7fadefb27a",
+          "bytes": 4985
+        },
+        {
+          "file": "raw/ingv_oe_tv_channels/video_8790a7a8-211c-4794-bcb2-41e24cd2e322.json",
+          "url": "https://garr.tv/api/v1/videos/8790a7a8-211c-4794-bcb2-41e24cd2e322",
+          "observed_at": "2026-11-14T07:39:33Z",
+          "status": 200,
+          "sha256": "324e7d20062f82686a8a34073a033059653f8070d8d97424b0e38e24861aa7a8",
+          "bytes": 5026
+        }
+      ]
+    },
+    "media_hosts": [
+      "garr.tv"
+    ],
+    "page_hosts": [
+      "www.ct.ingv.it"
+    ],
+    "formats": [
+      "hls"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "iowa_soda_plow_cams": {
+    "status": "held",
+    "held_reason": "Skipped: moving vehicle cameras, last images May 2023, not fixed webcams.",
+    "held_until": "not planned",
+    "evidence": [
+      "https://www.arcgis.com/home/item.html?id=e254de3a5ced49fb89de03fe97b0fd11"
+    ],
+    "source": {
+      "id": "iowa_soda_plow_cams",
+      "name": "Snow plow dash cameras (Nebraska view)",
+      "url": "https://www.arcgis.com/home/item.html?id=e254de3a5ced49fb89de03fe97b0fd11"
+    }
+  },
+  "ipgp_ovsg_guadeloupe": {
+    "status": "held",
+    "held_reason": "Observatory page re-read 2026-11-14 (full page): no webcam list, URLs or positions in it (station map loaded dynamically); IPGP terms forbid commercial use of the information without express authorisation.",
+    "held_until": "a readable webcam list with positions and IPGP's authorisation for listing in a paid app",
+    "evidence": [
+      "https://www.ipgp.fr/mentions-legales/"
+    ],
+    "source": {
+      "id": "ipgp_ovsg_guadeloupe",
+      "name": "OVSG-IPGP La Soufrière de Guadeloupe webcams",
+      "url": "https://www.ipgp.fr/observation/ovsg/"
+    }
+  },
+  "ipgp_ovsm_martinique": {
+    "status": "held",
+    "held_reason": "Observatory page re-read 2026-11-14 (full page): no webcam list, URLs or positions in it; IPGP terms forbid commercial use of the information without express authorisation.",
+    "held_until": "a readable webcam list with positions and IPGP's authorisation for listing in a paid app",
+    "evidence": [
+      "https://www.ipgp.fr/mentions-legales/"
+    ],
+    "source": {
+      "id": "ipgp_ovsm_martinique",
+      "name": "OVSM-IPGP Montagne Pelée webcams",
+      "url": "https://www.ipgp.fr/observation/ovsm/"
+    }
+  },
+  "israel_western_wall_cameras": {
+    "status": "held",
+    "held_reason": "Partially verified: the camera page was not found (old URL 404) and no terms were located.",
+    "held_until": "The current official camera page and its terms.",
+    "evidence": [
+      "https://thekotel.org/en/"
+    ],
+    "source": {
+      "id": "israel_western_wall_cameras",
+      "name": "Western Wall (Kotel) live cameras",
+      "url": "https://thekotel.org/en/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "japan_mlit_rivers_snapshot_upgrade": {
+    "status": "held",
+    "held_reason": "The river.go.jp terms allow reuse, but the still-image endpoint was not found (the JS bundle is over the 64 KiB sample) and the site bars periodic automated collection. The existing page-only policy japan_mlit_rivers is unchanged; this id only tracks the upgrade.",
+    "held_until": "A documented still-image URL per camera, user-tap fetch only (no polling), prefecture-owned cameras checked separately; scheduled refresh only through the FRICS distribution.",
+    "evidence": [
+      "https://www.river.go.jp/kawabou/kwb_apend/html/caution.html"
+    ],
+    "source": {
+      "id": "japan_mlit_rivers_snapshot_upgrade",
+      "name": "MLIT 川の防災情報 river cameras — snapshot upgrade of the existing page-only provider japan_mlit_rivers",
+      "url": "https://www.river.go.jp/kawabou/pcfull"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "jcg_mics_livecamera": {
+    "status": "held",
+    "held_reason": "Pages exist but the JCG site terms were not located or read; coordinates not yet checked.",
+    "held_until": "Read the JCG site policy (PDL1.0 or not) and find official camera positions.",
+    "evidence": [
+      "https://www6.kaiho.mlit.go.jp/livecamera.html"
+    ],
+    "source": {
+      "id": "jcg_mics_livecamera",
+      "name": "Japan Coast Guard 'Umi no Anzen Joho' lighthouse and port live cameras",
+      "url": "https://www6.kaiho.mlit.go.jp/livecamera.html"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "jma_volcano_cameras": {
+    "source": {
+      "id": "jma_volcano_cameras",
+      "name": "Japan Meteorological Agency volcano monitoring cameras (気象庁 監視カメラ画像)",
+      "url": "https://www.data.jma.go.jp/vois/data/obs/volcam/volcam.php",
+      "catalog_url": "https://www.data.jma.go.jp/vois/data/obs/volcam/volcam.php",
+      "terms_url": "https://www.jma.go.jp/jma/kishou/info/coment.html",
+      "metadata_license": "Public Data License 1.0 (PDL1.0), CC BY 4.0 compatible",
+      "license": "Public Data License 1.0 (PDL1.0)",
+      "license_url": "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+      "media_rights": "Site content, including camera stills, is usable under PDL1.0 (copy, public transmission, adaptation, commercial use) unless a page carries its own rights notice; the camera pages used carry none. Source attribution (出典 + page URL) and an edit notice are mandatory; QGlobe must not present the result as made by the agency.",
+      "rights_note": "「気象庁ホームページで公開している情報…は、権利表記の記載がない限り「公共データ利用規約（第1.0版）」に準拠した利用条件の下で、利用することができます。」 PDL1.0: commercial use permitted. Camera positions are the camera icons of JMA's official volcano camera map (0.001° precision).",
+      "attribution": "出典：気象庁ホームページ（https://www.data.jma.go.jp/vois/data/obs/volcam/volcam.php ・各カメラのページURL）を加工して作成。QGlobeが名称・位置等のデータを正規化・編集し、画像を縮小表示しています（気象庁が作成したものではありません）。Source: Japan Meteorological Agency website; data normalized and edited by QGlobe, not a JMA product. PDL1.0.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [
+        "www.data.jma.go.jp"
+      ],
+      "minimum_refresh_seconds": 120,
+      "image_url_lifecycle": "Dated frames every 2 minutes (camera/<dir>/<JST yyyymmddhhmmss>.jpg); each camera page lists only about the last hour (31 frames). No stable 'latest' URL exists: the saved URL does not advance and is likely to disappear about an hour after collection unless the catalogue is rebuilt or a tap-time resolver picks the newest frame from the camera page.",
+      "provider_notice": "Dated JMA volcano camera frame; a newer image needs an updated catalogue. For eruption warnings follow JMA and local authorities, not this image.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.jma.go.jp/jma/kishou/info/coment.html",
+        "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+        "https://www.data.jma.go.jp/vois/data/obs/volcam/volcam.php",
+        "https://www.data.jma.go.jp/vois/data/obs/volcam/param/geojson/camicon.geojson"
+      ],
+      "held_media_note": "Images allowed by the JMA terms (PDL 1.0 compatible), but frames are dated files kept about an hour: listed as camera pages until the viewer can pick the newest frame at tap time."
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.data.jma.go.jp"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "JP"
+    ],
+    "operator_hints": [
+      "気象庁",
+      "japan meteorological agency"
+    ],
+    "coordinate_role": "camera_location",
+    "official_map_url": "https://www.data.jma.go.jp/vois/data/obs/volcam/volmap.html"
+  },
+  "korea_its_cctv": {
+    "status": "held",
+    "held_reason": "API key required (free registration at its.go.kr); its.go.kr was unreachable from the research network; stream URLs may be http or short-lived.",
+    "held_until": "The user's decision to register a key, then proof that stream URLs are https, stable and key-free.",
+    "evidence": [
+      "https://www.data.go.kr/data/15040466/openapi.do",
+      "https://www.kogl.or.kr/info/licenseType1.do"
+    ],
+    "source": {
+      "id": "korea_its_cctv",
+      "name": "Korea National Transport Information Center (ITS) CCTV open API",
+      "url": "https://www.data.go.kr/data/15040466/openapi.do"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "korea_utic_police_cctv": {
+    "status": "held",
+    "held_reason": "API key with approval (심의승인) required; count and stream format unknown.",
+    "held_until": "The user's decision to apply for a key, then a check of stream format, https and expiry.",
+    "evidence": [
+      "https://www.data.go.kr/data/15148511/openapi.do"
+    ],
+    "source": {
+      "id": "korea_utic_police_cctv",
+      "name": "Korean National Police Agency urban traffic CCTV (UTIC) open API",
+      "url": "https://www.data.go.kr/data/15148511/openapi.do"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "lapalma_webcam_directory": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://www.opendatalapalma.es/pages/avisolegal"
+    ],
+    "source": {
+      "id": "lapalma_webcam_directory",
+      "name": "Cabildo de La Palma — webcam directory",
+      "url": "https://datos.gob.es/catalogo/l03380010-webcam"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "ES"
+    ]
+  },
+  "lincoln_ne_traffic": {
+    "source": {
+      "id": "lincoln_ne_traffic",
+      "name": "City of Lincoln (NE) traffic cameras",
+      "url": "https://www.arcgis.com/home/item.html?id=9b9cb862992847c4994ce060a1c59372",
+      "catalog_url": "https://services1.arcgis.com/wpJGOi6N4Rq5cqFv/arcgis/rest/services/TrafficCamerasMap_WFL1/FeatureServer/0",
+      "terms_url": "https://www.arcgis.com/home/item.html?id=9b9cb862992847c4994ce060a1c59372",
+      "metadata_license": "No licence stated on the city's public feature service ('Traffic camera feeds used for public facing applications'); factual list, links only",
+      "license": "No licence stated on the city's public feature service ('Traffic camera feeds used for public facing applications'); factual list, links only",
+      "media_rights": "No licence for video or photos: each record links to the city's own video.html viewer page; the accliveviewer (VMS) path is not used.",
+      "rights_note": "No licence for video or photos: each record links to the city's own video.html viewer page; the accliveviewer (VMS) path is not used.",
+      "attribution": "City of Lincoln, Nebraska",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.arcgis.com/home/item.html?id=9b9cb862992847c4994ce060a1c59372",
+        "https://services1.arcgis.com/wpJGOi6N4Rq5cqFv/arcgis/rest/services/TrafficCamerasMap_WFL1/FeatureServer/0"
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "ticcamvw02.lincoln.ne.gov"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "loire_atlantique_bridge_ferry_cams": {
+    "status": "held",
+    "held_reason": "low confidence in the register: image file ids may change per refresh, the publisher's /api/ is robots-disallowed, no coordinates",
+    "held_until": "a stable image URL outside /api/ or the publisher's confirmation",
+    "evidence": [
+      "https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf"
+    ],
+    "source": {
+      "id": "loire_atlantique_bridge_ferry_cams",
+      "name": "Webcams du pont de Saint-Nazaire et des bacs de Loire",
+      "url": "https://www.data.gouv.fr/datasets/webcams-du-pont-de-saint-nazaire-et-des-bacs-de-loire-temps-reel"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "FR"
+    ]
+  },
+  "madrid_calle30_cameras": {
+    "source": {
+      "id": "madrid_calle30_cameras",
+      "name": "Madrid Calle 30 (M-30) — traffic cameras",
+      "url": "https://nap.dgt.es/en/dataset/trafico-calle-30-camaras",
+      "terms_url": "https://datos.madrid.es/pages/condiciones-generales-ayuntamiento-de-madrid",
+      "metadata_license": "CC-BY",
+      "license": "CC-BY (Creative Commons Attribution; Ayuntamiento de Madrid general reuse conditions)",
+      "license_url": "https://datos.madrid.es/pages/condiciones-generales-ayuntamiento-de-madrid",
+      "media_rights": "The CC BY dataset 'Tráfico. Calle 30. Cámaras' is described as 'data and images from traffic control cameras in M-30' and lists each image file; Madrid's general conditions allow commercial and non-commercial reuse, citing the source. Images shown unmodified, never stored.",
+      "rights_note": "The CC BY dataset 'Tráfico. Calle 30. Cámaras' is described as 'data and images from traffic control cameras in M-30' and lists each image file; Madrid's general conditions allow commercial and non-commercial reuse, citing the source. Images shown unmodified, never stored.",
+      "attribution": "Origen de los datos: Ayuntamiento de Madrid / Madrid Calle 30 – Tráfico. Calle 30. Cámaras, CC BY",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "mc30.es"
+      ],
+      "official_page_hosts": [],
+      "minimum_refresh_seconds": 300,
+      "catalog_url": "https://datos.madrid.es/egob/catalogo/212166-7899870-trafico-calle30-camaras.xml",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://nap.dgt.es/en/dataset/trafico-calle-30-camaras",
+        "https://datos.madrid.es/pages/condiciones-generales-ayuntamiento-de-madrid",
+        "https://datos.madrid.es/egob/catalogo/212166-7899870-trafico-calle30-camaras.xml"
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [
+      "mc30.es"
+    ],
+    "page_hosts": [],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "ES"
+    ],
+    "operator_hints": [
+      "calle 30",
+      "mc30"
+    ],
+    "coordinate_role": "camera_location"
+  },
+  "malaga_traffic": {
+    "source": {
+      "id": "malaga_traffic",
+      "name": "Ayuntamiento de Málaga — cámaras de tráfico",
+      "url": "https://datosabiertos.malaga.eu/dataset/camaras-de-trafico",
+      "terms_url": "https://datosabiertos.malaga.eu/dataset/camaras-de-trafico",
+      "metadata_license": "CC-BY-4.0 (title) / CC-BY-SA-4.0 (link)",
+      "license": "CC-BY-4.0 per licence title; the link points to CC-BY-SA-4.0 (apply the stricter)",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "media_rights": "Dataset field URLIMAGEN publishes each camera's image URL as part of the openly licensed dataset (licence title CC BY 4.0, licence link CC BY-SA 4.0: both allow commercial use). Condition: images displayed unmodified, with attribution; never stored or edited.",
+      "rights_note": "Dataset field URLIMAGEN publishes each camera's image URL as part of the openly licensed dataset (licence title CC BY 4.0, licence link CC BY-SA 4.0: both allow commercial use). Condition: images displayed unmodified, with attribution; never stored or edited.",
+      "attribution": "Ayuntamiento de Málaga – Cámaras de tráfico (datosabiertos.malaga.eu), CC BY 4.0 / CC BY-SA 4.0",
+      "display_condition": "display unmodified with attribution",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "ctraficomovilidad.malaga.eu"
+      ],
+      "official_page_hosts": [
+        "movilidad.malaga.eu"
+      ],
+      "catalog_url": "https://datosabiertos.malaga.eu/recursos/transporte/trafico/da_camarasTrafico-4326.csv",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://datosabiertos.malaga.eu/dataset/camaras-de-trafico",
+        "https://datosabiertos.malaga.eu/recursos/transporte/trafico/da_camarasTrafico-4326.csv"
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
+    },
+    "media_hosts": [
+      "ctraficomovilidad.malaga.eu"
+    ],
+    "page_hosts": [
+      "movilidad.malaga.eu"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "ES"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "meteoswiss_weathercams": {
+    "source": {
+      "id": "meteoswiss_weathercams",
+      "name": "MeteoSwiss weather cameras (Wetterkameras)",
+      "url": "https://www.meteoswiss.admin.ch/services-and-publications/applications/measurement-values-and-measuring-networks.html#param=messnetz-webcams",
+      "catalog_url": "https://data.geo.admin.ch/ch.meteoschweiz.messnetz-webcams/ch.meteoschweiz.messnetz-webcams_en.json",
+      "terms_url": "https://opendatadocs.meteoswiss.ch/general/terms-of-use",
+      "metadata_license": "CC-BY-4.0 (MeteoSwiss Open Data, art. 10 EMOTA)",
+      "license": "CC-BY-4.0 (MeteoSwiss Open Data, art. 10 EMOTA)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "media_rights": "MeteoSwiss Open Data are CC BY 4.0, but whether that covers the vendor-hosted camera images is not established; station links only.",
+      "rights_note": "MeteoSwiss Open Data are CC BY 4.0, but whether that covers the vendor-hosted camera images is not established; station links only.",
+      "attribution": "Source: MeteoSwiss (CC BY 4.0). Metadata normalized by QGlobe; coordinates converted from LV95.",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.meteoswiss.admin.ch"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://opendatadocs.meteoswiss.ch/general/terms-of-use",
+        "https://data.geo.admin.ch/ch.meteoschweiz.messnetz-webcams/ch.meteoschweiz.messnetz-webcams_en.json",
+        "https://opendata.swiss/en/dataset/wetterkameras"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "minimum_refresh_seconds": 600,
+      "raw_files": [
+        {
+          "file": "raw/meteoswiss_weathercams/messnetz-webcams_en.json",
+          "url": "https://data.geo.admin.ch/ch.meteoschweiz.messnetz-webcams/ch.meteoschweiz.messnetz-webcams_en.json",
+          "observed_at": "2026-11-14T07:34:00Z",
+          "status": 200,
+          "sha256": "1adca5c64d1b1a4dcf1aa20c2971b92467e3e5e2eddd0ac475a6f431c7b8fe33",
+          "bytes": 42231
+        },
+        {
+          "file": "raw/meteoswiss_weathercams/backend.roundshot.com.robots.txt",
+          "url": "https://backend.roundshot.com/robots.txt",
+          "observed_at": "2026-11-14T07:34:01Z",
+          "status": 200,
+          "sha256": "a5011b9cbfad4824e1782f55ad65532e5f90416de9b27acd0c9abaf2574d68f1",
+          "bytes": 116
+        },
+        {
+          "file": "raw/meteoswiss_weathercams/storage2.roundshot.com.robots.txt",
+          "url": "https://storage2.roundshot.com/robots.txt",
+          "observed_at": "2026-11-14T07:49:38Z",
+          "status": 200,
+          "sha256": "331ea9090db0c9f6f597bd9840fd5b171830f6e0b3ba1cb24dfa91f0c95aedc1",
+          "bytes": 26
+        },
+        {
+          "file": "raw/meteoswiss_weathercams/opendata-terms-of-use.html",
+          "url": "https://opendatadocs.meteoswiss.ch/general/terms-of-use",
+          "observed_at": "2026-11-14T07:35:06Z",
+          "status": 200,
+          "sha256": "fd0bcae24c71066fead9776408c512afb9203f5dec6cf60f4a4e7b36e6a6c429",
+          "bytes": 23985
+        },
+        {
+          "file": "raw/meteoswiss_weathercams/legal-basis.html",
+          "url": "https://www.meteoswiss.admin.ch/about-us/legal-basis.html",
+          "observed_at": "2026-11-14T07:34:46Z",
+          "status": 404,
+          "sha256": "a68e06d61f22cb744e31c216937d847693b0521d77961cc10a17f5bcb7064e02",
+          "bytes": 4096
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.meteoswiss.admin.ch"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "CH"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "meteotrentino_webcams": {
+    "source": {
+      "id": "meteotrentino_webcams",
+      "name": "Meteotrentino — webcam (Provincia autonoma di Trento)",
+      "url": "https://www.meteotrentino.it/dati/meteo/webcam/",
+      "catalog_url": "https://www.meteotrentino.it/dati/meteo/webcam/",
+      "terms_url": "https://www.provincia.tn.it/Informative/Note-legali-e-crediti",
+      "metadata_license": "CC-BY-4.0 per the provincial legal notes (site content incl. images)",
+      "license": "CC-BY-4.0 per the provincial legal notes (site content incl. images)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "media_rights": "The image host contenuti.meteotrentino.it disallows all robots and the image route is unconfirmed: per-camera page links only (upgrade candidate once Meteotrentino confirms).",
+      "rights_note": "The image host contenuti.meteotrentino.it disallows all robots and the image route is unconfirmed: per-camera page links only (upgrade candidate once Meteotrentino confirms).",
+      "attribution": "Meteotrentino - Provincia autonoma di Trento, CC BY 4.0",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.meteotrentino.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.provincia.tn.it/Informative/Note-legali-e-crediti",
+        "https://www.meteotrentino.it/dati/meteo/webcam/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/meteotrentino_webcams/webcam-index.html",
+          "url": "https://www.meteotrentino.it/dati/meteo/webcam/",
+          "observed_at": "2026-11-14T07:40:04Z",
+          "status": 200,
+          "sha256": "0babfdd2a57c36ac082c825e0f495b606d6f53475a5348f25f860f09638efc5a",
+          "bytes": 157834
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.meteotrentino.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "milano_serravalle_videowall": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://www.e015.regione.lombardia.it/site/download-policy?id=226"
+    ],
+    "source": {
+      "id": "milano_serravalle_videowall",
+      "name": "Milano Serravalle — Milano Tangenziali videowall",
+      "url": "https://www.serravalle.it/index.php/pagine/videowall/1"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "mlit_dpf_cctv": {
+    "status": "held",
+    "held_reason": "The DPF API needs a registered API key; provider-level rights not checked.",
+    "held_until": "The user's decision to register, then each data provider's rules.",
+    "evidence": [
+      "https://www.mlit-data.jp/"
+    ],
+    "source": {
+      "id": "mlit_dpf_cctv",
+      "name": "MLIT Data Platform CCTV common-format dataset",
+      "url": "https://www.mlit-data.jp/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "mlit_kanto_cctv": {
+    "source": {
+      "id": "mlit_kanto_cctv",
+      "name": "MLIT Kanto Regional Development Bureau river and road camera stills (関東地方整備局 ライブカメラ)",
+      "url": "https://www.ktr.mlit.go.jp/guide/guide00000012.html",
+      "catalog_url": "https://www.ktr.mlit.go.jp/guide/guide00000012.html",
+      "terms_url": "https://www.ktr.mlit.go.jp/guide/copyright.html",
+      "metadata_license": "Public Data License 1.0 (PDL1.0), CC BY 4.0 compatible",
+      "license": "Public Data License 1.0 (PDL1.0)",
+      "license_url": "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+      "media_rights": "Site content, including camera stills, is usable under PDL1.0 (copy, public transmission, adaptation, commercial use) unless a page carries its own rights notice; the camera pages used carry none. Source attribution (出典 + page URL) and an edit notice are mandatory; QGlobe must not present the result as made by the agency.",
+      "rights_note": "「関東地方整備局ウェブサイトで掲載・発信している情報…の著作権は、特記されていない限り関東地方整備局に帰属し、権利表記の記載がない限り「公共データ利用規約(第1.0版)」(PDL1.0)に準拠した利用条件の下で、利用することができます。」 Required: 出典：関東地方整備局ウェブサイト(当該ページのURL), plus an edit notice; must not look government-made. Only offices publishing official coordinates are included (Tone upstream river office cameradb.json; Kita-shuto national highway office CCTV.kml).",
+      "attribution": "出典：関東地方整備局ウェブサイト（利根川上流河川事務所 河川ライブカメラ映像 https://www.ktr.mlit.go.jp/tonejo/cctv/ ・北首都国道事務所 国道298号ライブカメラ https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.html ・各カメラのページURL）を加工して作成。QGlobeが名称・位置等のデータを正規化・編集し、画像を縮小表示しています（国土交通省が作成したものではありません）。Source: MLIT Kanto Regional Development Bureau website; data normalized and edited by QGlobe, not an MLIT product. PDL1.0.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.ktr.mlit.go.jp"
+      ],
+      "minimum_refresh_seconds": 600,
+      "image_url_lifecycle": "Stable still URLs replaced in place about every 10 minutes (Cache-Control max-age=300).",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.ktr.mlit.go.jp/guide/copyright.html",
+        "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+        "https://www.ktr.mlit.go.jp/tonejo/cctv/cameraimage/cameradb.json",
+        "https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.kml"
+      ]
+    },
+    "media_hosts": [
+      "www.ktr.mlit.go.jp"
+    ],
+    "page_hosts": [
+      "www.ktr.mlit.go.jp"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "JP"
+    ],
+    "operator_hints": [
+      "関東地方整備局",
+      "国土交通省",
+      "mlit"
+    ],
+    "coordinate_role": "camera_location"
+  },
+  "mlit_kyushu_road_cameras": {
+    "status": "held",
+    "held_reason": "No office page publishes camera coordinates (pixel image maps, route/km labels or JS maps only), so none of the cameras can be placed: at least 77 stills/camera pages counted on the office directory pages fetched. PDL1.0 terms are fine (bureau /pp/ and Kumamoto office).",
+    "held_until": "An official camera list with coordinates (or MLIT DPF records, held for a key). Fukuoka office (road-info-prvs.mlit.go.jp) and NEXCO links stay out.",
+    "evidence": [
+      "https://www.qsr.mlit.go.jp/pp/index.html",
+      "https://www.qsr.mlit.go.jp/kumamoto/link_copyright.html",
+      "https://www.qsr.mlit.go.jp/useful/road_livecam.html"
+    ],
+    "source": {
+      "id": "mlit_kyushu_road_cameras",
+      "name": "MLIT Kyushu Regional Development Bureau national-highway live cameras",
+      "url": "https://www.qsr.mlit.go.jp/useful/road_livecam.html"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "mlit_regional_bureaus_other": {
+    "status": "held",
+    "held_reason": "Not verified: no bureau copyright page or image was checked in the research round.",
+    "held_until": "Per bureau: read the copyright page (PDL1.0 or not), one image check, and a camera list with official coordinates.",
+    "evidence": [],
+    "source": {
+      "id": "mlit_regional_bureaus_other",
+      "name": "MLIT other regional bureaus' live cameras (Hokkaido, Tohoku, Hokuriku, Chubu, Kinki, Chugoku, Shikoku, Okinawa)",
+      "url": "https://www.mlit.go.jp/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "mvo_montserrat": {
+    "status": "held",
+    "held_reason": "Camera page URL and position not published in a list; MVO asks for permission before any use of its media.",
+    "held_until": "the camera page URL with a position, and MVO's agreement to a link listing",
+    "evidence": [
+      "https://www.mvo.ms/who-we-are/copyright-intellectual-property/"
+    ],
+    "source": {
+      "id": "mvo_montserrat",
+      "name": "Montserrat Volcano Observatory live remote camera",
+      "url": "https://www.mvo.ms/"
+    }
+  },
+  "newengland511_compass": {
+    "status": "held",
+    "held_reason": "Images only as base64 inside per-state bulk XML: needs an image relay (or a per-camera HTTPS image URL) and the developer terms agreement.",
+    "held_until": "an image relay decision or per-camera HTTPS images under the same terms",
+    "evidence": [
+      "http://nec-por.ne-compass.com/DeveloperPortal/Home/Terms"
+    ],
+    "source": {
+      "id": "newengland511_compass",
+      "name": "New England Compass (Maine DOT, NHDOT, VTrans)",
+      "url": "http://nec-por.ne-compass.com/DeveloperPortal"
+    }
+  },
+  "nexco_central_ihighway": {
+    "status": "held",
+    "held_reason": "Partially verified: the site returned 403 to the research client and no terms were read.",
+    "held_until": "Terms read and a camera list with coordinates reachable without bypassing the block.",
+    "evidence": [],
+    "source": {
+      "id": "nexco_central_ihighway",
+      "name": "NEXCO Central expressway live cameras (iHighway)",
+      "url": "https://www.c-ihighway.jp/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "nexco_east_driveplaza": {
+    "status": "held",
+    "held_reason": "Partially verified: area pages exist, but no reuse terms were found or read.",
+    "held_until": "Terms read and a camera list with coordinates.",
+    "evidence": [
+      "https://www.driveplaza.com/traffic/camera/"
+    ],
+    "source": {
+      "id": "nexco_east_driveplaza",
+      "name": "NEXCO East expressway live cameras (ドラぷら)",
+      "url": "https://www.driveplaza.com/traffic/camera/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "nexco_west_ihighway": {
+    "status": "held",
+    "held_reason": "Partially verified: single-page app shell only; terms not located.",
+    "held_until": "Terms read and a camera list with coordinates.",
+    "evidence": [],
+    "source": {
+      "id": "nexco_west_ihighway",
+      "name": "NEXCO West expressway live cameras (iHighway)",
+      "url": "https://ihighway.jp/pcsite/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "nicaragua_ineter_volcano_webcams": {
+    "status": "held",
+    "held_reason": "Volcano pages embed one image each but publish no camera positions; no licence or terms found.",
+    "held_until": "camera positions from INETER and a readable terms statement",
+    "evidence": [
+      "https://www.ineter.gob.ni/"
+    ],
+    "source": {
+      "id": "nicaragua_ineter_volcano_webcams",
+      "name": "INETER volcano webcams",
+      "url": "https://www.ineter.gob.ni/volcanes-en-nicaragua/volcan-masaya-nicaragua/"
+    }
+  },
+  "noaa_glerl_metcams": {
+    "source": {
+      "id": "noaa_glerl_metcams",
+      "name": "NOAA GLERL Great Lakes meteorological station webcams",
+      "url": "https://www.glerl.noaa.gov/metdata/",
+      "catalog_url": "https://www.glerl.noaa.gov/metdata/",
+      "terms_url": "https://www.glerl.noaa.gov/home/notice.html",
+      "metadata_license": "US federal public domain (NOAA)",
+      "license": "US federal public domain (NOAA)",
+      "license_url": "https://www.glerl.noaa.gov/home/notice.html",
+      "media_rights": "'Information presented on these pages is considered public information and may be distributed or copied. Use of appropriate byline/photo/image credits is requested.' (GLERL Disclaimer and IP Notice, read 2026-11-14). Station positions from GLERL's own station pages.",
+      "rights_note": "'Information presented on these pages is considered public information and may be distributed or copied. Use of appropriate byline/photo/image credits is requested.' (GLERL Disclaimer and IP Notice, read 2026-11-14). Station positions from GLERL's own station pages.",
+      "attribution": "NOAA GLERL (public domain)",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.glerl.noaa.gov"
+      ],
+      "minimum_refresh_seconds": 1800,
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.glerl.noaa.gov/home/notice.html",
+        "https://www.glerl.noaa.gov/metdata/",
+        "https://www.weather.gov/disclaimer"
+      ]
+    },
+    "media_hosts": [
+      "www.glerl.noaa.gov"
+    ],
+    "page_hosts": [
+      "www.glerl.noaa.gov"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location",
+    "force_coordinate_role": "station_location"
+  },
+  "noaa_ndbc_buoycams": {
+    "source": {
+      "id": "noaa_ndbc_buoycams",
+      "name": "NOAA NDBC BuoyCAMs",
+      "url": "https://www.ndbc.noaa.gov/buoycams.shtml",
+      "catalog_url": "https://www.ndbc.noaa.gov/buoycams.php",
+      "terms_url": "https://www.weather.gov/disclaimer",
+      "metadata_license": "US federal public domain (NOAA/NWS)",
+      "license": "US federal public domain (NOAA/NWS)",
+      "license_url": "https://www.weather.gov/disclaimer",
+      "media_rights": "'The information on National Weather Service (NWS) Web pages are in the public domain, unless specifically noted otherwise, and may be used without charge for any lawful purpose' (NWS disclaimer, re-read 2026-11-14; NDBC's disclaimer page redirects to it). Do not imply NOAA endorsement.",
+      "rights_note": "Offshore stations: country is the operator (US), position is the buoy station. Images are 2880x300 six-direction panoramas.",
+      "attribution": "NOAA National Data Buoy Center BuoyCAM (public domain)",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.ndbc.noaa.gov"
+      ],
+      "minimum_refresh_seconds": 3600,
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.weather.gov/disclaimer",
+        "https://www.ndbc.noaa.gov/buoycams.php"
+      ]
+    },
+    "media_hosts": [
+      "www.ndbc.noaa.gov"
+    ],
+    "page_hosts": [
+      "www.ndbc.noaa.gov"
+    ],
+    "formats": [
+      "snapshot",
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location",
+    "force_coordinate_role": "station_location"
+  },
+  "novascotia_highway_cameras": {
+    "status": "held",
+    "held_reason": "List re-read 2026-11-14: 55 per-camera pages, but neither the list nor a camera page publishes a position.",
+    "held_until": "published camera positions (or a documented gazetteer accepted as approximate)",
+    "evidence": [
+      "https://novascotia.ca/tran/cameras/all.asp",
+      "https://511.novascotia.ca/about/about"
+    ],
+    "source": {
+      "id": "novascotia_highway_cameras",
+      "name": "Nova Scotia highway cameras",
+      "url": "https://novascotia.ca/tran/cameras/all.asp"
+    }
+  },
+  "nyc_dot_tmc": {
+    "status": "held",
+    "held_reason": "webcams.nyctmc.org did not serve robots.txt on 2026-11-14 (unreachable, treated as disallow); camera list, coordinates and stable per-camera pages unverified.",
+    "held_until": "a reachable list with coordinates and stable camera pages",
+    "evidence": [
+      "https://www.nyc.gov/html/dot/html/motorist/atis.shtml",
+      "https://www.nyc.gov/main/terms-of-use"
+    ],
+    "source": {
+      "id": "nyc_dot_tmc",
+      "name": "NYC DOT Traffic Management Center webcams",
+      "url": "https://webcams.nyctmc.org/"
+    }
+  },
+  "orleans_metropole_webcams": {
+    "status": "held",
+    "held_reason": "the only camera-list routes are Opendatasoft exports under data.orleans-metropole.fr/api/, which robots.txt disallows for all agents (robots.txt disallows https://data.orleans-metropole.fr/api/explore/v2.1/catalog/datasets/om-webcam-dispositif/exports/geojson)",
+    "held_until": "a list outside /api/ (static data.gouv.fr resource) or the publisher's permission",
+    "evidence": [
+      "https://www.data.gouv.fr/api/1/datasets/webcam-orleans-metropole/",
+      "https://data.orleans-metropole.fr/robots.txt"
+    ],
+    "source": {
+      "id": "orleans_metropole_webcams",
+      "name": "Webcam — Orléans Métropole",
+      "url": "https://www.data.gouv.fr/datasets/webcam-orleans-metropole"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "FR"
+    ]
+  },
+  "panama_canal_webcams": {
+    "status": "held",
+    "held_reason": "multimedia.panama-canal.com did not serve robots.txt (unreachable, treated as disallow by the polite client) on 2026-11-14; no camera list with positions; ACP terms restrict linking the images.",
+    "held_until": "a reachable camera list with positions and ACP's view on plain page links",
+    "evidence": [
+      "https://pancanal.com/en/terms-of-use/"
+    ],
+    "source": {
+      "id": "panama_canal_webcams",
+      "name": "Panama Canal Authority webcams",
+      "url": "https://multimedia.panama-canal.com/"
+    }
+  },
+  "phenocam_network": {
+    "status": "held",
+    "held_reason": "Licence confirmation needed for in-app display (held by the brief); robots disallows /data/ for image probes.",
+    "held_until": "PhenoCam's confirmation of CC BY 4.0 display in a paid app",
+    "evidence": [
+      "https://phenocam.nau.edu/webcam/fairuse_statement/"
+    ],
+    "source": {
+      "id": "phenocam_network",
+      "name": "PhenoCam Network (Northern Arizona University)",
+      "url": "https://phenocam.nau.edu/"
+    }
+  },
+  "promet_si_cameras": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://promet.si/en/kolofon"
+    ],
+    "source": {
+      "id": "promet_si_cameras",
+      "name": "promet.si / NAP Slovenia traffic cameras",
+      "url": "https://www.promet.si/sl/kamere"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "SI"
+    ]
+  },
+  "ras_suedtirol_webcams": {
+    "source": {
+      "id": "ras_suedtirol_webcams",
+      "name": "RAS — Radiotelevisione Azienda Speciale, webcam (Alto Adige / Südtirol)",
+      "url": "https://www.ras.bz.it/it/webcams/",
+      "catalog_url": "https://www.ras.bz.it/it/webcams/",
+      "terms_url": "https://www.ras.bz.it/it/note-legali/",
+      "metadata_license": "None stated (© RAS)",
+      "license": "None stated (© RAS)",
+      "license_url": null,
+      "media_rights": "No licence for third-party display of the images; links to the official camera pages only.",
+      "rights_note": "No licence for third-party display of the images; links to the official camera pages only.",
+      "attribution": "RAS - Radiotelevisione Azienda Speciale (www.ras.bz.it)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.ras.bz.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.ras.bz.it/it/note-legali/",
+        "https://home.provincia.bz.it/it/note-legali"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/ras_suedtirol_webcams/webcams.html",
+          "url": "https://www.ras.bz.it/it/webcams/",
+          "observed_at": "2026-11-14T07:39:57Z",
+          "status": 200,
+          "sha256": "9490cc33dbbf99de2fec5f81bced9a5d957d996117339b75901ae63177fee48e",
+          "bytes": 91958
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "www.ras.bz.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location",
+    "official_map_url": "https://www.ras.bz.it/it/webcams/"
+  },
+  "ridot_cameras": {
+    "status": "held",
+    "held_reason": "Conditional: RIDOT confirmation that the RI.gov copyright policy covers camera images; no coordinates (names carry route/exit only).",
+    "held_until": "RIDOT confirmation and a positioned list",
+    "evidence": [
+      "https://ri.gov/policies/copyright"
+    ],
+    "source": {
+      "id": "ridot_cameras",
+      "name": "RIDOT traffic cameras",
+      "url": "https://www.dot.ri.gov/travel/"
+    }
+  },
+  "ru_isp_city_cams": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://stream.is74.ru/",
+      "https://maps.ufanet.ru/"
+    ],
+    "source": {
+      "id": "ru_isp_city_cams",
+      "name": "Russian ISP 'smart city' public cameras",
+      "url": "https://stream.is74.ru/"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "RU"
+    ]
+  },
+  "ru_krasnaya_polyana": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://krasnayapolyanaresort.ru/webcams"
+    ],
+    "source": {
+      "id": "ru_krasnaya_polyana",
+      "name": "Krasnaya Polyana resort webcams (Sochi)",
+      "url": "https://krasnayapolyanaresort.ru/webcams"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "RU"
+    ]
+  },
+  "ru_moscow_city": {
+    "status": "held",
+    "held_reason": "low confidence in the register, which rejects it: no public reusable official source reached; mos.ru robots.txt disallows Anthropic agents",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://data.mos.ru/"
+    ],
+    "source": {
+      "id": "ru_moscow_city",
+      "name": "Moscow city services (data.mos.ru, transport.mos.ru)",
+      "url": "https://data.mos.ru/"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "RU"
+    ]
+  },
+  "ru_rosa_khutor": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://rosaski.com/"
+    ],
+    "source": {
+      "id": "ru_rosa_khutor",
+      "name": "Rosa Khutor resort webcams",
+      "url": "https://rosaski.com/"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "RU"
+    ]
+  },
+  "seoul_topis": {
+    "status": "held",
+    "held_reason": "Not verified (search summary only); the Open API is non-commercial and needs approval.",
+    "held_until": "Terms read on the TOPIS site and a decision on a single official map link.",
+    "evidence": [],
+    "source": {
+      "id": "seoul_topis",
+      "name": "Seoul TOPIS traffic CCTV",
+      "url": "https://topis.seoul.go.kr/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "singapore_lta_datamall": {
+    "status": "held",
+    "held_reason": "AccountKey required; image links are short-lived signed URLs, unsuitable for a static catalogue.",
+    "held_until": "A key plus a key-holding resolver that never exposes the key; the existing singapore_lta provider stays.",
+    "evidence": [
+      "https://data.gov.sg/open-data-licence"
+    ],
+    "source": {
+      "id": "singapore_lta_datamall",
+      "name": "Singapore LTA DataMall Traffic Images",
+      "url": "https://datamall.lta.gov.sg/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "sioux_falls_traffic": {
+    "status": "held",
+    "held_reason": "Server unreachable in research (connection refused/timeout); not retried by this adapter.",
+    "held_until": "the city GIS server answering",
+    "evidence": [
+      "https://www.arcgis.com/home/item.html?id=71ee3a06d0aa476d8c8545761dde916e"
+    ],
+    "source": {
+      "id": "sioux_falls_traffic",
+      "name": "City of Sioux Falls traffic cameras",
+      "url": "https://gis.siouxfalls.gov/arcgis/rest/services/Data/Traffic/MapServer/8"
+    }
+  },
+  "taichung_transport_snapshot_upgrade": {
+    "status": "held",
+    "held_reason": "OGDL v1.0 plausibly covers the images, but the dataset's url field is a viewer page; no stable HTTPS image or HLS URL found. The existing page-only policy taichung_transport is unchanged.",
+    "held_until": "A stable HTTPS JPEG or HLS URL per camera exposed by the official viewer.",
+    "evidence": [
+      "https://data.gov.tw/dataset/83750",
+      "https://data.gov.tw/license"
+    ],
+    "source": {
+      "id": "taichung_transport_snapshot_upgrade",
+      "name": "Taichung real-time road images — snapshot upgrade of the existing page-only provider taichung_transport",
+      "url": "https://data.gov.tw/dataset/83750"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "taiwan_freeway_cctv": {
+    "status": "held",
+    "held_reason": "Host timed out twice from the research network; nothing verified.",
+    "held_until": "A reachable CCTV list (no alternate host to dodge the block) and one image check.",
+    "evidence": [
+      "https://data.gov.tw/license"
+    ],
+    "source": {
+      "id": "taiwan_freeway_cctv",
+      "name": "Taiwan Freeway Bureau CCTV (national freeways)",
+      "url": "https://tisvcloud.freeway.gov.tw/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "topr_pogoda_cams": {
+    "source": {
+      "id": "topr_pogoda_cams",
+      "name": "TOPR — Tatra mountain webcams (pogoda.topr.pl)",
+      "url": "https://pogoda.topr.pl/",
+      "catalog_url": "https://pogoda.topr.pl/",
+      "terms_url": "https://pogoda.topr.pl/",
+      "metadata_license": "All rights reserved (© TOPR)",
+      "license": "All rights reserved (© TOPR)",
+      "license_url": null,
+      "media_rights": "'Copyright © TOPR. All rights reserved.' Page links only.",
+      "rights_note": "'Copyright © TOPR. All rights reserved.' Page links only.",
+      "attribution": "TOPR — Tatrzańskie Ochotnicze Pogotowie Ratunkowe (pogoda.topr.pl)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "new.pogoda.topr.pl"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://pogoda.topr.pl/"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/topr_pogoda_cams/index.html",
+          "url": "https://pogoda.topr.pl/",
+          "observed_at": "2026-11-14T07:35:36Z",
+          "status": 200,
+          "sha256": "d567dc88c7f618039462f99c6791ca8c76fd72403a58012fe16df55a74a60d28",
+          "bytes": 135822
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "new.pogoda.topr.pl"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "PL"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate",
+    "official_map_url": "https://pogoda.topr.pl/"
+  },
+  "traffic_wales_cctv": {
+    "source": {
+      "id": "traffic_wales_cctv",
+      "name": "Traffic Wales / Traffig Cymru — road camera pages",
+      "url": "https://traffic.wales/road-cameras",
+      "catalog_url": "https://traffic.wales/road-cameras",
+      "terms_url": "https://traffic.wales/developers",
+      "metadata_license": "OGL v3 for website information; CCTV images and camera locations restricted-access (additional terms)",
+      "license": "OGL v3 for website information; CCTV images and camera locations restricted-access (additional terms)",
+      "license_url": null,
+      "media_rights": "Still images and camera locations are on a restricted-access server under additional terms; 'The Welsh Government is content for users to establish hyperlinks to this site' (no framing). Road page links only.",
+      "rights_note": "Still images and camera locations are on a restricted-access server under additional terms; 'The Welsh Government is content for users to establish hyperlinks to this site' (no framing). Road page links only.",
+      "attribution": "Traffic Wales (Welsh Government)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "traffic.wales"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://traffic.wales/developers"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/traffic_wales_cctv/road-cameras.html",
+          "url": "https://traffic.wales/road-cameras",
+          "observed_at": "2026-11-14T07:35:34Z",
+          "status": 200,
+          "sha256": "c1d97d812c476f2f7ff71ee43ea96c3a08eb940b997ad95358f68a9493164408",
+          "bytes": 36176
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "traffic.wales"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "GB"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature"
+  },
+  "trafikverket_cameras": {
+    "status": "held",
+    "held_reason": "API key required (not registered); CC0 coverage of the real-time images unconfirmed",
+    "held_until": "the user registers a free API key and the Camera images are confirmed under the CC0 terms",
+    "evidence": [
+      "https://bransch.trafikverket.se/contentassets/697793c5366a46369c10efdbd0080cbd/termsofuse_hvd.json"
+    ],
+    "source": {
+      "id": "trafikverket_cameras",
+      "name": "Trafikverket — Camera object (open traffic API)",
+      "url": "https://api.trafikinfo.trafikverket.se/v2/data.json"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "SE"
+    ]
+  },
+  "ua_bukovel_cams": {
+    "source": {
+      "id": "ua_bukovel_cams",
+      "name": "Bukovel resort official webcams",
+      "url": "https://bukovel.com/cams",
+      "catalog_url": "https://bukovel.com/cams",
+      "terms_url": "https://bukovel.com/",
+      "metadata_license": "Not stated",
+      "license": "Not stated",
+      "license_url": null,
+      "media_rights": "No reuse licence; links to the resort's own camera pages only (wartime caution: no street or road cameras).",
+      "rights_note": "No reuse licence; links to the resort's own camera pages only (wartime caution: no street or road cameras).",
+      "attribution": "Bukovel (bukovel.com)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "bukovel.com"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://bukovel.com/cams"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/ua_bukovel_cams/sitemap.xml",
+          "url": "https://bukovel.com/sitemap.xml",
+          "observed_at": "2026-11-14T07:35:42Z",
+          "status": 200,
+          "sha256": "197e8627d933ba1c4261ac76bf3ec077c0ad7777cbe19ba203b734bd4004d4f1",
+          "bytes": 20197
+        }
+      ]
+    },
+    "media_hosts": [],
+    "page_hosts": [
+      "bukovel.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "UA"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "us_ski_tourism_pattern": {
+    "status": "held",
+    "held_reason": "No list or coordinates in the register; would need a hand-curated list per resort terms.",
+    "held_until": "a curated list with per-resort terms and positions",
+    "evidence": [
+      "https://www.roundshot.com/de/service/legal.html/106"
+    ],
+    "source": {
+      "id": "us_ski_tourism_pattern",
+      "name": "US ski resort and tourism webcams (pattern)",
+      "url": "https://www.roundshot.com/"
+    }
+  },
+  "usgs_hivis_nims": {
+    "source": {
+      "id": "usgs_hivis_nims",
+      "name": "USGS HIVIS / NIMS stream-gauge cameras",
+      "url": "https://apps.usgs.gov/hivis/",
+      "catalog_url": "https://api.waterdata.usgs.gov/nims/v0/cameras",
+      "terms_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "metadata_license": "US Government work in the public domain (17 USC 105); USGS Copyrights and Credits",
+      "license": "US Government work in the public domain (17 USC 105); USGS Copyrights and Credits",
+      "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "media_rights": "'USGS-authored or produced data and information are considered to be in the U.S. Public Domain' (USGS Copyrights and Credits, re-read 2026-11-14); NIMS delivers imagery from USGS gaging stations 'for public consumption' (NIMS OpenAPI, licence: US Government work in the public domain). Cameras whose description names a partner programme or another operator are left out.",
+      "rights_note": "Credit requested by USGS: 'Credit: U.S. Geological Survey'. Image URLs name one capture time: the catalogue must be refreshed to show newer images (records carry requires_catalog_refresh).",
+      "attribution": "Image: U.S. Geological Survey, HIVIS/NIMS (public domain)",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "usgs-nims-images.s3.amazonaws.com"
+      ],
+      "minimum_refresh_seconds": 3600,
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "https://api.waterdata.usgs.gov/nims/v0/openapi.json"
+      ]
+    },
+    "media_hosts": [
+      "usgs-nims-images.s3.amazonaws.com"
+    ],
+    "page_hosts": [
+      "apps.usgs.gov"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "US",
+      "PR",
+      "GU",
+      "VI",
+      "AS",
+      "MP"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "camera_location"
+  },
+  "usgs_volcview_ashcam": {
+    "source": {
+      "id": "usgs_volcview_ashcam",
+      "name": "USGS VolcView / Ashcam volcano webcams",
+      "url": "https://volcview.wr.usgs.gov/ashcam-gui/",
+      "catalog_url": "https://volcview.wr.usgs.gov/ashcam-api/webcamApi/webcams",
+      "terms_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "metadata_license": "USGS Ashcam webcam list (factual metadata); USGS-produced images are US public domain",
+      "license": "USGS Ashcam webcam list (factual metadata); USGS-produced images are US public domain",
+      "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "media_rights": "Snapshots only for cameras that a USGS observatory publishes on its own usgs.gov host (HVO volcanoes.usgs.gov, CVO cvo-valve/tahoma.wr.usgs.gov): USGS-produced, public domain. Cameras with no stated owner (AVO stations run with UAF-GI/ADGGS, other Cascades/Yellowstone stations) are links to the USGS Ashcam page only. FAA (faaInd=Y), NPS-hosted and third-party cameras are not included.",
+      "rights_note": "Snapshots only for cameras that a USGS observatory publishes on its own usgs.gov host (HVO volcanoes.usgs.gov, CVO cvo-valve/tahoma.wr.usgs.gov): USGS-produced, public domain. Cameras with no stated owner (AVO stations run with UAF-GI/ADGGS, other Cascades/Yellowstone stations) are links to the USGS Ashcam page only. FAA (faaInd=Y), NPS-hosted and third-party cameras are not included.",
+      "attribution": "USGS Volcano Hazards Program (HVO, CVO, YVO) / Alaska Volcano Observatory, via USGS Ashcam",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "volcview.wr.usgs.gov"
+      ],
+      "minimum_refresh_seconds": 600,
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "https://volcview.wr.usgs.gov/ashcam-api/webcamApi/webcams",
+        "https://volcview.wr.usgs.gov/ashcam-gui/"
+      ]
+    },
+    "media_hosts": [
+      "volcview.wr.usgs.gov"
+    ],
+    "page_hosts": [
+      "volcview.wr.usgs.gov",
+      "volcanoes.usgs.gov"
+    ],
+    "formats": [
+      "snapshot",
+      "official_page"
+    ],
+    "countries": [
+      "US"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "station_location"
+  },
+  "valencia_traffic": {
+    "status": "held",
+    "held_reason": "geoportal.valencia.es robots.txt unreachable (connection reset, twice): treated as disallow (RFC 9309), so the ArcGIS layer was not queried. robots.txt disallows https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/190/query?where=1%3D1&outFields=*&outSR=4326&f=json",
+    "held_until": "geoportal.valencia.es serves a robots.txt that allows the layer query",
+    "evidence": [
+      "https://datos.gob.es/catalogo/l01462508-camaras-trafico"
+    ],
+    "source": {
+      "id": "valencia_traffic",
+      "name": "Ajuntament de València — Càmeres de trànsit",
+      "url": "https://datos.gob.es/catalogo/l01462508-camaras-trafico"
+    }
+  },
+  "venezia_cpsm_webcams": {
+    "source": {
+      "id": "venezia_cpsm_webcams",
+      "name": "Comune di Venezia — Centro Previsioni e Segnalazioni Maree, webcam",
+      "url": "https://www.comune.venezia.it/it/content/webcam-0",
+      "catalog_url": "https://www.comune.venezia.it/it/content/webcam-0",
+      "terms_url": "https://www.comune.venezia.it/content/note-legali",
+      "metadata_license": "CC-BY-3.0-IT (site-wide, 'salvo dove è diversamente specificato'; nothing else stated on the webcam page)",
+      "license": "CC-BY-3.0-IT (site-wide, 'salvo dove è diversamente specificato'; nothing else stated on the webcam page)",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/it/",
+      "media_rights": "The webcam images are content of www.comune.venezia.it published by the Comune; the site-wide CC BY 3.0 IT applies unless otherwise stated and the page states nothing else: reuse allowed citing the source and the original page address. Tier B: not separately confirmed with the Comune.",
+      "rights_note": "The webcam images are content of www.comune.venezia.it published by the Comune; the site-wide CC BY 3.0 IT applies unless otherwise stated and the page states nothing else: reuse allowed citing the source and the original page address. Tier B: not separately confirmed with the Comune.",
+      "attribution": "Comune di Venezia - Centro Previsioni e Segnalazioni Maree, webcam (https://www.comune.venezia.it/it/content/webcam-0), CC BY 3.0 IT",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.comune.venezia.it"
+      ],
+      "official_page_hosts": [
+        "www.comune.venezia.it"
+      ],
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.comune.venezia.it/content/note-legali",
+        "https://www.comune.venezia.it/it/content/webcam-0"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "minimum_refresh_seconds": 1200,
+      "provider_notice": "Images are updated in sequence about every 20 minutes (Comune di Venezia).",
+      "raw_files": [
+        {
+          "file": "raw/venezia_cpsm_webcams/webcam-0.html",
+          "url": "https://www.comune.venezia.it/it/content/webcam-0",
+          "observed_at": "2026-11-14T07:39:44Z",
+          "status": 200,
+          "sha256": "74bb5a85ab6c542ca67570d6b164f9e13e28fa996d49fc6fd7d9cdeed5ce1acc",
+          "bytes": 57305
+        }
+      ]
+    },
+    "media_hosts": [
+      "www.comune.venezia.it"
+    ],
+    "page_hosts": [
+      "www.comune.venezia.it"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "IT"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "approximate"
+  },
+  "visittrentino_webcams": {
+    "status": "held",
+    "held_reason": "low confidence in the register",
+    "held_until": "a re-check raising confidence (camera list, coordinates and terms read)",
+    "evidence": [
+      "https://www.visittrentino.info/it/note-legali"
+    ],
+    "source": {
+      "id": "visittrentino_webcams",
+      "name": "Visit Trentino webcam directory",
+      "url": "https://www.visittrentino.info/it/webcams"
+    },
+    "reviewed_at": "2026-11-14",
+    "countries": [
+      "IT"
+    ]
+  },
+  "wa_main_roads": {
+    "status": "held",
+    "held_reason": "Terms verified (no commercial reuse, so links only), but no camera list was found to link.",
+    "held_until": "An official camera list with per-camera pages and positions.",
+    "evidence": [
+      "https://www.mainroads.wa.gov.au/disclaimer-copyright/"
+    ],
+    "source": {
+      "id": "wa_main_roads",
+      "name": "Main Roads Western Australia traffic cameras",
+      "url": "https://www.mainroads.wa.gov.au/"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "windy_webcams_api": {
+    "status": "held",
+    "held_reason": "API key required; free-plan image URLs expire after 15 minutes and offsets stop at 1,000; the Professional plan is paid (9,990 EUR/year).",
+    "held_until": "A paid-plan decision and a server-side resolver; not suitable for a static catalogue.",
+    "evidence": [
+      "https://api.windy.com/webcams/terms"
+    ],
+    "source": {
+      "id": "windy_webcams_api",
+      "name": "Windy Webcams API",
+      "url": "https://api.windy.com/webcams"
+    },
+    "reviewed_at": "2026-11-14"
+  },
+  "youtube_live": {
+    "status": "held",
+    "held_reason": "YouTube embeds are not supported by the player and watch links go stale; official channels stay as community links only.",
+    "held_until": "a player that supports official embeds",
+    "evidence": [
+      "https://www.youtube.com/t/terms"
+    ],
+    "source": {
+      "id": "youtube_live",
+      "name": "YouTube live streams",
+      "url": "https://www.youtube.com/"
+    }
   }
 }

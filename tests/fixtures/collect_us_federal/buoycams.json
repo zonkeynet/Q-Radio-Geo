@@ -1,0 +1,38 @@
+[
+ {
+  "id": "41004",
+  "name": "EDISTO - 41 NM Southeast of Charleston, SC",
+  "lat": 32.502,
+  "lng": -79.099,
+  "img": "Z20A_2026_11_14_0710.jpg",
+  "width": 2880,
+  "height": 300
+ },
+ {
+  "id": "41013",
+  "name": "Frying Pan Shoals, NC",
+  "lat": 33.436,
+  "lng": -77.764,
+  "img": null,
+  "width": null,
+  "height": null
+ },
+ {
+  "id": "46070",
+  "name": "SOUTHWEST BERING SEA - 142NM NNE OF ATTU IS, AK",
+  "lat": 55.048,
+  "lng": 175.246,
+  "img": null,
+  "width": null,
+  "height": null
+ },
+ {
+  "id": "51101",
+  "name": "NORTHWESTERN HAWAII TWO - 186 NM NW of Kauai Is., HI   ",
+  "lat": 24.34,
+  "lng": -162.073,
+  "img": "Z50A_2026_11_14_0710.jpg",
+  "width": 2880,
+  "height": 300
+ }
+]
