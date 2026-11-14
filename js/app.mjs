@@ -1,4 +1,4 @@
-import { Catalog, loadJSON } from './catalog.mjs';
+import { Catalog, loadJSON, expandStations } from './catalog.mjs';
 import { APP_MODE, LITE_MODE, PICK_MODE, QCAST_IN_APP, pickStart, requestNativePick, requestNativeShare } from './native-app.mjs';
 import { icon } from './icons.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
@@ -538,18 +538,25 @@ function selectDir(it, { fly = true } = {}) {
     if (fly) globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, .5) }, 600);
     globe?.select(it.lat, it.lng, .8);
 }
-async function setMode(next) {
+function unavailable(def) { $('globeNotice').textContent = `${def.sidebarTitle} list unavailable. Check ${def.dataUrl} and reload.`; $('globeNotice').hidden = false; }
+/** Shows a layer once its data is here; false (and a notice) when the data cannot be loaded. remember: false for the
+ * first layer of the page, which is the one of the link or the last visit, or radio by default. */
+async function setMode(next, { remember = true } = {}) {
     if (next !== 'webcams') closeWebcamPlayer();
     const def = DIRECTORIES[next];
     if (def && !dirState[next]) {
         try { const items = await loadDirectory(def); dirState[next] = { base: items, items, values: initialValues(def) }; }
-        catch { $('globeNotice').textContent = `${def.sidebarTitle} list unavailable. Check ${def.dataUrl} and reload.`; $('globeNotice').hidden = false; return; }
+        catch { unavailable(def); return false; }
+    }
+    if (!def && !catalog) {
+        try { await loadCatalog(); }
+        catch { $('globeNotice').textContent = 'Radio catalog unavailable. Check data/places.json and data/stations.json and reload.'; $('globeNotice').hidden = false; return false; }
     }
     if (liveRun && liveRun.def !== def) stopLive();
     mode = def ? next : 'radio';
     document.documentElement.dataset.mode = mode;
     // Picking a point is a moment: the layer used last time stays the one remembered.
-    if (!PICK_MODE) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
+    if (!PICK_MODE && remember) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
     markMode();
     pendingPick = null;
     playerMini = null; applyPlayerSize();
@@ -567,6 +574,23 @@ async function setMode(next) {
     renderLive();
     globe?.setLayer(def ? dirLayer() : radioLayer());
     renderTicker();
+    return true;
+}
+let catalogLoading = null;
+/** The radio catalogue (places, stations, countries), loaded when the radio layer is first shown: a link to another
+ * layer starts without it. The search index is built in its worker meanwhile. */
+function loadCatalog() {
+    catalogLoading ??= Promise.all(['data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json'].map(p => loadJSON(p)))
+        .then(([places, stationData, countries, summary]) => {
+            const stations = expandStations(stationData);
+            if (![places, stations, countries].every(Array.isArray)) throw new Error('Invalid catalog or configuration');
+            catalog = new Catalog(places, stations, countries, summary);
+            initShortcuts();
+            catalog.initializeSearch(); // early searches simply queue behind the index
+            return catalog;
+        })
+        .catch(e => { catalogLoading = null; throw e; });
+    return catalogLoading;
 }
 /* The player: full in RADIO, a one-line bar in the other layers, so the list and the globe keep the room. The user's
  * choice (▾ ▴) holds until the layer changes. */
@@ -871,15 +895,22 @@ async function start() {
     $('searchInput').addEventListener('keydown', e => { if (e.key === 'Escape') hideSearch(); if (e.key === 'ArrowDown') $('searchResults').querySelector('button')?.focus(); });
     renderTabs();
     document.addEventListener('click', e => { if (!e.target.closest?.('.search-wrapper')) hideSearch(); });
+    let savedMode = null;
+    try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
+    const link = readLink(); // a shared link wins over the layer used last time
+    // The first layer: user radio when picking a point for a station, else the link's, else the last visit's, else
+    // radio. Only its data loads now: a link to webcams does not wait for the radio catalogue.
+    const linkLayer = link?.get('layer');
+    const first = PICK_MODE ? 'qcast' : link ? (DIRECTORIES[linkLayer] ? linkLayer : 'radio') : DIRECTORIES[savedMode] ? savedMode : 'radio';
+    const firstData = DIRECTORIES[first] ? loadDirectory(DIRECTORIES[first]) : loadCatalog();
+    firstData.catch(() => { /* handled below */ });
     try {
-        const [places, stations, countries, summary, runtimeConfig] = await Promise.all(['data/places.json','data/stations.json','data/countries.json','data/summary.json','app-config.json'].map(p => loadJSON(p)));
-        if (![places,stations,countries].every(Array.isArray) || !['direct','proxy'].includes(runtimeConfig.streamMode)) throw new Error('Invalid catalog or configuration');
+        const runtimeConfig = await loadJSON('app-config.json');
+        if (!['direct','proxy'].includes(runtimeConfig?.streamMode)) throw new Error('Invalid catalog or configuration');
         config = runtimeConfig;
-        catalog = new Catalog(places,stations,countries,summary);
-        updateStats();
-        ready = true; $('btnRandom').disabled = false; initShortcuts();
-        // The search index is built in its worker while the globe is drawn: early searches simply queue behind it.
-        catalog.initializeSearch();
+        // The globe is drawn once its first layer's data is here; without it, radio as before; without radio, an error.
+        const firstOk = await firstData.then(() => true, e => { if (first === 'radio') throw e; return false; });
+        if (!firstOk) { unavailable(DIRECTORIES[first]); await loadCatalog(); } // tried once, as before
         try {
             // Choosing a point for the app: tapping a station opens nothing and plays nothing; only a long press counts.
             globe = createGlobe($('globeViz'), item => PICK_MODE ? null : mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false),
@@ -887,9 +918,7 @@ async function start() {
             // Choosing a point for the app: start where the station already is, ringed.
             const start = PICK_MODE && pickStart();
             if (start) { globe.markPick(start.lat, start.lng); globe.world.pointOfView({ ...start, altitude: 1.4 }, 0); }
-            globe.setLayer(radioLayer());
             setTheme(theme.id);
-            markReady('qglobe:globe-ready');
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
             $('btnResetView').onclick = () => globe.navigation.flyTo({lat:41.9,lng:12.5,altitude:2.2});
             $('btnAutoRotate').disabled = false;
@@ -907,13 +936,15 @@ async function start() {
         $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
         initModeMenu(); markMode(); watchLive();
         tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });
-        let savedMode = null;
-        try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
-        const link = readLink(); // a shared link wins over the layer used last time
-        // Picking a point for a station: the user radio layer, where the station will appear.
-        if (PICK_MODE) await setMode('qcast');
-        else if (link) await applyLink(link);
-        else if (DIRECTORIES[savedMode]) await setMode(savedMode);
+        // The first layer is remembered as before: a link's or the picker's, not the default radio one.
+        const shown = firstOk ? await setMode(first, { remember: false }) || (first !== 'radio' && await setMode('radio', { remember: false }))
+            : await setMode('radio', { remember: false });
+        if (!shown) throw new Error('Invalid catalog or configuration');
+        if (first !== 'radio' && mode === first && !PICK_MODE) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
+        ready = true; $('btnRandom').disabled = false;
+        markReady('qglobe:globe-ready');
+        // Then what the link adds: its view, filters, card or station (unless its layer could not be loaded).
+        if (link && !PICK_MODE && mode === first) await applyLink(link);
         linked = true;
         markReady('qglobe:layer-ready');
         window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });

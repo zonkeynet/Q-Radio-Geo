@@ -27,7 +27,7 @@ env:
   OBJECT: globe                  # object name prefix in the bucket
   DNSLINK: globe.qp1ng.com       # domains whose _dnslink TXT record points at the new CID
   WARM_SKIP: '^(data/surveillance/|db/)'          # not fetched to warm the gateway: loaded on demand
-  WARM_EXTRA: data/places.json data/stations.json  # over 1 MB, but every visit needs them
+  WARM_EXTRA: data/places.json data/stations.json  # over 1 MB, but the default (radio) view needs them
   FILEBASE_KEY: ${{ secrets.FILEBASE_KEY }}
   FILEBASE_SECRET: ${{ secrets.FILEBASE_SECRET }}
   FILEBASE_BUCKET: ${{ secrets.FILEBASE_BUCKET }}

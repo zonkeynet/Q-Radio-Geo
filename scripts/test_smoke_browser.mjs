@@ -84,6 +84,23 @@ try {
             await page.evaluate(() => { location.hash = '#layer=security&kind=CAMERA&view=30.000,0.000,2.50'; });
             await page.locator('#countryCitiesList .dir-item-name', { hasText: 'surveillance cameras in this area' }).first().waitFor({ timeout: 60000 });
         });
+        await step('a webcams link starts without the radio catalogue, which loads with the radio layer', async () => {
+            const fresh = await context.newPage();
+            fresh.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+            const base = path.split('?')[0], query = path.includes('?') ? `?${path.split('?')[1]}` : '';
+            await fresh.goto(`${server.origin}${base}${query}#layer=webcams`);
+            await ready(fresh);
+            assert.equal(await fresh.evaluate(() => document.documentElement.dataset.mode), 'webcams');
+            const asked = await fresh.evaluate(() => performance.getEntriesByType('resource').map(e => new URL(e.name).pathname));
+            assert.ok(asked.some(p => p.endsWith('data/webcams-live.json')), 'webcams data loaded');
+            assert.deepEqual(asked.filter(p => /data\/(stations|places)\.json$/.test(p)), [], 'no radio data for a webcams link');
+            await fresh.locator('#btnMode').click();
+            await fresh.locator('#modeMenu .mode-option[data-mode="radio"]').click();
+            await fresh.waitForFunction(() => document.documentElement.dataset.mode === 'radio' && /STATIONS/.test(document.getElementById('statsDisplay').textContent), null, { timeout: 30000 });
+            await fresh.locator('#searchInput').fill('paris');
+            await fresh.locator('#searchResults .search-item').first().waitFor({ timeout: 20000 });
+            await fresh.close();
+        });
         await step('no page or console errors', () => assert.deepEqual(errors, []));
         await step('third parties: only the automatic data requests, all blocked; no media', () => {
             const hosts = [...new Set(thirdParty.map(([, url]) => new URL(url).hostname))];

@@ -14,6 +14,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { inflateRawSync } from 'node:zlib';
+import { encodeStations } from './stations_format.mjs';
 
 process.env.UV_THREADPOOL_SIZE ??= '32'; // more parallel DNS lookups for the HTTPS probe
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []));
@@ -483,7 +484,8 @@ const summary = {
     }
 };
 writeFileSync(join(OUT, 'places.json'), JSON.stringify(placeList));
-writeFileSync(join(OUT, 'stations.json'), JSON.stringify(stations));
+// One array per field with value tables (scripts/stations_format.mjs): js/catalog.mjs expandStations() reads it.
+writeFileSync(join(OUT, 'stations.json'), JSON.stringify(encodeStations(stations, summary.generated_at)));
 writeFileSync(join(OUT, 'countries.json'), JSON.stringify(countryList));
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(summary, null, 1));
 console.log(JSON.stringify(summary, null, 1));

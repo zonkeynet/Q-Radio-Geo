@@ -170,6 +170,28 @@ class Database:
         return {"out": f"{self.out}.gz", "bytes": self.out.stat().st_size, "gzip_bytes": Path(f"{self.out}.gz").stat().st_size, "rows": self.counts}
 
 
+def expand_stations(data):
+    """data/stations.json back to one dict per station: schema 2 (one list per field, value tables; see
+    scripts/stations_format.mjs and js/catalog.mjs expandStations), or the earlier list of dicts as it is."""
+    if isinstance(data, list):
+        return data
+    if data.get("schema_version") != 2 or data.get("payload_kind") != "radio_stations":
+        raise ValueError("stations.json: unknown format")
+    fields, columns, values = data["fields"], data["columns"], data.get("values") or {}
+    tables = [values.get(f) for f in fields]
+    stations = []
+    for i in range(len(columns[0]) if columns else 0):
+        row = {}
+        for f, column, table in zip(fields, columns, tables):
+            v = column[i]
+            if table is not None:
+                v = table[v] if isinstance(v, int) and 0 <= v < len(table) else None
+            if v is not None:
+                row[f] = v
+        stations.append(row)
+    return stations
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="data")
@@ -184,7 +206,7 @@ def main():
     insert("radio_places", ((p["id"], p["city"], p["country"], p["lat"], p["lng"], p["count"], precision.get(p.get("loc"), "city"))
                             for p in load("places.json")))
     insert("radio_stations", ((s["id"], s["place_id"], s["title"], s["stream_url"], s.get("homepage"), s.get("codec"),
-                               s.get("bitrate"), s.get("hls", 0), "radio-browser") for s in load("stations.json")))
+                               s.get("bitrate"), s.get("hls", 0), "radio-browser") for s in expand_stations(load("stations.json"))))
     insert("sdr_receivers", ((r["id"], r["name"], r["type"], r["url"], r["lat"], r["lng"], r.get("place"), r.get("bands"),
                               r.get("channels"), r.get("snr"), r.get("antenna"), r.get("featured", 0),
                               "kiwisdr-list" if r["type"] == "KiwiSDR" else "receiverbook") for r in load("sdr.json")["receivers"]))

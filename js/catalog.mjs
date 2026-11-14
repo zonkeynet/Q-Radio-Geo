@@ -11,6 +11,28 @@ export async function loadJSON(path, base = document.baseURI, { timeout = 0 } = 
         return data;
     } finally { clearTimeout(timer); }
 }
+/** data/stations.json (schema 2: one array per field, value tables for repeated values; scripts/stations_format.mjs)
+ *  back to one object per station, exactly as the earlier one-object-per-station file: fields in the same order,
+ *  absent ones left out. An array (that earlier file) is used as it is; anything else gives null. */
+export function expandStations(json) {
+    if (Array.isArray(json)) return json;
+    if (json?.schema_version !== 2 || json.payload_kind !== 'radio_stations' || !Array.isArray(json.fields) || !Array.isArray(json.columns)) return null;
+    const fields = json.fields, columns = json.columns, values = json.values && typeof json.values === 'object' ? json.values : {};
+    const n = Array.isArray(columns[0]) ? columns[0].length : 0;
+    if (columns.length !== fields.length || fields.some(f => typeof f !== 'string' || !/^[a-z_]{1,40}$/.test(f) || f === '__proto__')
+        || columns.some(c => !Array.isArray(c) || c.length !== n)) return null;
+    const tables = fields.map(f => Array.isArray(values[f]) ? values[f] : null);
+    const stations = new Array(n);
+    for (let i = 0; i < n; i++) {
+        const s = {};
+        for (let k = 0; k < fields.length; k++) {
+            const c = columns[k][i], v = tables[k] ? (Number.isInteger(c) ? tables[k][c] : undefined) : c;
+            if (v !== null && v !== undefined) s[fields[k]] = v;
+        }
+        stations[i] = s;
+    }
+    return stations;
+}
 export class Catalog {
     constructor(places, stations, countries, summary) {
         this.places = places; this.stations = stations; this.countries = countries; this.summary = summary;
