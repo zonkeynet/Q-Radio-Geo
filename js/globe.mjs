@@ -259,7 +259,11 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         const href = new URL(path, document.baseURI).href, started = performance.now();
         world.globeImageUrl(path);
         (function waitForTexture() {
-            if (material.map?.image?.src === href) { textures.set(path, material.map); loading.delete(path); paint(); }
+            if (material.map?.image?.src === href) {
+                textures.set(path, material.map); loading.delete(path); paint();
+                // Load timing for the measurement scripts: the first bundled texture on the globe.
+                try { if (!performance.getEntriesByName('qglobe:texture-ready').length) performance.mark('qglobe:texture-ready'); } catch { /* no timing API */ }
+            }
             else if (performance.now() - started < 30000) setTimeout(waitForTexture, 100);
             else { loading.delete(path); paint(); }
         })();

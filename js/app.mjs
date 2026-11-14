@@ -54,6 +54,15 @@ const dirLayer = () => ({
     colors: Object.fromEntries(dir().palette.map(v => [v, v])),
     pulses: dir().pulses?.(dirShown())
 });
+/** Load timings (performance marks, read by the measurement scripts): each mark once, after the next frame is drawn.
+ * qglobe:globe-ready: the catalogue is loaded and the globe drawn; qglobe:layer-ready: the layer of the link, of the
+ * last visit or the default one is shown. */
+const marked = new Set();
+function markReady(name) {
+    if (marked.has(name)) return;
+    marked.add(name);
+    requestAnimationFrame(() => requestAnimationFrame(() => { try { performance.mark(name); } catch { /* no timing API */ } }));
+}
 const buttons = ['btnRandom','btnPrevStation','btnNextStation','btnPlayPause'];
 function markState({ state, detail, station }) {
     const labels = { idle: 'READY', ready: 'PRESS PLAY', buffering: 'TUNING', playing: 'ON AIR', paused: 'PAUSED', ended: 'ENDED', error: 'ERROR' };
@@ -880,6 +889,7 @@ async function start() {
             if (start) { globe.markPick(start.lat, start.lng); globe.world.pointOfView({ ...start, altitude: 1.4 }, 0); }
             globe.setLayer(radioLayer());
             setTheme(theme.id);
+            markReady('qglobe:globe-ready');
             $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
             $('btnResetView').onclick = () => globe.navigation.flyTo({lat:41.9,lng:12.5,altitude:2.2});
             $('btnAutoRotate').disabled = false;
@@ -905,6 +915,7 @@ async function start() {
         else if (link) await applyLink(link);
         else if (DIRECTORIES[savedMode]) await setMode(savedMode);
         linked = true;
+        markReady('qglobe:layer-ready');
         window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
     } catch (e) {
         $('playerTitle').textContent = 'Loading failed';
