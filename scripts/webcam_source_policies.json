@@ -861,6 +861,9 @@
     "operator_hints": []
   },
   "nsw_transport": {
+    "status": "excluded",
+    "exclusion_rule": "nsw-livetraffic-terms",
+    "excluded_note": "Excluded 2026-11-14: these records came from data.livetraffic.com, whose Live Traffic NSW terms give only a personal licence and bar republishing (cl. 3.1, 6.1). Re-source from the Transport for NSW Open Data Hub dataset (CC BY 4.0) after registering, then lift the rule in scripts/webcam_exclusions.json.",
     "source": {
       "id": "nsw_transport",
       "name": "New South Wales Live Traffic camera locations",
@@ -1373,24 +1376,26 @@
     ]
   },
   "kentucky_kytc": {
+    "status": "excluded",
+    "exclusion_rule": "kytc-cc0-withdrawn",
+    "excluded_note": "Excluded 2026-11-14: CC0 was the only stated basis for publishing these 256 camera names and positions, and KYTC reportedly confirmed the camera data is not CC0. Lift the rule in scripts/webcam_exclusions.json only with KYTC's written terms.",
     "source": {
       "id": "kentucky_kytc",
       "name": "KYTC public traffic camera locations and partner views",
       "url": "https://maps.kytc.ky.gov/trafficcameras/",
       "catalog_url": "https://services2.arcgis.com/CcI36Pduqd0OR4W9/arcgis/rest/services/trafficCamerasCur_Prd/FeatureServer/0",
       "terms_url": "https://www.arcgis.com/sharing/rest/content/items/0666efd2054343b080b5c2f0924ef2ae/info/metadata/metadata.xml?format=default&output=html",
-      "metadata_license": "CC0-1.0 for KYTC published map/data; source webmap explicitly loads the acquired traffic camera layer",
-      "license": "CC0-1.0 for KYTC published map/data; source webmap explicitly loads the acquired traffic camera layer",
+      "metadata_license": "Terms not established; links only. KYTC's CC0 statement on its web map item (modified 2025-02-06) is withdrawn: Road511 reports KYTC confirmed on 2026-08-16 that the camera data is not CC0.",
+      "license": "Terms not established; links only. KYTC's CC0 statement on its web map item (modified 2025-02-06) is withdrawn: Road511 reports KYTC confirmed on 2026-08-16 that the camera data is not CC0.",
       "media_rights": "External official map only. KYTC map/data CC0 does not conclusively establish rights in all linked TRIMARC/Indiana partner images; no snapshots embedded in this proposal.",
       "rights_note": "External official map only. KYTC map/data CC0 does not conclusively establish rights in all linked TRIMARC/Indiana partner images; no snapshots embedded in this proposal.",
-      "attribution": "Kentucky Transportation Cabinet, Traffic Cameras, CC0. Metadata normalized by QGlobe; linked images remain subject to their original publisher's rights.",
+      "attribution": "Kentucky Transportation Cabinet. Metadata normalized by QGlobe; linked images remain subject to their original publisher's rights.",
       "allowed_hosts": [],
       "official_page_hosts": [
         "maps.kytc.ky.gov"
       ],
       "rights_status": "official_page_only",
       "review_status": "reviewed_for_external_references_only",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "reviewed_at": "2026-11-14T02:55:52.659706+00:00",
       "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted."
     },
@@ -2728,7 +2733,9 @@
       "US"
     ],
     "force_coordinate_role": "approximate",
-    "operator_hints": []
+    "operator_hints": [],
+    "official_map_url": "https://goakamai.org/",
+    "official_map_note": "Operator's public camera map, used as the record's page: the Live Environment Streams rows give only the stream URL (kept as an HLS reference, never played). Checked by the 2026-11-14 research pass."
   },
   "les_ladotd_511": {
     "source": {
@@ -2767,7 +2774,9 @@
       "US"
     ],
     "force_coordinate_role": "approximate",
-    "operator_hints": []
+    "operator_hints": [],
+    "official_map_url": "https://511la.org/",
+    "official_map_note": "Operator's public camera map, used as the record's page: the Live Environment Streams rows give only the stream URL (kept as an HLS reference, never played). Checked by the 2026-11-14 research pass."
   },
   "les_mndot": {
     "source": {
@@ -2804,7 +2813,9 @@
       "US"
     ],
     "force_coordinate_role": "approximate",
-    "operator_hints": []
+    "operator_hints": [],
+    "official_map_url": "https://511mn.org/",
+    "official_map_note": "Operator's public camera map, used as the record's page: the Live Environment Streams rows give only the stream URL (kept as an HLS reference, never played). Checked by the 2026-11-14 research pass."
   },
   "les_seattle_sdot": {
     "source": {
@@ -2841,7 +2852,9 @@
       "US"
     ],
     "force_coordinate_role": "approximate",
-    "operator_hints": []
+    "operator_hints": [],
+    "official_map_url": "https://web.seattle.gov/travelers/",
+    "official_map_note": "Operator's public camera map, used as the record's page: the Live Environment Streams rows give only the stream URL (kept as an HLS reference, never played). Checked by the 2026-11-14 research pass."
   },
   "les_vdot": {
     "source": {
@@ -2885,7 +2898,9 @@
       "US"
     ],
     "force_coordinate_role": "approximate",
-    "operator_hints": []
+    "operator_hints": [],
+    "official_map_url": "https://511.vdot.virginia.gov/",
+    "official_map_note": "Operator's public camera map, used as the record's page: the Live Environment Streams rows give only the stream URL (kept as an HLS reference, never played). Checked by the 2026-11-14 research pass."
   },
   "livetraf_faa_links": {
     "source": {

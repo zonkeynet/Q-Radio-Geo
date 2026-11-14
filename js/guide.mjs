@@ -45,7 +45,7 @@ const SOURCES = [
     ['USGS, GDACS, NASA EONET', 'earthquakes, disaster alerts, natural events (live)', 'public data', 'https://earthquake.usgs.gov'],
     ['40+ news outlets (RSS)', 'headlines, summaries and links', '© each outlet, linked to the original', null],
     ['Broadcasters, via the iptv-org index', 'live TV streams', 'streams from each broadcaster; index public domain', 'https://github.com/iptv-org/iptv'],
-    ['Webcam publishers (81 sources, OpenStreetMap and Wikidata among them)', 'public webcam feeds and links', 'each source\'s terms, on every card; OpenStreetMap ODbL 1.0, Wikidata CC0', null],
+    ['Webcam publishers (79 sources, OpenStreetMap and Wikidata among them)', 'public webcam feeds and links', 'each source\'s terms, on every card; OpenStreetMap ODbL 1.0, Wikidata CC0', null],
     ['globe.gl, three.js, hls.js', 'software, bundled with the site', 'MIT, MIT, Apache 2.0', 'https://github.com/vasturiano/globe.gl']
 ];
 

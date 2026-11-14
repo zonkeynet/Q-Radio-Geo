@@ -170,6 +170,22 @@ Il livello WEBCAMS carica per primo `data/webcams-live.json`: solo i record con 
 | `data/webcams.json` filtrato (viewer con filtro privacy) | 62.527 | 37.550.695 | 2.694.117 | ~1,0–1,2 s |
 | `data/webcams-live.json` (caricato per primo) | 15.464 | 3.675.103 | 600.336 | ~0,24 s |
 
+## Esclusioni legali e di sicurezza
+
+`scripts/webcam_exclusions.json` (versionato: motivo ed evidenza per regola) è applicato da `build_webcams.py` a ogni build, quindi le ricostruzioni offline li lasciano fuori; `reports/webcams/exclusions.json` elenca i record rimossi per regola. Una regola si toglie solo eliminandola dal file.
+
+| Regola | Record rimossi | Motivo |
+| --- | ---: | --- |
+| `ua-martial-law` | 71 (70 UA + 1 a Sebastopoli etichettato RU) | Legge marziale: la SBU chiede di fermare le webcam stradali (art. 114-2 c.p.). Paese UA, record senza paese dentro i confini ucraini, Crimea con qualsiasi etichetta; restano solo le pagine di Bukovel (oggi nessuna nel catalogo). |
+| `asfinag-terms` | 21 | Le condizioni ASFINAG vietano anche i link alle webcam senza approvazione scritta. |
+| `nsw-livetraffic-terms` | 250 | Dati presi da data.livetraffic.com: licenza personale, ripubblicazione vietata. Policy `excluded`; torneranno dall'Open Data Hub (CC BY 4.0) dopo la registrazione. |
+| `kytc-cc0-withdrawn` | 256 | L'unica base era la CC0 di KYTC, che secondo Road511 KYTC ha smentito il 16.08.2026. Policy `excluded`, licenza «terms not established; links only». |
+| `kz-business-premises` | 5 | Telecamere dei locali di una catena di pizzerie (nodi OSM dei punti vendita). |
+
+Correzioni di campo: un URL di stream o file multimediale non è mai una pagina. Le 17 immagini A22 e altri 11.282 casi (3.903 righe Live Environment Streams con l'`.m3u8` come pagina, immagini OSM/Wikidata e di fonti snapshot) diventano riferimenti del tipo giusto, mai stream attivati; la pagina diventa la mappa dell'operatore (`official_map_url` per VDOT, MnDOT, Seattle, LA DOTD, HDOT) o la pagina sorgente. La build si ferma se resta una pagina multimediale.
+
+Catalogo dopo il filtro privacy e le esclusioni: **61.924 record**, 79 fonti.
+
 ## Pubblicazione del database
 
 `db/qp1ng-webcams.sqlite.gz` (circa 29 MB) non fa parte del sito né del mirror IPFS: è in `.gitignore`, GitHub Pages pubblica solo i file tracciati e `.github/workflows/ipfs.yml` lo esclude comunque. Si pubblica come allegato della release GitHub con tag fisso `webcams-db`, così il link della guida resta stabile:

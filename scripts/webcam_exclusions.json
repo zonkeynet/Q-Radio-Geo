@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "updated": "2026-11-14",
+  "note": "Records left out of the webcam catalogue for legal or safety reasons, applied by scripts/build_webcams.py at every build (reports/webcams/exclusions.json lists what each rule removed). Adding or changing a rule needs a reason and evidence; a rule is lifted only by removing it here. Match semantics: countries = the record's country code; areas = outlines as [lng, lat] rings, applied to the listed countries ('*' = any); hosts = any URL anywhere in the record on that host or a subdomain; providers = whole source; keep_hosts = records whose own page is on one of these hosts stay.",
+  "rules": [
+    {
+      "id": "ua-martial-law",
+      "action": "remove_record",
+      "match": {
+        "countries": ["UA"],
+        "areas": [
+          {
+            "name": "Ukraine within its internationally recognised borders (coarse outline, about 30 km tolerance): for records without a country",
+            "countries": ["ZZ"],
+            "ring": [[23.65, 51.5], [24.4, 51.9], [25.8, 51.95], [27.2, 51.7], [28.3, 51.6], [29.3, 51.42], [30.25, 51.5],
+                     [30.55, 51.3], [30.9, 52.05], [31.8, 52.12], [32.4, 52.3], [33.2, 52.37], [34.1, 51.98], [34.4, 51.7],
+                     [35.1, 51.2], [35.4, 50.6], [35.9, 50.45], [36.6, 50.25], [37.6, 50.3], [38.2, 50.05], [39.2, 49.85],
+                     [40.15, 49.6], [40.2, 49.25], [39.7, 48.8], [39.95, 48.3], [39.8, 47.85], [38.6, 47.6], [38.3, 47.3],
+                     [38.22, 47.1], [37.55, 47.05], [36.8, 46.7], [35.4, 46.35], [34.8, 46.1], [35.3, 45.7], [35.6, 45.45],
+                     [36.1, 45.47], [36.62, 45.45], [36.45, 45.05], [35.4, 44.9], [34.4, 44.38], [33.5, 44.35], [33.35, 44.6],
+                     [33.3, 45.15], [32.45, 45.3], [33.2, 45.95], [32.9, 46.05], [31.6, 46.3], [31.0, 46.6], [30.73, 46.45],
+                     [30.2, 45.85], [29.75, 45.2], [28.85, 45.3], [28.2, 45.45], [28.5, 45.75], [28.95, 46.05], [29.65, 46.4],
+                     [30.13, 46.42], [29.95, 46.85], [29.6, 47.35], [29.3, 47.95], [28.4, 48.15], [27.6, 48.48], [26.62, 48.26],
+                     [25.9, 47.97], [25.0, 47.73], [24.55, 47.95], [23.5, 48.0], [22.9, 47.95], [22.6, 48.1], [22.15, 48.4],
+                     [22.57, 49.08], [22.75, 49.4], [22.95, 49.8], [23.5, 50.25], [24.1, 50.65], [24.1, 51.05]]
+          },
+          {
+            "name": "Crimea and Sevastopol, whatever country the coordinates were assigned to",
+            "countries": ["*"],
+            "ring": [[32.4, 45.35], [33.3, 44.35], [34.5, 44.35], [35.6, 44.75], [36.45, 44.95], [36.62, 45.3], [36.66, 45.47],
+                     [35.7, 45.6], [35.1, 45.95], [34.6, 46.2], [33.4, 46.2], [32.4, 45.9]]
+          }
+        ]
+      },
+      "keep_hosts": ["bukovel.com"],
+      "reason": "Under martial law the Security Service of Ukraine (SBU) asks owners of street webcams to stop online broadcasts, because the enemy may use them to target strikes; spreading such footage can fall under Criminal Code art. 114-2 (Law 2160-IX of 24.03.2022). No Ukrainian street or road camera is listed; the Bukovel ski resort's own camera pages may be.",
+      "evidence": ["https://interfax.com.ua/news/general/913493.html"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "asfinag-terms",
+      "action": "remove_record",
+      "match": {"hosts": ["asfinag.at"]},
+      "reason": "ASFINAG's terms for webcam information allow private use only and require ASFINAG's prior written approval for any other use, links to its homepage and webcam information included.",
+      "evidence": ["https://media.asfinag.at/media/b3fngdvg/webcam-informationen-nutzungsbedingunge_-august-2007.pdf"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "nsw-livetraffic-terms",
+      "action": "remove_record",
+      "match": {"providers": ["nsw_transport"]},
+      "reason": "These records were sourced from data.livetraffic.com, a Live Traffic NSW data feed: its terms give only a personal, revocable licence and forbid republishing (cl. 1.2, 3.1, 6.1). They can return when re-sourced from the Transport for NSW Open Data Hub dataset (CC BY 4.0), which needs a registered account.",
+      "evidence": ["https://transportnsw.info/livetraffic/terms-of-use", "https://opendata.transport.nsw.gov.au/datalicence",
+                   "https://opendata.transport.nsw.gov.au/data/dataset/live-traffic-cameras"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "kz-business-premises",
+      "action": "remove_record",
+      "match": {"hosts": ["nexxiopizza.kz"]},
+      "reason": "Five OpenStreetMap restaurant nodes of the Nexxio pizza chain in Oral (operator Nexxiopizza, coordinates of the branches, not of cameras) link the business's own cameras on its website (cam1 to cam6): a private business's premises cameras, not public webcams. Judged from the OpenStreetMap data alone; the pages were not opened.",
+      "evidence": ["https://www.openstreetmap.org/node/1832841813", "https://www.openstreetmap.org/node/4360273092"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "kytc-cc0-withdrawn",
+      "action": "remove_record",
+      "match": {"providers": ["kentucky_kytc"]},
+      "reason": "The only stated basis for publishing these KYTC camera names and positions was the CC0 statement on KYTC's web map item (modified 2025-02-06). Road511's licence registry reports that KYTC confirmed on 2026-08-16 that the camera data is not CC0 (not verifiable here, but newer). Without another basis the records are left out; the policy now reads 'terms not established; links only'.",
+      "evidence": ["https://api.road511.com/api/v1/data-sources", "https://www.arcgis.com/home/item.html?id=0666efd2054343b080b5c2f0924ef2ae"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "a22-image-not-page",
+      "action": "image_page_to_reference",
+      "match": {"field": "official_page", "url_pattern": "^https://www\\.autobrennero\\.it/WebCamImg/km[0-9]+\\.jpg$"},
+      "reason": "Open Data Hub and OpenStreetMap give the A22 camera image URL as the webcam page. An image is not a page: the field is cleared (the inputs give no A22 page per camera, so the record falls back to its source page) and the image stays as an image reference.",
+      "evidence": ["https://www.autobrennero.it/it/in-viaggio/webcam/"],
+      "decided": "2026-11-14"
+    },
+    {
+      "id": "media-url-not-page",
+      "action": "media_page_to_reference",
+      "match": {"fields": ["official_page", "webcam_page"]},
+      "reason": "A stream or media file is not a web page. When an input gives a playlist, manifest or media file (.m3u8, .m3u, .mpd, .ts, images, clips, or a URL its row reports as media) as the page, the URL moves to a reference of the matching kind (never an enabled stream; the source's rights status is unchanged) and the page becomes the operator's camera map from the policy (official_map_url), else the record's source page. Live Environment Streams rows, for example, give the raw .m3u8 as the page. scripts/build_webcams.py also refuses to write any record whose official_page or source_page is still a media URL.",
+      "evidence": ["https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/462171be74a94963277dd76c8b2f8cd18f928cda/streams.geojson"],
+      "decided": "2026-11-14"
+    }
+  ]
+}

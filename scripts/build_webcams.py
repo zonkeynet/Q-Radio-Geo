@@ -205,6 +205,206 @@ def private_url_reason(value, *, community=False, check_query=True, _depth=0):
     return None
 
 
+# Legal and safety exclusions: a reviewed, versioned rule list (reason and evidence per rule),
+# applied at every build so offline rebuilds keep those records out.
+EXCLUSIONS_PATH = Path(__file__).with_name("webcam_exclusions.json")
+EXCLUSION_ACTIONS = ("remove_record", "image_page_to_reference", "media_page_to_reference")
+# A page is never a stream or a media file: playlists, manifests, segments, images, clips.
+MEDIA_EXTENSIONS = (".m3u8", ".m3u", ".mpd", ".ts", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp",
+                    ".mjpg", ".mjpeg", ".mp4", ".m4v", ".webm", ".mov", ".flv")
+MEDIA_REPORTED_FORMATS = frozenset({"hls", "dash", "mjpeg", "mp4", "jpeg", "jpg", "image", "snapshot", "rtsp"})
+
+
+def media_url(value, row=None):
+    """A stream or media file by its path, or a URL its own row reports as media (reported_media_format)."""
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        path = urlsplit(value.strip()).path.lower()
+    except ValueError:
+        return False
+    if path.endswith(MEDIA_EXTENSIONS):
+        return True
+    return bool(row) and str(row.get("reported_media_format") or "").lower() in MEDIA_REPORTED_FORMATS and value in (
+        row.get("reference_url"), row.get("stream_url"), row.get("snapshot_url"))
+
+
+def media_reference_field(value, row):
+    path = urlsplit(value).path.lower()
+    if path.endswith((".m3u8", ".m3u")) or str(row.get("reported_media_format") or "").lower() == "hls":
+        return "reference_hls_url"
+    if path.endswith((".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp")):
+        return "reference_snapshot_url"
+    if path.endswith((".mp4", ".m4v", ".webm", ".mov", ".flv")):
+        return "reported_clip_url"
+    return "reference_url"
+
+
+def media_page_records(items):
+    """(id, field) of every record whose page or source page is still a media URL: the build stops on any."""
+    return [(x["id"], f) for x in items for f in ("official_page", "source_page") if media_url(x.get(f), x)]
+
+
+def load_exclusions(path=EXCLUSIONS_PATH, policies=None):
+    """Read and check the rule list; every policy marked excluded must be covered by a provider rule."""
+    if not Path(path).exists():
+        return {"version": None, "sha256": None, "rules": []}
+    body = Path(path).read_bytes()
+    doc = json.loads(body)
+    rules, seen = doc.get("rules"), set()
+    if not isinstance(rules, list):
+        raise ValueError("Exclusion file needs a rules list")
+    for rule in rules:
+        if not isinstance(rule, dict) or rule.get("id") in seen or not re.fullmatch(r"[a-z0-9-]{3,60}", str(rule.get("id"))):
+            raise ValueError(f"Exclusion rule id missing or repeated: {rule!r}"[:200])
+        seen.add(rule["id"])
+        if rule.get("action") not in EXCLUSION_ACTIONS or not isinstance(rule.get("match"), dict):
+            raise ValueError(f"Exclusion rule {rule['id']}: unknown action or match")
+        if not str(rule.get("reason", "")).strip() or not rule.get("evidence"):
+            raise ValueError(f"Exclusion rule {rule['id']} needs a reason and evidence")
+        for area in rule["match"].get("areas", []):
+            if len(area.get("ring", [])) < 3 or not area.get("countries"):
+                raise ValueError(f"Exclusion rule {rule['id']}: an area needs countries and a ring")
+        if rule["action"] == "image_page_to_reference":
+            rule["_pattern"] = re.compile(rule["match"]["url_pattern"])
+    covered = {p for rule in rules if rule["action"] == "remove_record" for p in rule["match"].get("providers", [])}
+    for provider, policy in (policies if policies is not None else PROVIDER_POLICIES).items():
+        if policy.get("status") == "excluded" and provider not in covered:
+            raise ValueError(f"Policy {provider} is marked excluded but no exclusion rule removes it")
+    return {"version": doc.get("version"), "sha256": hashlib.sha256(body.replace(b"\r\n", b"\n")).hexdigest(), "rules": rules}
+
+
+def host_under(host, domains):
+    host = (host or "").lower().rstrip(".")
+    return any(host == d or host.endswith("." + d) for d in domains)
+
+
+def inside_ring(lat, lng, ring):
+    """Even-odd test on a [lng, lat] ring."""
+    hit = False
+    x0, y0 = ring[-1]
+    for x1, y1 in ring:
+        if (y1 > lat) != (y0 > lat) and lng < (x0 - x1) * (lat - y1) / (y0 - y1) + x1:
+            hit = not hit
+        x0, y0 = x1, y1
+    return hit
+
+
+def record_hosts(value):
+    """Hosts of every URL in a record's strings (pages, references, media, provenance)."""
+    if isinstance(value, str):
+        hosts = set()
+        for url in URL_IN_TEXT.findall(value):
+            try:
+                hosts.add((urlsplit(url).hostname or "").lower())
+            except ValueError:
+                pass
+        return hosts
+    if isinstance(value, dict):
+        return set().union(*(record_hosts(v) for v in value.values())) if value else set()
+    if isinstance(value, list):
+        return set().union(*(record_hosts(v) for v in value)) if value else set()
+    return set()
+
+
+def exclusion_rule(item, rules):
+    """The first remove_record rule matching a normalized record, or None."""
+    for rule in rules:
+        if rule["action"] != "remove_record":
+            continue
+        match = rule["match"]
+        hit = item.get("provider") in match.get("providers", ()) or item.get("country") in match.get("countries", ())
+        if not hit and match.get("hosts"):
+            hit = any(host_under(h, match["hosts"]) for h in record_hosts(item))
+        if not hit:
+            hit = any(("*" in area["countries"] or item.get("country") in area["countries"])
+                      and inside_ring(item["lat"], item["lng"], area["ring"]) for area in match.get("areas", ()))
+        if hit and rule.get("keep_hosts"):
+            own = item.get("official_page") or primary_url(item) or ""
+            if host_under(urlsplit(own).hostname, rule["keep_hosts"]):
+                hit = False
+        if hit:
+            return rule
+    return None
+
+
+def apply_exclusions(items, rules):
+    kept, log = [], []
+    for item in items:
+        rule = exclusion_rule(item, rules)
+        if rule:
+            log.append({"id": item["id"], "provider": item["provider"], "country": item.get("country"),
+                        "rule": rule["id"], "action": "record_removed"})
+        else:
+            kept.append(item)
+    return kept, log
+
+
+def repair_raw(raw, rules, log=None):
+    """Input-level repairs, before normalization (an image given as the page becomes an image reference)."""
+    if not isinstance(raw, dict):
+        return raw
+    for rule in rules:
+        if rule["action"] == "media_page_to_reference":
+            raw = repair_media_page(raw, rule, log)
+            continue
+        if rule["action"] != "image_page_to_reference":
+            continue
+        field = rule["match"]["field"]
+        value = raw.get(field)
+        if not isinstance(value, str) or not rule["_pattern"].fullmatch(value.strip()) or private_url_reason(value):
+            continue
+        raw = dict(raw)
+        raw[field] = None
+        if value not in {raw.get(f) for f in REFERENCE_FIELDS}:
+            raw["reference_snapshot_url"] = value
+        if log is not None:
+            log.append({"id": raw.get("id") or f"{raw.get('provider')}:{raw.get('provider_id')}", "provider": raw.get("provider"),
+                        "rule": rule["id"], "action": "image_moved_to_reference", "field": field})
+    return raw
+
+
+def repair_media_page(raw, rule, log=None):
+    """A stream or media URL given as the page becomes a reference of its kind (never enabled media);
+    the page becomes the operator's camera map from the policy, else the record's source page."""
+    moved = False
+    community = community_source(raw.get("provider"))
+    for field in rule["match"].get("fields", ["official_page"]):
+        value = raw.get(field)
+        # A private link is left where it is, so the privacy filter removes the whole record.
+        if not media_url(value, raw) or private_url_reason(value, community=community):
+            continue
+        raw, moved = dict(raw), True
+        raw[field] = None
+        action = "media_page_cleared"
+        if value not in {raw.get(f) for f in (*REFERENCE_FIELDS, "stream_url", "snapshot_url")}:
+            target = media_reference_field(value, raw)
+            target = target if not raw.get(target) else "reference_url" if not raw.get("reference_url") else None
+            if target:
+                raw[target], action = value, "media_moved_to_reference"
+        if log is not None:
+            log.append({"id": raw.get("id") or f"{raw.get('provider')}:{raw.get('provider_id')}", "provider": raw.get("provider"),
+                        "rule": rule["id"], "action": action, "field": field})
+    if moved and not raw.get("official_page") and not raw.get("webcam_page"):
+        page = PROVIDER_POLICIES.get(raw.get("provider"), {}).get("official_map_url")
+        if page:
+            raw["official_page"] = page
+    return raw
+
+
+def exclusion_summary(exclusions, log):
+    removed = [e for e in log if e["action"] == "record_removed"]
+    repaired = [e for e in log if e["action"] != "record_removed"]
+    return {"rules_file": "scripts/webcam_exclusions.json", "rules_version": exclusions["version"],
+            "rules_sha256": exclusions["sha256"],
+            "rules": [{k: r[k] for k in ("id", "action", "reason", "evidence", "decided") if k in r} for r in exclusions["rules"]],
+            "records_removed": len(removed),
+            "records_removed_by_rule": dict(sorted(collections.Counter(e["rule"] for e in removed).items())),
+            "records_removed_by_rule_and_country": {rule: dict(sorted(collections.Counter(e["country"] for e in removed if e["rule"] == rule).items()))
+                                                    for rule in sorted({e["rule"] for e in removed})},
+            "fields_repaired_by_rule": dict(sorted(collections.Counter(e["rule"] for e in repaired).items()))}
+
+
 def community_source(provider):
     source = PROVIDER_POLICIES.get(provider, {}).get("source", {})
     return source.get("provenance_type") == "community_directory"
@@ -511,7 +711,9 @@ def normalize_world_item(raw, observed_at, privacy_log=None):
         if not official_page:
             raise ValueError("Page record requires a published, safe web link")
         page_hosts = policy.get("page_hosts") or source.get("official_page_hosts")
-        if page_hosts and urlsplit(official_page).hostname not in page_hosts:
+        supplied = raw.get("official_page") or raw.get("webcam_page")
+        if (supplied and page_hosts and urlsplit(official_page).hostname not in page_hosts
+                and supplied != policy.get("official_map_url")):
             raise ValueError("Page host is outside the reviewed publisher list")
         rights = "official_page_only"
     else:
@@ -603,7 +805,7 @@ def privacy_summary(log):
             "note": "Entries name the record, field and rule only: removed URLs and host names are not reproduced."}
 
 
-def load_extra_catalogs(paths, fallback_time, privacy_log=None):
+def load_extra_catalogs(paths, fallback_time, privacy_log=None, exclusions=None, exclusion_log=None):
     """Load normalized metadata without trusting the input's provider/rights policy.
 
     The first approved adapter used {sources, items} without schema_version;
@@ -648,6 +850,7 @@ def load_extra_catalogs(paths, fallback_time, privacy_log=None):
             try:
                 if not isinstance(raw, dict) or raw.get("provider") not in declared:
                     raise ValueError("Item provider is not an approved declared source")
+                raw = repair_raw(raw, (exclusions or {}).get("rules", []), exclusion_log)
                 items.append(normalize_extra_item(raw, file_time, privacy_log))
             except PrivacyFiltered as exc:
                 if privacy_log is not None:
@@ -1184,14 +1387,16 @@ def main():
         ap.error("--live-out needs --compact-web")
     outputs = [args.out, args.out.with_suffix(args.out.suffix + ".tmp"), *([args.live_out] if args.live_out else []), args.db,
                args.db.with_suffix(args.db.suffix + ".tmp"), args.db.with_suffix(args.db.suffix + ".gz")]
-    outputs += [args.audit_dir / name for name in ("import_report.json", "source_fetches.json", "rejected_records.json", "probe_evidence.json", "probe_parse_warnings.json", "webcams.geojson", "webcams.csv", "osm_candidate_links.csv", "shared_url_groups.json", "published_links.csv", "country_counts.json", "snapshot_access_evidence.json", "privacy_filter.json")]
+    outputs += [args.audit_dir / name for name in ("import_report.json", "source_fetches.json", "rejected_records.json", "probe_evidence.json", "probe_parse_warnings.json", "webcams.geojson", "webcams.csv", "osm_candidate_links.csv", "shared_url_groups.json", "published_links.csv", "country_counts.json", "snapshot_access_evidence.json", "privacy_filter.json", "exclusions.json")]
     protect_baseline(args.osm_db, outputs + [p.with_suffix(p.suffix + ".tmp") for p in outputs])
     stamp = args.generated_at or utcnow()
     if args.fetch:
         fetch_caltrans(args.source_dir)
     items, provenance, rejected = load_caltrans(args.source_dir, stamp)
-    privacy_log = []
-    extra_items, extra_sources, extra_provenance, extra_rejected = load_extra_catalogs(args.extra_catalog, stamp, privacy_log)
+    privacy_log, exclusion_log = [], []
+    exclusions = load_exclusions()
+    extra_items, extra_sources, extra_provenance, extra_rejected = load_extra_catalogs(
+        args.extra_catalog, stamp, privacy_log, exclusions, exclusion_log)
     items = sorted(items + extra_items, key=lambda x: x["id"])
     if len({x["id"] for x in items}) != len(items):
         raise ValueError("Duplicate camera identity across providers/catalogs")
@@ -1202,6 +1407,16 @@ def main():
     privacy_log += swept
     rejected += [{"source": e["provider"], "provider": e["provider"], "provider_id": e["id"].split(":", 1)[-1],
                   "reason": f"Privacy filter: {e['reason']} in {e['field']}"} for e in swept]
+    items, excluded = apply_exclusions(items, exclusions["rules"])
+    exclusion_log += excluded
+    rejected += [{"source": e["provider"], "provider": e["provider"], "provider_id": e["id"].split(":", 1)[-1],
+                  "reason": f"Excluded: {e['rule']} (scripts/webcam_exclusions.json)"} for e in excluded]
+    stray = media_page_records(items)
+    if stray:
+        raise ValueError(f"{len(stray)} records still give a stream or media file as their page, e.g. {stray[:3]}")
+    # A source left without records (an excluded policy) is not listed either.
+    kept_providers = {x["provider"] for x in items}
+    sources = [s for s in sources if s["id"] in kept_providers]
     probe_parse_warnings = []
     events = load_probe_events(args.health, probe_parse_warnings)
     if args.url_repairs:
@@ -1223,7 +1438,7 @@ def main():
     provider_stats = provider_statistics(items, provenance, rejected, events, matches)
     link_stats, shared_urls = link_statistics(items)
     scope = ["All 12 official Caltrans metadata catalogs"]
-    scope.extend(f"supplied {s['name']} normalized catalog(s)" for s in extra_sources)
+    scope.extend(f"supplied {s['name']} normalized catalog(s)" for s in sources if s["id"] != SOURCE["id"])
     report = {
         "generated_at": stamp, "baseline_commit": args.baseline_commit,
         # Hashes of the files as committed (LF), whatever line endings the checkout uses.
@@ -1264,6 +1479,7 @@ def main():
         "cameras_without_osm_candidate": len(items) - len(n_by_cam),
         "identity_merges_performed": 0, "original_osm_rows_modified": 0,
         "privacy_filter": privacy_summary(privacy_log),
+        "exclusions": exclusion_summary(exclusions, exclusion_log),
         "scope": "; ".join(scope) + ". Only these approved sources are included; this is not a complete worldwide catalog.",
         "scope_providers": [s["id"] for s in sources],
         "scope_countries": sorted({x["country"] for x in items}),
@@ -1282,6 +1498,7 @@ def main():
     write_json(args.audit_dir / "probe_parse_warnings.json", probe_parse_warnings)
     write_json(args.audit_dir / "snapshot_access_evidence.json", snapshot_audit)
     write_json(args.audit_dir / "privacy_filter.json", {**privacy_summary(privacy_log), "entries": privacy_log})
+    write_json(args.audit_dir / "exclusions.json", {**exclusion_summary(exclusions, exclusion_log), "entries": exclusion_log})
     write_json(args.audit_dir / "shared_url_groups.json", shared_urls)
     write_json(args.audit_dir / "country_counts.json", report["country_counts"])
     write_json(args.audit_dir / "webcams.geojson", {"type": "FeatureCollection", "features": [geojson_feature(x) for x in items]})

@@ -8,3 +8,4 @@ reports/webcams/*
 !reports/webcams/import_report.json
 !reports/webcams/privacy_filter.json
 !reports/webcams/rejected_records.json
+!reports/webcams/exclusions.json
