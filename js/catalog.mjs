@@ -22,15 +22,31 @@ export function expandStations(json) {
     if (columns.length !== fields.length || fields.some(f => typeof f !== 'string' || !/^[a-z_]{1,40}$/.test(f) || f === '__proto__')
         || columns.some(c => !Array.isArray(c) || c.length !== n)) return null;
     const tables = fields.map(f => Array.isArray(values[f]) ? values[f] : null);
-    const stations = new Array(n);
-    for (let i = 0; i < n; i++) {
+    const generic = i => {
         const s = {};
         for (let k = 0; k < fields.length; k++) {
             const c = columns[k][i], v = tables[k] ? (Number.isInteger(c) ? tables[k][c] : undefined) : c;
             if (v !== null && v !== undefined) s[fields[k]] = v;
         }
-        stations[i] = s;
-    }
+        return s;
+    };
+    const stations = new Array(n);
+    // The published layout: objects of one shape, built field by field in order (several times faster on phones
+    // than names looked up per cell); any unusual row takes the general way, so the result is the same.
+    if (fields.join() === 'id,place_id,title,stream_url,homepage,codec,bitrate,hls' && tables.every((t, k) => Boolean(t) === (k === 1 || k === 5))) {
+        const [id, place, title, url, home, codec, bitrate, hls] = columns, places = tables[1], codecs = tables[5];
+        const value = x => x !== null && x !== undefined;
+        for (let i = 0; i < n; i++) {
+            const p = place[i], c = codec[i];
+            if (!value(id[i]) || !Number.isInteger(p) || !value(places[p]) || !value(title[i]) || !value(url[i]) || (c !== null && !Number.isInteger(c))) { stations[i] = generic(i); continue; }
+            const s = { id: id[i], place_id: places[p], title: title[i], stream_url: url[i] };
+            if (value(home[i])) s.homepage = home[i];
+            if (value(codecs[c])) s.codec = codecs[c];
+            if (value(bitrate[i])) s.bitrate = bitrate[i];
+            if (value(hls[i])) s.hls = hls[i];
+            stations[i] = s;
+        }
+    } else for (let i = 0; i < n; i++) stations[i] = generic(i);
     return stations;
 }
 export class Catalog {

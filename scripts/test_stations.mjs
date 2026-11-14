@@ -58,7 +58,8 @@ test('edge cases: absent optional fields, unicode, an empty list, the earlier ar
     const sample = [
         { id: 'a1', place_id: 'nUS', title: 'Ünïcødé ☕ 📻', stream_url: 'https://x.example/a', homepage: 'https://x.example/', codec: 'MP3', bitrate: 128, hls: 1 },
         { id: 'b2', place_id: 'g1', title: 'B', stream_url: 'https://x.example/b' },
-        { id: 'c3', place_id: 'nUS', title: 'C', stream_url: 'https://x.example/c', bitrate: 0, codec: 'MP3' }
+        { id: 'c3', place_id: 'nUS', title: 'C', stream_url: 'https://x.example/c', bitrate: 0, codec: 'MP3' },
+        { id: 'd4', place_id: 'g1', stream_url: 'https://x.example/d', codec: 'AAC' } // no title: the general decoding path
     ];
     const back = expandStations(JSON.parse(JSON.stringify(encodeStations(sample))));
     assert.deepStrictEqual(back, sample.map(s => Object.fromEntries(STATION_FIELDS.filter(f => s[f] !== undefined).map(f => [f, s[f]]))));
