@@ -22,9 +22,13 @@ export function indexItems(def, items) {
     for (const it of items) if (it.search === undefined) { it.search = normalize(def.searchText(it)); it.compact = compactOf(it.search); }
     return items;
 }
-/** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. */
+/** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. A mode with no bundled file
+ * (news) gives def.loadItems({ signal }) instead: live data, so a finished load is reused only for a minute (the
+ * page's first layer starts loading before the layer is shown), never as a stale copy later. */
 export function loadDirectory(def, { onProgress = null, signal = null } = {}) {
-    def.loading ??= loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout, onProgress, signal }).then(json => def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)))
+    if (def.loadItems && def.loadedAt && Date.now() - def.loadedAt > 60000) def.loading = null;
+    def.loading ??= (def.loadItems ? def.loadItems({ signal, onProgress }) : loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout, onProgress, signal }).then(def.prepare))
+        .then(items => { def.loadedAt = Date.now(); return items.filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)); })
         .catch(e => { def.loading = null; throw e; });
     return def.loading;
 }
@@ -211,7 +215,10 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
     }
     function heading() {
         title.replaceChildren(icon(def.id, 'icon title-icon'), node('span', '', def.titleOf(values)));
-        meta.textContent = `${countText(def, shown().length)} · ${def.listOrder ? t('dir.newestFirst') : t('dir.nearestFirst')}`;
+        // A mode may say how fresh its data is instead of the order (news: when the headlines were built), as a warning when old.
+        const own = def.metaOf?.(shown().length);
+        meta.textContent = own?.text ?? `${countText(def, shown().length)} · ${def.listOrder ? t('dir.newestFirst') : t('dir.nearestFirst')}`;
+        meta.classList.toggle('stale', Boolean(own?.stale));
     }
     function renderList() {
         center = getCenter();
@@ -286,6 +293,8 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
             if (fromList) requestAnimationFrame(() => cardBox.querySelector('#cardTitle')?.focus({ preventScroll: true }));
         },
         get selected() { return selected; },
+        /** The header again (a time in it, "12 minutes ago", moves on). */
+        retitle() { if (def) heading(); },
         get def() { return def; },
         /** Back to the list from a card. */
         deselect() { selected = null; render(); },

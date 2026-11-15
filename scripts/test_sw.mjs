@@ -74,9 +74,9 @@ test('the worker answers only same-origin GETs of the globe’s own files', () =
         ['https://de1.api.radio-browser.info/json/stations', {}], ['https://gibs.earthdata.nasa.gov/wmts/x.jpeg', { destination: 'image' }],
         ['https://raw.githubusercontent.com/x/news.json', {}], ['https://overpass-api.de/api/interpreter', { method: 'POST' }],
         ['https://camera.example.com/live.m3u8', {}], ['https://stream.example.com/radio', { destination: 'audio' }],
-        [site + 'data/news.json', { method: 'POST' }], [site + 'data/news.json', { headers: { range: 'bytes=0-99' } }],
-        [site + 'data/news.json', { headers: { authorization: 'Bearer x' } }],
-        [site + 'data/news.json?x=1', {}],
+        [site + 'data/sdr.json', { method: 'POST' }], [site + 'data/sdr.json', { headers: { range: 'bytes=0-99' } }],
+        [site + 'data/sdr.json', { headers: { authorization: 'Bearer x' } }],
+        [site + 'data/sdr.json?x=1', {}],
         [site + 'db/qp1ng.sqlite.gz', {}], [site + 'db/qp1ng-webcams.sqlite.gz', { mode: 'navigate' }], [site + 'tests/qcast/player.html', { mode: 'navigate' }],
         [site + 'docs/WEBCAMS_2026-11-13.md', {}], [site + 'sw-manifest.json', {}], [site + 'assets/x.mp4', { destination: 'video' }],
         ['http://globe.qp1ng.com/js/app.mjs', {}], ['https://globe.qp1ng.com.evil.example/js/app.mjs', {}]

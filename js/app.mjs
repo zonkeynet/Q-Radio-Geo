@@ -501,6 +501,7 @@ async function loadLive(def) {
     const run = liveRun = { def, ctrl: new AbortController(), area: overview ? OVERVIEW : area?.query || true };
     st.liveTried = run.area; // a failed area is not retried by itself: the button retries
     setLiveStatus(def, def.live.slow ? t('live.loadingSlow') : t('live.loading'));
+    if (dir() === def && !switching && def.statusOf?.()) showStatus({ kind: 'loading', text: def.loadingText || t('live.loading') }); // Retry pressed
     postLoading('area');
     try {
         const { items: loaded, note, complete = true } = overview ? await def.live.overview(st.base, run.ctrl.signal)
@@ -508,16 +509,20 @@ async function loadLive(def) {
         if (liveRun !== run) return; // replaced by a newer request
         st.liveFails = 0;
         if (!complete) st.liveTried = { ...area.need, partial: true }; // capped: any new view loads again
-        const kept = new Map(st.items.filter(it => it.live).map(it => [it.id, it])); // an open card stays open
-        st.items = loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it);
+        // An open card stays open: its item is kept (live items, and the one shown, by id).
+        const shownCard = dir() === def ? explorer.selected : null;
+        const kept = new Map(st.items.filter(it => it.live || it === shownCard).map(it => [it.id, it]));
+        st.items = loaded.map(it => (it.live || it.id === shownCard?.id) && kept.has(it.id) ? kept.get(it.id) : it);
         st.liveAt = Date.now();
         const time = new Date().toISOString().slice(11, 16);
-        st.liveStatus = overview ? note : def.live.needsView === false ? (note ? t('live.updatedNote', { time, note }) : t('live.updated', { time }))
+        st.liveStatus = overview ? note : def.live.statusText ? def.live.statusText({ note }) : def.live.needsView === false ? (note ? t('live.updatedNote', { time, note }) : t('live.updated', { time }))
             : `${t('live.loaded', { n: st.items.length - st.base.length, where: note || (area.cut ? t('live.withinKm', { km: def.live.boxKm / 2 }) : t('live.forArea')) })}${liveTabOn(def) ? t('live.follow') : ''}`;
         if (dir() === def) {
             explorer.use(def, st.items, st.values);
-            if (!$('sheet').hidden) explorer.open();
-            globe?.setLayer(dirLayer()); renderTicker(); renderChips();
+            // A timed refresh keeps the list where the reader left it.
+            const list = $('sheetList'), scrolled = list.scrollTop;
+            if (!$('sheet').hidden) { explorer.open(); list.scrollTop = scrolled; }
+            globe?.setLayer(dirLayer()); renderTicker(); renderChips(); modeStatus(def);
             const linked = pendingPick?.mode === def.id && st.items.find(it => String(it.id) === pendingPick.id);
             if (linked) selectDir(linked, { fly: false });
             markReady('qglobe:live-ready'); // timing of the first live load (police and cameras in view, catalogue links)
@@ -533,6 +538,7 @@ async function loadLive(def) {
                 st.items = kept;
                 if (dir() === def) { explorer.use(def, st.items, st.values); explorer.open(); globe?.setLayer(dirLayer()); renderTicker(); }
             }
+            if (dir() === def) modeStatus(def);
         }
     } finally {
         if (liveRun === run) liveRun = null;
@@ -557,10 +563,13 @@ function liveIfWanted() {
 /** While a live tab is on, follows the view: loads each new area once the globe has stopped moving. A mode with
  * live.every (news) also refreshes on its own while it is open. */
 function watchLive() {
+    let minute = 0;
     setInterval(() => {
         syncLink();
         const d = dir();
+        // Only the layer shown, only while the page is visible: a hidden tab or another layer asks nothing.
         if (d?.live?.every && !document.hidden && liveRun?.def !== d && Date.now() - (state().liveAt || 0) > d.live.every) loadLive(d);
+        if (d?.metaOf && !document.hidden && ++minute % 60 === 0) explorer.retitle();
         if (!liveTabOn(d) || document.hidden) { lastView = null; return; }
         const b = globe?.viewBounds(), prev = lastView;
         lastView = b;
@@ -699,6 +708,13 @@ function showStatus({ kind, text, detail = '', progress = null, onRetry = null, 
     syncLayout();
 }
 function clearStatus() { $('sheetStatus').hidden = true; $('sheetStatus').replaceChildren(); syncLayout(); }
+/** A mode's own problem once it is shown (news: the headlines did not arrive, the rest did): plain words and Retry. */
+function modeStatus(def) {
+    if (switching) return; // another layer is loading: its status stays
+    const problem = def?.statusOf?.();
+    if (problem) showStatus({ kind: 'error', text: problem.text, detail: problem.detail || '', onRetry: () => loadLive(def) });
+    else if ($('sheetStatus').classList.contains('error') || $('sheetStatus').classList.contains('loading')) clearStatus();
+}
 function loadingSkeleton() {
     const s = node('div', 'skeleton'); s.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 4; i++) s.append(node('i'));
@@ -709,7 +725,7 @@ const offline = () => navigator.onLine === false;
 const layerName = id => (DIRECTORIES[id] || RADIO_MODE).label;
 function layerError(id, retry) {
     const network = offline();
-    showStatus({ kind: 'error', text: t(network ? 'error.offline' : 'error.layer', { layer: layerName(id) }), detail: t(network ? 'error.offlineHint' : 'error.layerHint'),
+    showStatus({ kind: 'error', text: !network && DIRECTORIES[id]?.errorText || t(network ? 'error.offline' : 'error.layer', { layer: layerName(id) }), detail: t(network ? 'error.offlineHint' : 'error.layerHint'),
         onRetry: retry, onDismiss: () => { clearStatus(); markMode(); restoreSheet(mode); renderChips(); } }); // ✕: back to the layer shown
     postError(network ? 'network' : 'data', true);
 }
@@ -744,14 +760,16 @@ async function setMode(next, { remember = true } = {}) {
         };
         // Cancel goes back to the layer shown before; the first layer of the page has none to go back to.
         const cancellable = layerShown;
-        const status = p => showStatus({ kind: 'loading', text: t('app.loadingLayer', { layer: layerName(next) }), detail: p.detail || '',
+        const status = p => showStatus({ kind: 'loading', text: def?.loadingText || t('app.loadingLayer', { layer: layerName(next) }), detail: p.detail || '',
             progress: p.progress ?? null, onCancel: cancellable ? () => { run.byUser = true; run.abort(); } : null });
         onProgress.show = status;
         onProgress({ loaded: 0, total: 0 });
         const cancelled = new Promise((_, reject) => run.signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true }));
         cancelled.catch(() => { /* handled below */ });
         try {
-            if (def) { const items = await Promise.race([loadDirectory(def, { onProgress, signal: run.signal }), cancelled]); dirState[next] ??= { base: items, items, values: initialValues(def) }; }
+            // A live mode's first load is its first refresh too (liveAt): the next one comes after def.live.every.
+            if (def) { const items = await Promise.race([loadDirectory(def, { onProgress, signal: run.signal }), cancelled]); dirState[next] ??= { base: items, items, values: initialValues(def), liveAt: def.loadItems ? def.loadedAt : 0,
+                liveStatus: def.loadItems && def.live?.statusText ? def.live.statusText({ note: def.loadNote || '' }) : '' }; }
             else await Promise.race([loadCatalog({ onProgress, signal: run.signal }), cancelled]);
         } catch (e) {
             if (switching !== run) return false; // a newer switch took over
@@ -777,7 +795,7 @@ async function setMode(next, { remember = true } = {}) {
     pendingPick = null;
     hideSearch(); $('searchInput').value = '';
     liveNoteOpen = false;
-    if (def) { explorer.use(def, state().items, state().values); explorer.open(); }
+    if (def) { explorer.use(def, state().items, state().values); explorer.open(); modeStatus(def); }
     else showRadioList();
     if (changed && sheetState() === 'peek' && !PICK_MODE) setSheet('half');
     renderChips(); renderLive();

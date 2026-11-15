@@ -1,9 +1,21 @@
 // 📰 News: what is happening now. Headlines of public news feeds placed on the globe (scripts/build_news.mjs, rebuilt
-// every 10 minutes by .github/workflows/news.yml on the news-data branch), plus live events read straight from public
-// feeds that allow it: earthquakes (USGS), disaster alerts (GDACS) and natural events (NASA EONET).
+// by .github/workflows/news.yml on the news-data branch), plus live events read straight from public feeds that allow
+// it: earthquakes (USGS), disaster alerts (GDACS) and natural events (NASA EONET). Nothing of it is bundled with the
+// site: the layer shows what these sources say now, with the headlines' own time in the header, or says plainly that
+// they did not load. An old snapshot shown as if current was worse than nothing (the October file, a month later).
 import { t, tn, num, date, ago as relativeTime, list, has } from './i18n.mjs';
 
 const HEADLINES_URL = 'https://raw.githubusercontent.com/zonkeynet/Q-Radio-Geo/news-data/news.json';
+// Headlines older than 72 hours are dropped here. build_news.mjs keeps 48 h; the margin lets a file whose publisher
+// stalled (GitHub runs the 10-minute schedule hours late, and may skip it) show what it has, with its true age in the
+// header, but never last week's news.
+export const HEADLINE_WINDOW_MS = 72 * 36e5;
+// Past 2 hours (or the file's own stale_after) the header shows its age as a warning: it should be rebuilt every 10 minutes.
+export const STALE_MS = 2 * 36e5;
+// Each source may take this long: enough for Tor in the app. The loading state has Cancel, a failure Retry.
+const TIMEOUT_MS = 45000;
+// Refreshed while the layer is shown and the page visible, at most this often (the file changes every 10 minutes at best).
+const REFRESH_MS = 600000;
 const SOURCES = {
     quakes: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
     alerts: 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/EVENTS4APP',
@@ -33,6 +45,13 @@ const LOC_NOTE = { country: 'news.loc.country', source: 'news.loc.source' };
 
 const headlines = json => (json.items || []).filter(h => Number.isFinite(h.lat)).map(h => ({ id: `n${h.id}`, kind: 'NEWS', name: h.t, ts: h.ts, lat: h.lat, lng: h.lng,
     url: h.u, source: h.s, summary: h.sum, topic: h.topic, place: h.pl, loc: h.loc, cc: h.cc }));
+/** The headlines file: its items and when it was built; anything else is not a headlines file. */
+function readHeadlines(json) {
+    const at = Date.parse(json?.generated_at), staleAt = Date.parse(json?.stale_after);
+    if (!Array.isArray(json?.items) || !Number.isFinite(at)) throw new Error('Not a headlines file');
+    return { at, staleAt: Number.isFinite(staleAt) && staleAt > at ? staleAt : at + STALE_MS, items: headlines(json) };
+}
+const recent = it => it.kind !== 'NEWS' || Date.now() - Date.parse(it.ts) <= HEADLINE_WINDOW_MS;
 const quakes = json => (json.features || []).map(f => {
     const p = f.properties, [lng, lat, depth] = f.geometry.coordinates, mag = fixed1(p.mag ?? 0);
     return { id: `q${f.id}`, kind: 'QUAKE', name: p.place ? t('news.quake.namePlace', { mag, place: p.place }) : t('news.quake.name', { mag }), ts: new Date(p.time).toISOString(), lat, lng,
@@ -51,15 +70,49 @@ const nature = json => (json.events || []).map(e => {
 }).filter(Boolean);
 
 async function getJSON(url, signal) {
-    const res = await fetch(url, { signal, cache: 'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const ctrl = new AbortController(), stop = () => ctrl.abort();
+    const timer = setTimeout(stop, TIMEOUT_MS);
+    signal?.addEventListener('abort', stop, { once: true });
+    try {
+        // no-cache: revalidated every time (raw.githubusercontent.com answers 304 when nothing changed).
+        const res = await fetch(url, { signal: ctrl.signal, cache: 'no-cache' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
 }
 
+/** The headlines file last read (its items and time), and whether the last attempt failed. A failed refresh keeps the
+ * last good file, whose time the header keeps showing; nothing older than HEADLINE_WINDOW_MS is shown. */
+export const feed = { at: 0, staleAt: 0, items: null, failed: false };
+/** Every source at once. Throws when none answers; otherwise the items of those that did, and a note on the others. */
+async function loadNews(signal) {
+    const [news, q, a, n] = await Promise.allSettled([getJSON(HEADLINES_URL, signal).then(readHeadlines), getJSON(SOURCES.quakes, signal).then(quakes),
+        getJSON(SOURCES.alerts, signal).then(alerts), getJSON(SOURCES.nature, signal).then(nature)]);
+    if (signal?.aborted) throw new DOMException('Replaced by a newer request', 'AbortError');
+    if (news.status === 'fulfilled') Object.assign(feed, news.value, { failed: false }); else feed.failed = true;
+    const failed = [['headlines', news], ['quakes', q], ['alerts', a], ['nature', n]].filter(([, r]) => r.status === 'rejected').map(([name]) => t(`news.live.src.${name}`));
+    if (failed.length === 4) throw new Error(t('news.live.noSource'));
+    const ok = r => r.status === 'fulfilled' ? r.value : [];
+    const items = [...(feed.items || []), ...ok(q), ...ok(a), ...ok(n)].filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng) && it.ts && recent(it));
+    return { items, note: failed.length ? t('news.live.unavailable', { list: list(failed) }) : '' };
+}
+/** "05:24" ("5:24 AM"), or "14 Nov, 05:24" when not today: the user's time zone, language and clock. */
+const today = at => new Date(at).toDateString() === new Date().toDateString();
+const clock = at => date(at, today(at) ? { timeStyle: 'short' } : { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
 export const NEWS = {
-    id: 'news', label: t('news.label'), group: 'live', noun: t('news.noun'), countOf: n => tn('news.count', n), dataUrl: 'data/news.json',
+    id: 'news', label: t('news.label'), group: 'live', noun: t('news.noun'), countOf: n => tn('news.count', n),
     sidebarTitle: t('news.sidebarTitle'), placeholder: t('news.placeholder'), randomTitle: t('news.random'),
-    prepare: headlines,
+    // No bundled file: the first load is the live one (js/directory.mjs loadDirectory), with its own words.
+    async loadItems({ signal }) { const { items, note } = await loadNews(signal); this.loadNote = note; return items; },
+    loadingText: t('news.loading'), errorText: t('news.failed'),
+    /** The header: how many stories, and when the headlines were built ("Updated 05:24 (12 minutes ago)"), as a
+     * warning past STALE_MS; or that no headlines arrived. */
+    metaOf: n => feed.items ? { text: `${tn('news.count', n)} · ${t(today(feed.at) ? 'news.updated' : 'news.updatedDay', { time: clock(feed.at), ago: relativeTime(Math.min(feed.at, Date.now())) })}`,
+        stale: Date.now() > feed.staleAt }
+        : { text: `${tn('news.count', n)} · ${t('news.noHeadlines')}`, stale: true },
+    /** Shown in the sheet with Retry while there are no headlines at all (the other sources answered). */
+    statusOf: () => feed.items ? null : { text: t('news.failed'), detail: t('news.failedPartial') },
     searchText: it => `${it.name} ${it.source} ${it.place || ''} ${TOPIC[it.topic] || ''} ${it.summary || ''} ${it.type || ''} ${it.category || ''}`,
     searchOrder: (a, b) => b.ts.localeCompare(a.ts),
     listOrder: (a, b) => b.ts.localeCompare(a.ts), twoLines: true,
@@ -107,18 +160,11 @@ export const NEWS = {
     live: {
         label: t('news.live.label'),
         note: t('news.live.note'),
-        needsView: false, every: 120000,
-        async load(_b, base, signal) {
-            const [news, q, a, n] = await Promise.allSettled([getJSON(HEADLINES_URL, signal).then(headlines), getJSON(SOURCES.quakes, signal).then(quakes),
-                getJSON(SOURCES.alerts, signal).then(alerts), getJSON(SOURCES.nature, signal).then(nature)]);
-            if (signal.aborted) throw new DOMException('Replaced by a newer request', 'AbortError');
-            const failed = [['headlines', news], ['quakes', q], ['alerts', a], ['nature', n]].filter(([, r]) => r.status === 'rejected').map(([name]) => t(`news.live.src.${name}`));
-            if (failed.length === 4) throw new Error(t('news.live.noSource'));
-            const ok = r => r.status === 'fulfilled' ? r.value : [];
-            const items = [...(news.status === 'fulfilled' && news.value.length ? news.value : base), ...ok(q), ...ok(a), ...ok(n)]
-                .filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng) && it.ts);
-            return { items, note: failed.length ? t('news.live.unavailable', { list: list(failed) }) : '' };
-        }
+        needsView: false, every: REFRESH_MS,
+        load: (_b, _base, signal) => loadNews(signal),
+        // When no source answers, the headlines shown still go once they pass the window.
+        prune: items => items.filter(recent),
+        statusText: ({ note }) => note ? t('news.live.checkedNote', { time: clock(Date.now()), note }) : t('news.live.checked', { time: clock(Date.now()) })
     },
     links: [[t('news.links.verify'), [
         [t('news.links.bellingcat'), 'https://www.bellingcat.com/category/resources/'],

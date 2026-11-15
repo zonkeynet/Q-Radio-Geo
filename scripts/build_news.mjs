@@ -2,10 +2,12 @@
 /**
  * Builds the NEWS layer's headlines: the latest items of public RSS and Atom feeds, each placed on the globe from
  * the place named in it and tagged with a topic. Only the headline, a short summary and the link are kept.
- * .github/workflows/news.yml runs it every 10 minutes and publishes the result to the news-data branch; run by hand
- * it refreshes data/news.json, the snapshot the page shows before the live file arrives.
+ * .github/workflows/news.yml runs it every 10 minutes (when GitHub honours the schedule: runs come hours apart) and
+ * publishes the result to the news-data branch, which the page reads. Nothing is bundled with the site: an old copy
+ * shown as current was worse than none. The file says when it was built (generated_at), when the page should call it
+ * stale (stale_after), and how each feed answered (feeds[].n, feeds[].error).
  *
- * Usage: node scripts/build_news.mjs [--out data/news.json] [--gazetteer]
+ * Usage: node scripts/build_news.mjs [--out out/news.json] [--gazetteer]
  *   --gazetteer  first rebuilds scripts/news-gazetteer.json from Natural Earth (public domain)
  */
 import { createHash } from 'node:crypto';
@@ -14,10 +16,12 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2), arg = name => { const i = args.indexOf(`--${name}`); return i < 0 ? null : args[i + 1] ?? ''; };
-const OUT = resolve(arg('out') || 'data/news.json');
+const OUT = resolve(arg('out') || 'out/news.json');
 const GAZETTEER = join(dirname(fileURLToPath(import.meta.url)), 'news-gazetteer.json');
 const UA = 'Q-Radio-Geo/1.0 news reader (+https://github.com/zonkeynet/Q-Radio-Geo)';
 const MAX_AGE_H = 48, MAX_ITEMS = 900;
+// The schedule is every 10 minutes; past this the page shows the file's age as a warning (js/news.mjs).
+const STALE_AFTER_H = 2;
 
 // [name, feed URL, language, home country]. Public feeds offered for readers; only headlines, summaries and links
 // are used. A national outlet's headline that names no place is put on its home country, and says so.
@@ -181,7 +185,10 @@ for (const item of results.flatMap(r => r.status === 'fulfilled' ? r.value : [])
 news.sort((a, b) => b.ts.localeCompare(a.ts));
 const items = news.slice(0, MAX_ITEMS);
 mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, JSON.stringify({ generated_at: new Date().toISOString(), feeds: FEEDS.map(([name, url, lang]) => ({ name, url, lang })), items }));
+const built = Date.now();
+writeFileSync(OUT, JSON.stringify({ generated_at: new Date(built).toISOString(), stale_after: new Date(built + STALE_AFTER_H * 36e5).toISOString(),
+    feeds: FEEDS.map(([name, url, lang], i) => ({ name, url, lang, ...(results[i].status === 'fulfilled' ? { n: results[i].value.length } : { error: String(results[i].reason?.message || 'failed').slice(0, 120) }) })),
+    items }));
 // The headlines are the outlets' own: shown with their name and a link back, never as full articles.
 console.log(report.join('\n'));
 console.log(`${items.length} headlines placed: ${items.filter(i => i.loc === 'place').length} at a named place, ${items.filter(i => i.loc === 'country').length} on a country, ${items.filter(i => i.loc === 'source').length} on the outlet's country`);

@@ -4,6 +4,7 @@
 // no console error other than the blocked requests, and third parties only among the documented automatic ones.
 // Then the interface: the app contract (messages, back(), commands, insets), Italian and English, a right-to-left
 // sanity check, landscape (side panel), a 320 px phone and 130 % page zoom (no header overlap, nothing cut off).
+// News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
 // Run with Playwright installed:  node scripts/test_smoke_browser.mjs   (SMOKE_ONLY=app to run one variant)
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -100,6 +101,15 @@ try {
             await step(`layer ${id} and one card`, async () => {
                 await page.locator('#btnMode').click();
                 await page.locator(`#modeMenu .mode-option[data-mode="${id}"]`).click();
+                if (id === 'news') {
+                    // Offline nothing answers: plain words and Retry, never a bundled list; ✕ goes back to the layer shown.
+                    await page.locator('#sheetStatus.error').waitFor({ timeout: 120000 });
+                    assert.match(await page.locator('#sheetStatus').innerText(), /Couldn’t load the latest headlines|offline/);
+                    assert.equal(await page.locator('#sheetStatus .btn', { hasText: 'Retry' }).count(), 1);
+                    assert.equal(await page.locator('#sheetList .dir-item').count(), 0, 'no stories without the network');
+                    await page.locator('#sheetStatus .icon-btn').click();
+                    return;
+                }
                 await page.waitForFunction(m => document.documentElement.dataset.mode === m, id, { timeout: 120000 });
                 const item = page.locator('#sheetList .dir-item').first();
                 if (await item.count() || await item.waitFor({ timeout: 5000 }).then(() => true, () => false)) {
@@ -108,9 +118,94 @@ try {
                     // The layer button and the random pick are named for this layer (TalkBack reads these).
                     const names = await page.evaluate(() => [document.getElementById('btnMode').getAttribute('aria-label'), document.getElementById('btnRandom').getAttribute('aria-label')]);
                     assert.ok(names[1] && names[1] !== 'Play a random station', `random pick named for the radio in ${names[0]}`);
-                } else assert.ok(['qcast', 'news'].includes(id), 'no list item'); // live-only layers: nothing without the network
+                } else assert.ok(['qcast'].includes(id), 'no list item'); // live-only layers: nothing without the network
             });
         }
+        if (variant === 'site') await step('news: live first, the file\'s time in the header, old headlines dropped; stale, failed and partly failed with Retry', async () => {
+            const now = Date.now(), iso = ms => new Date(ms).toISOString();
+            const story = (id, title, minutesAgo) => ({ id, t: title, u: `https://news.example.org/${id}`, s: 'Example News', l: 'en', ts: iso(now - minutesAgo * 6e4),
+                topic: 'politics', lat: 41.9, lng: 12.5, cc: 'IT', pl: 'Rome', loc: 'place' });
+            const quake = { type: 'Feature', id: 'us-smoke', properties: { mag: 4.6, place: '10 km S of Testville', time: now - 30 * 6e4, url: 'https://earthquake.usgs.gov/x', tsunami: 0 },
+                geometry: { type: 'Point', coordinates: [12.5, 41.9, 10] } };
+            // The live file as build_news.mjs writes it, built `built` minutes ago; one story per age band, one from last week.
+            const live = { built: 5, fail: false, hold: null, quakes: false, asked: 0 };
+            const open = async () => {
+                const p = await context.newPage();
+                p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+                await p.route('https://raw.githubusercontent.com/**', async r => {
+                    live.asked++;
+                    if (live.hold) await live.hold;
+                    if (live.fail) return r.abort();
+                    const at = now - live.built * 6e4;
+                    r.fulfill({ json: { generated_at: iso(at), stale_after: iso(at + 2 * 36e5), feeds: [],
+                        items: [story('a1', 'Fresh headline', 5), story('a2', 'Yesterday headline', 26 * 60), story('a3', 'Last week headline', 7 * 24 * 60)] } });
+                });
+                await p.route(u => u.hostname === 'earthquake.usgs.gov', r => live.quakes ? r.fulfill({ json: { features: [quake] } }) : r.abort());
+                await p.route(u => ['www.gdacs.org', 'eonet.gsfc.nasa.gov'].includes(u.hostname), r => r.abort());
+                return p;
+            };
+            const sheet = p => p.evaluate(() => ({ meta: document.getElementById('sheetMeta').textContent, stale: document.getElementById('sheetMeta').classList.contains('stale'),
+                status: document.getElementById('sheetStatus').hidden ? '' : document.getElementById('sheetStatus').innerText, kind: document.getElementById('sheetStatus').className,
+                list: document.getElementById('sheetList').innerText, items: document.querySelectorAll('#sheetList .dir-item').length, live: document.getElementById('dirLive').innerText }));
+            // Loading: the words, a skeleton, no stories until the live file is here.
+            let release;
+            live.hold = new Promise(r => { release = r; });
+            const p = await open();
+            await p.goto(`${server.origin}/?hl=en#layer=news`);
+            await p.locator('#sheetStatus.loading', { hasText: 'Loading the latest headlines…' }).waitFor({ timeout: 30000 });
+            assert.equal((await sheet(p)).items, 0, 'nothing shown while loading');
+            live.hold = null; release();
+            await p.locator('#sheetList .dir-item').first().waitFor({ timeout: 30000 });
+            let s = await sheet(p);
+            assert.match(s.meta, /^2 stories · Updated \d{1,2}:\d\d( [AP]M)? \(5 minutes ago\)$/, s.meta);
+            assert.equal(s.stale, false);
+            assert.match(s.list, /Fresh headline[\s\S]*5 minutes ago[\s\S]*Yesterday headline[\s\S]*1 day ago/);
+            assert.doesNotMatch(s.list, /Last week headline/, 'older than 72 h: dropped');
+            assert.equal(s.status, '', 'no error');
+            assert.match(s.live, /Checked at \d{1,2}:\d\d( [AP]M)?; earthquakes, alerts,? and natural events unavailable/, s.live);
+            // The first load counts as the first refresh: the next comes after 10 minutes, not at once.
+            await p.waitForTimeout(2500);
+            assert.equal(live.asked, 1, `headline requests: ${live.asked}`);
+            // Stale: built 3 hours ago. The header says so, as a warning, and nothing is an error.
+            live.built = 180;
+            await p.locator('#dirLive .live-btn').click();
+            await p.waitForFunction(() => /3 hours ago/.test(document.getElementById('sheetMeta').textContent), null, { timeout: 30000 });
+            s = await sheet(p);
+            assert.equal(s.stale, true, 'warning style past stale_after');
+            assert.equal(s.status, '');
+            await p.close();
+            // Failed: no source answers. Plain words and Retry, no stories; Retry brings them.
+            live.built = 5; live.fail = true;
+            const f = await open();
+            await f.goto(`${server.origin}/?hl=en#layer=news`);
+            await f.locator('#sheetStatus.error').waitFor({ timeout: 30000 });
+            s = await sheet(f);
+            assert.match(s.status, /Couldn’t load the latest headlines\./);
+            assert.equal(s.items, 0);
+            live.fail = false;
+            await f.locator('#sheetStatus .btn', { hasText: 'Retry' }).click();
+            await f.locator('#sheetList .dir-item', { hasText: 'Fresh headline' }).waitFor({ timeout: 30000 });
+            assert.equal((await sheet(f)).status, '');
+            await f.close();
+            // Partly failed: earthquakes answer, the headlines do not. The quake is shown, the header and the status say
+            // the headlines are missing, Retry loads them.
+            live.fail = true; live.quakes = true;
+            const q = await open();
+            await q.goto(`${server.origin}/?hl=it#layer=news`);
+            await q.locator('#sheetList .dir-item', { hasText: 'Testville' }).waitFor({ timeout: 30000 });
+            await q.locator('#sheetStatus.error').waitFor({ timeout: 10000 });
+            s = await sheet(q);
+            assert.match(s.status, /Non è stato possibile caricare le ultime notizie\.[\s\S]*Sono mostrati solo terremoti/);
+            assert.match(s.meta, /titoli non caricati/);
+            assert.equal(s.stale, true);
+            live.fail = false;
+            await q.locator('#sheetStatus .btn').filter({ hasText: /Riprova|Retry/ }).click();
+            await q.locator('#sheetList .dir-item', { hasText: 'Fresh headline' }).waitFor({ timeout: 30000 });
+            s = await sheet(q);
+            assert.match(s.meta, /Aggiornate alle \d{1,2}:\d\d \(5 minuti fa\)/, s.meta);
+            assert.equal(s.status, '');
+            await q.close();
+        });
         await step('webcams card (no media loaded)', async () => {
             await page.evaluate(() => { location.hash = '#layer=webcams'; });
             await page.waitForFunction(() => document.documentElement.dataset.mode === 'webcams');

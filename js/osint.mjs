@@ -230,11 +230,22 @@ const fireBand = it => it.frp >= 100 ? 'big' : it.frp >= 10 ? 'mid' : 'small';
 // Detection time ("2026-10-12 00:41", UTC) as day, month and 24-hour time in the UI language, still in UTC.
 const fireTime = it => `${date(`${String(it.t).replace(' ', 'T')}:00Z`, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' }) || it.t} UTC`;
 const firePower = it => t('osint.fires.mw', { mw: it.frp });
+// The first and last detection of the file: the header says this window (the file is a snapshot from the last build,
+// "last 24 h" only on the day it was built), as a warning once the last detection is two days old.
+let fireSpan = null;
+function spanOf(items) {
+    let first = null, last = null;
+    for (const { t: at } of items) if (at) { if (!first || at < first) first = at; if (!last || at > last) last = at; }
+    fireSpan = first ? [first, last] : null;
+    return items;
+}
 export const FIRES = {
     id: 'fires', label: t('osint.fires.label'), group: 'safety', noun: t('osint.fires.noun'), dataUrl: 'data/fires.json',
     countOf: n => tn('osint.fires.count', n),
     sidebarTitle: t('osint.fires.title'), placeholder: t('osint.fires.placeholder'), randomTitle: t('osint.fires.random'),
-    prepare: json => json.items || [],
+    prepare: json => spanOf(json.items || []),
+    metaOf: n => fireSpan && { text: `${tn('osint.fires.count', n)} · ${t('osint.fires.window', { from: fireTime({ t: fireSpan[0] }), to: fireTime({ t: fireSpan[1] }) })}`,
+        stale: Date.now() - Date.parse(`${fireSpan[1].replace(' ', 'T')}:00Z`) > 48 * 36e5 },
     searchText: it => `${it.host || ''} ${it.t}`,
     searchOrder: (a, b) => b.frp - a.frp, // strongest first
     filters: [{ key: 'power', label: t('osint.fires.power'), options: [{ id: 'all', label: t('common.all'), name: t('osint.fires.anyPower') },

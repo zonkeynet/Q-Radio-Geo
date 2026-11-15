@@ -1,6 +1,9 @@
 # Rebuilds the NEWS layer's headlines every 10 minutes and publishes them as news.json on the news-data branch,
 # which the page reads from raw.githubusercontent.com. The branch holds one commit, replaced on every run, so the
 # repository does not grow; main and the GitHub Pages site are not touched.
+# GitHub delays and drops scheduled runs: in November 2026 they came 3 to 8 hours apart, not every 10 minutes. The
+# file carries generated_at and stale_after, and the page shows its true age; Run workflow (workflow_dispatch) rebuilds
+# it at once.
 name: News headlines
 
 on:
