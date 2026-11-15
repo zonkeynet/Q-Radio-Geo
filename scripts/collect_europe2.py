@@ -1180,6 +1180,15 @@ SOURCES = {
 
 VIEWABLE = ("ooe_land_webcams", "oulu_kelikamerat", "dwd_webcams", "dhmz_webcams", "wien_stadt_webcams")
 
+# Placement round (2026-11-14): collect_places_europe.py writes the inputs and fragments of these sources (it reuses
+# this file's parsers and round-2 builders and adds the records placed at named features); the Ukraine-facing hold
+# is retired (its pages are records of md_border_police_webcams). This build stage no longer writes them.
+BUILT_BY_PLACES = frozenset({
+    "md_border_police_webcams", "md_border_police_webcams_ukraine_facing", "plzen_city_webcams", "pkl_webcams",
+    "bansko_ski_webcams", "port_of_helsinki_webcams", "visitfinland_live_streams", "port_of_kiel_webcams",
+    "oresundsbron_pylon_cams", "turku_cathedral_tower_cams", "it_ski_bormio", "it_ski_campiglio_apt", "it_ski_cervinia",
+    "tirol_luft_livebilder", "mk_state_roads_video_kameri", "be_rmi_kmi_webcams", "shmu_webcams"})
+
 ETIQUETTE = [
     "Every request went through webcam_fetch.PoliteClient (robots.txt first, 1 s per host, HTTPS only); the Oulu list is one "
     "keyless GraphQL POST sent by post_json with the same rules (robots.txt answered 403 = no rules).",
@@ -1222,7 +1231,7 @@ def build_stage(out, only=None):
     report = {"family": FAMILY, "generated_at": F.now(), "register": REGISTER, "sources": [], "held": [], "hosts_refused": [],
               "already_held_in_repo": REPO_HELD, "etiquette": ETIQUETTE}
     for sid, spec in SOURCES.items():
-        if "build" not in spec or (only and sid not in only):
+        if "build" not in spec or sid in BUILT_BY_PLACES or (only and sid not in only):
             continue
         result = spec["build"](out)
         C.write_json(policy_path(out, sid), {sid: result["policy"]})

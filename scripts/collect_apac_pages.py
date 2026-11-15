@@ -69,7 +69,8 @@ POLICIES = {
                             "positions (station list), not surveyed camera mounts."),
             "attribution": "Hong Kong Observatory",
             "provider_notice": "Opens the official Hong Kong Observatory photo page. The marker is the HKO weather "
-                               "station the camera belongs to.",
+                               "station the camera belongs to or, where HKO publishes none for the site, a position "
+                               "placed by Q-Globe at the named site (the card says so; collect_places_world.py).",
             "rights_status": "official_page_only", "allowed_hosts": [],
             "review_status": "reviewed_for_external_references_only", "reviewed_at": REVIEWED_AT,
             "evidence": [HKO_TERMS, HKO_INDEX, HKO_STATIONS, HKO + "/robots.txt"],
@@ -135,6 +136,9 @@ def held(source_id, name, url, reason, until, evidence):
                         "source": {"id": source_id, "name": name, "url": url}, "reviewed_at": REVIEWED_AT}}
 
 
+# Placement round (2026-11-14): held only for lack of a position; scripts/collect_places_world.py places it and
+# writes its policy fragment, so this collector no longer writes the hold.
+PLACED_BY_PLACES_ROUND = {"israel_western_wall_cameras"}
 HELD = {}
 for _entry in [
     held("korea_its_cctv", "Korea National Transport Information Center (ITS) CCTV open API",
@@ -562,6 +566,8 @@ def build(out, catalog=None, refused=()):
             "http-only .webm references dropped; https ones kept as reported_clip_url."],
         "overlaps": overlap_report(saao, catalog)})
     for pid, policy in {**POLICIES, **HELD}.items():
+        if pid in PLACED_BY_PLACES_ROUND:
+            continue
         (out / "policies").mkdir(parents=True, exist_ok=True)
         (out / "policies" / f"{pid}.json").write_text(json.dumps({pid: policy}, ensure_ascii=False, indent=1),
                                                       encoding="utf-8")

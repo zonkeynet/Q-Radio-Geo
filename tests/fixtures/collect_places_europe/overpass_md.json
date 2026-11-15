@@ -1,0 +1,15 @@
+{"note": "Synthetic Overpass elements laid out on the test's rectangle countries (MD lng 28-30, RO lng 26-28, UA lat 48-49).",
+ "elements": [
+  {"type": "node", "id": 1, "lat": 46.48, "lon": 28.05, "tags": {"place": "town", "name": "Leova"}},
+  {"type": "way", "id": 11, "bounds": {"minlat": 46.4797, "minlon": 28.0095, "maxlat": 46.4803, "maxlon": 28.0105}, "tags": {"barrier": "border_control", "building": "service"}},
+  {"type": "node", "id": 12, "lat": 46.48, "lon": 27.995, "tags": {"barrier": "border_control"}},
+  {"type": "node", "id": 2, "lat": 45.48, "lon": 28.05, "tags": {"place": "village", "name": "Giurgiulești"}},
+  {"type": "way", "id": 21, "bounds": {"minlat": 45.469, "minlon": 28.018, "maxlat": 45.471, "maxlon": 28.022}, "tags": {"barrier": "border_control", "name": "Punctul de trecere a frontierei „Giurgiulești - Galați“ (Rutier)"}},
+  {"type": "node", "id": 22, "lat": 45.52, "lon": 28.09, "tags": {"barrier": "border_control"}},
+  {"type": "node", "id": 3, "lat": 47.97, "lon": 28.5, "tags": {"place": "town", "name": "Otaci"}},
+  {"type": "node", "id": 31, "lat": 47.99, "lon": 28.45, "tags": {"barrier": "border_control", "name": "Moldova"}},
+  {"type": "node", "id": 32, "lat": 48.005, "lon": 28.51, "tags": {"barrier": "border_control", "name": "ПП \"Могилів-Подільський\""}},
+  {"type": "node", "id": 4, "lat": 47.95, "lon": 29.5, "tags": {"place": "village", "name": "Palanca"}},
+  {"type": "node", "id": 41, "lat": 47.985, "lon": 29.47, "tags": {"barrier": "border_control"}},
+  {"type": "node", "id": 42, "lat": 47.985, "lon": 29.53, "tags": {"barrier": "border_control", "name": "Удобне"}}
+ ]}

@@ -255,6 +255,9 @@ HELD = {
         ["https://www.arcgis.com/home/item.html?id=e254de3a5ced49fb89de03fe97b0fd11"]),
 }
 REFUSED_HOSTS = {"nyc_dot_tmc": "webcams.nyctmc.org"}
+# Placement round (2026-11-14): held only for lack of a position; scripts/collect_places_world.py places it (or keeps
+# it held with its own reason) and writes its policy fragment: this collector no longer does.
+PLACED_BY_PLACES_ROUND = {"novascotia_highway_cameras"}
 
 
 # ================================================================= network run
@@ -303,7 +306,8 @@ def run(out, client=None):
         print(source, len(items), excluded)
 
     for source, entry in HELD.items():
-        hold(source, entry, host=REFUSED_HOSTS.get(source))
+        if source not in PLACED_BY_PLACES_ROUND:
+            hold(source, entry, host=REFUSED_HOSTS.get(source))
     report["robots"] = {base: (rule if isinstance(rule, str) else "robots.txt read and honoured")
                         for base, rule in client.robots.items()}
     report["generated_at"] = W.now()

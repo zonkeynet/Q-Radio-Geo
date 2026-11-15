@@ -128,6 +128,10 @@ class PolicyTest(unittest.TestCase):
             self.assertEqual(existing.get(pid), policy, pid)
         for pid, policy in M.HELD.items():
             self.assertEqual(policy["status"], "held")
+            if pid in M.PLACED_BY_PLACES_ROUND:  # placed by collect_places_world.py: integrated, with placement notes
+                self.assertIsNone(existing[pid].get("status"))
+                self.assertIn("placed by Q-Globe", existing[pid]["source"]["rights_note"])
+                continue
             self.assertEqual(existing.get(pid, policy).get("status"), "held", "a hold never replaces an integrated policy")
         self.assertNotIn("nsw_transport", M.HELD)
 

@@ -180,6 +180,9 @@ def held(source_id, name, url, reason, until, evidence):
 
 
 HELD = {}  # round 2: the other Japanese holds are written by collect_japan_rivers.py
+# Placement round (2026-11-14): scripts/collect_places_japan.py writes the mlit_kanto_cctv fragment, starting from
+# POLICIES["mlit_kanto_cctv"] here and adding the offices it places; this collector no longer writes it.
+POLICY_WRITTEN_BY_PLACES_ROUND = {"mlit_kanto_cctv"}
 for _entry in [
     held("mlit_dpf_cctv", "MLIT Data Platform CCTV common-format dataset", "https://www.mlit-data.jp/",
          "The DPF API needs a registered API key; provider-level rights not checked.",
@@ -598,6 +601,8 @@ def build(out, catalog=None, refused=()):
     report["kyushu_offices"] = offices
     # policies
     for pid, policy in {**POLICIES, **HELD}.items():
+        if pid in POLICY_WRITTEN_BY_PLACES_ROUND:
+            continue
         (out / "policies").mkdir(parents=True, exist_ok=True)
         (out / "policies" / f"{pid}.json").write_text(json.dumps({pid: policy}, ensure_ascii=False, indent=1),
                                                       encoding="utf-8")
