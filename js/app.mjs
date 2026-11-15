@@ -968,7 +968,10 @@ function setSheet(next) {
     const sheet = $('sheet');
     sheet.dataset.sheet = next;
     const toggle = $('sheetToggle'), open = next !== 'peek';
-    toggle.replaceChildren(icon(panelMode.matches ? (open ? 'up' : 'down') : (open ? 'down' : 'up')));
+    // One chevron, turned by CSS. Replacing it inside its own click detached the tapped <svg>; the header's "a tap on
+    // a collapsed sheet opens it" then found no button above it and opened the sheet again (Galaxy A30, Chrome 155).
+    if (!toggle.querySelector('svg')) toggle.replaceChildren(icon('down'));
+    toggle.dataset.dir = panelMode.matches ? (open ? 'up' : 'down') : (open ? 'down' : 'up');
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? t('sheet.collapse') : t('sheet.expand'));
     toggle.title = toggle.getAttribute('aria-label');
@@ -1011,41 +1014,79 @@ function initSheet() {
     const ORDER = ['peek', 'half', 'full'];
     const step = dir => { const i = ORDER.indexOf(sheetState()); setSheet(ORDER[Math.max(0, Math.min(2, i + dir))]); haptic('tick'); };
     $('sheetToggle').onclick = () => setSheet(sheetState() === 'peek' ? 'half' : 'peek');
-    // A collapsed sheet opens from a tap on its title.
-    $('sheetHead').addEventListener('click', e => { if (sheetState() === 'peek' && !e.target.closest('button')) setSheet('half'); });
+    // A collapsed sheet opens from a tap on its title, not on its buttons: the event's path as dispatched, which still
+    // holds the button when what was tapped inside it has changed since.
+    $('sheetHead').addEventListener('click', e => {
+        if (sheetState() === 'peek' && !e.composedPath().some(n => n instanceof HTMLButtonElement)) setSheet('half');
+    });
+    handle.addEventListener('click', () => { if (!panelMode.matches) setSheet(ORDER[(ORDER.indexOf(sheetState()) + 1) % 3]); });
     handle.addEventListener('keydown', e => {
         if (e.key === 'ArrowUp') { e.preventDefault(); step(1); }
         else if (e.key === 'ArrowDown') { e.preventDefault(); step(-1); }
         else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSheet(sheetState() === 'full' ? 'peek' : ORDER[ORDER.indexOf(sheetState()) + 1]); }
     });
-    // Drag the handle or the header: the sheet follows the finger (transform only) and snaps to the nearest height.
-    let drag = null;
-    const start = e => {
-        if (panelMode.matches || e.target.closest('button') && e.currentTarget !== handle) return;
+    // Dragging (phones, portrait): the sheet follows the finger (transform only), then goes to the nearest height, or
+    // to the next one in the direction of a fling. Which vertical drags are the sheet's is settled by touch-action
+    // before the gesture starts (assets/app.css): on the grip and the header always; elsewhere too, except inside the
+    // list or a card while the sheet is full, which scroll, and from their top a drag down is the sheet's again. The
+    // browser takes the gestures it may pan (pointercancel), so the code mirrors those rules. Only the header and the
+    // grip had a drag before, and the header's was taken by the browser after 16 px: the sheet came back.
+    // The pointer is captured only once the drag has started, so a tap on a header button stays that button's click.
+    let drag = null, dragEnded = false;
+    sheet.addEventListener('pointerdown', e => {
+        if (panelMode.matches || drag || !e.isPrimary || e.button > 0) return;
+        const top = e.target.closest?.('#sheetHandle, #sheetHead');
+        if (e.pointerType === 'mouse' && !top) return; // a mouse scrolls the list with its wheel and selects text
+        const scroller = top ? null : e.target.closest?.('.sheet-list, .card-scroll');
+        const downOnly = Boolean(scroller) && sheetState() === 'full';
+        if (downOnly && scroller.scrollTop > 0) return; // the list scrolls
         const h = sheetHeights();
-        drag = { y: e.clientY, from: h[sheetState()], h, moved: false, id: e.pointerId };
-        e.currentTarget.setPointerCapture(e.pointerId);
-    };
-    const move = e => {
+        drag = { id: e.pointerId, x: e.clientX, y: e.clientY, from: h[sheetState()], h, now: h[sheetState()], moved: false, downOnly, samples: [[e.timeStamp, h[sheetState()]]] };
+    });
+    sheet.addEventListener('pointermove', e => {
         if (!drag || e.pointerId !== drag.id) return;
-        const dy = drag.y - e.clientY;
-        if (Math.abs(dy) > 6) { drag.moved = true; sheet.classList.add('dragging'); }
-        if (drag.moved) document.documentElement.style.setProperty('--sheet-h', `${Math.max(drag.h.peek - 20, Math.min(drag.h.full, drag.from + dy))}px`);
-    };
+        const dy = drag.y - e.clientY; // up is positive
+        if (!drag.moved) {
+            if (Math.abs(dy) < 8) return;
+            // Sideways is not the sheet's; nor, in a full sheet's list, a drag up (the list scrolls on).
+            if (Math.abs(e.clientX - drag.x) > Math.abs(dy) || (drag.downOnly && dy > 0)) { drag = null; return; }
+            drag.moved = true;
+            sheet.classList.add('dragging');
+            try { sheet.setPointerCapture(e.pointerId); } catch { /* the pointer is gone */ }
+        }
+        drag.now = Math.max(drag.h.peek - 20, Math.min(drag.h.full, drag.from + dy));
+        drag.samples.push([e.timeStamp, drag.now]);
+        if (drag.samples.length > 12) drag.samples.shift();
+        document.documentElement.style.setProperty('--sheet-h', `${drag.now}px`);
+    });
     const end = e => {
         if (!drag || e.pointerId !== drag.id) return;
-        const { moved, h } = drag, now = parseFloat(document.documentElement.style.getPropertyValue('--sheet-h')) || h.half;
-        drag = null; sheet.classList.remove('dragging');
-        if (!moved) { if (e.currentTarget === handle) setSheet(ORDER[(ORDER.indexOf(sheetState()) + 1) % 3]); return; }
-        const nearest = ORDER.reduce((a, b) => Math.abs(h[b] - now) < Math.abs(h[a] - now) ? b : a);
-        setSheet(nearest); haptic('tick');
+        const d = drag;
+        drag = null;
+        if (!d.moved) return; // a tap: its click does what it does
+        sheet.classList.remove('dragging');
+        if (e.type === 'pointercancel') { setSheet(sheetState()); return; } // the browser took the gesture: back
+        // Speed over the last 120 ms (or the last two moves, when they come further apart), px/ms, up positive: past 0.6
+        // (a flick, not a slow drag) the sheet goes on to the next height that way. A finger that stopped has no speed.
+        const recent = d.samples.filter(([t]) => e.timeStamp - t <= 120), before = d.samples.at(-2);
+        const [t0, h0] = recent.length > 1 ? recent[0] : before && e.timeStamp - before[0] <= 250 ? before : [e.timeStamp, d.now];
+        const v = e.timeStamp > t0 ? (d.now - h0) / (e.timeStamp - t0) : 0;
+        const heights = ORDER.map(s => [s, d.h[s]]);
+        const next = v > .6 ? (heights.find(([, x]) => x > d.now + 1) || heights[2])[0]
+            : v < -.6 ? ([...heights].reverse().find(([, x]) => x < d.now - 1) || heights[0])[0]
+            : heights.reduce((a, b) => Math.abs(b[1] - d.now) < Math.abs(a[1] - d.now) ? b : a)[0];
+        setSheet(next); haptic('tick');
+        dragEnded = true; setTimeout(() => { dragEnded = false; }, 0);
     };
-    for (const el of [handle, $('sheetHead')]) {
-        el.addEventListener('pointerdown', start);
-        el.addEventListener('pointermove', move);
-        el.addEventListener('pointerup', end);
-        el.addEventListener('pointercancel', end);
-    }
+    sheet.addEventListener('pointerup', end);
+    sheet.addEventListener('pointercancel', end);
+    // A mouse drag ends with a click where it started: not a tap.
+    sheet.addEventListener('click', e => { if (dragEnded) { e.stopPropagation(); e.preventDefault(); } }, true);
+    // Whether the list or the card is scrolled: at the top a drag down moves a full sheet (touch-action, assets/app.css).
+    sheet.addEventListener('scroll', e => {
+        const el = e.target;
+        if (el.classList?.contains('sheet-list') || el.classList?.contains('card-scroll')) el.classList.toggle('scrolled', el.scrollTop > 0);
+    }, { capture: true, passive: true });
     // Back to the top of a long list.
     const top = iconButton('up', t('sheet.top'), 'fab list-top');
     top.hidden = true;

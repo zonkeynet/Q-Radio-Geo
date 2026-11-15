@@ -314,9 +314,20 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .sheet { inset-inline: 0; bottom: 0; height: var(--sheet-full, 60dvh); border-radius: var(--r-sheet) var(--r-sheet) 0 0; border-bottom: 0;
     transform: translateY(calc(var(--sheet-full, 60dvh) - var(--sheet-h, 40dvh))); transition: transform var(--dur) var(--ease); }
 .sheet.dragging { transition: none; }
+/* Vertical drags move the sheet (js/app.mjs initSheet) everywhere on it but inside the list or a card while the sheet
+   is full: there they scroll, and from the top a drag down moves the sheet again (pan-down: the list may only scroll on).
+   Decided before the gesture starts, so the browser never takes a drag halfway (pointercancel). */
+.sheet { touch-action: pan-x; }
+.sheet :is(.sheet-list, .card-scroll) { touch-action: pan-x; }
+.sheet[data-sheet="full"] :is(.sheet-list, .card-scroll) { touch-action: pan-x pan-down; }
+.sheet[data-sheet="full"] :is(.sheet-list, .card-scroll).scrolled { touch-action: pan-x pan-y; }
 .sheet-grip { flex: none; display: grid; place-items: center; height: 24px; touch-action: none; cursor: grab; }
 .sheet-grip span { width: 32px; height: 4px; border-radius: 2px; background: var(--outline-strong); }
-.sheet-head { flex: none; display: flex; align-items: center; gap: 4px; min-height: 60px; padding: 0 8px 4px 16px; }
+.sheet-head { flex: none; display: flex; align-items: center; gap: 4px; min-height: 60px; padding: 0 8px 4px 16px; touch-action: none; }
+/* Its buttons get the tap, never the icon inside them; the size chevron turns rather than being replaced. */
+.sheet-head button svg { pointer-events: none; }
+#sheetToggle .icon { transition: transform var(--dur-fast) var(--ease); }
+#sheetToggle[data-dir="up"] .icon { transform: rotate(180deg); }
 .sheet-heading { flex: 1; min-width: 0; cursor: default; }
 .sheet-title { display: flex; align-items: center; gap: 8px; font: 600 20px/28px var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sheet-title .icon { width: 22px; height: 22px; color: var(--primary); }
@@ -337,6 +348,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
     .sheet[data-sheet="peek"] :is(.sheet-body, .dir-live) { display: none; }
     .sheet-grip { display: none; }
     .sheet-head { padding-top: 4px; }
+    .sheet, .sheet-head, .sheet .sheet-list, .sheet .card-scroll { touch-action: auto !important; } /* a panel: nothing to drag */
     .sheet-body { flex: 1; height: auto; }
     .sheet-list { padding-bottom: 16px; }
     .chips { top: calc(var(--header-bottom, 64px) + 4px); }

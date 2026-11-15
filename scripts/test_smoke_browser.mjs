@@ -5,6 +5,8 @@
 // Then the interface: the app contract (messages, back(), commands, insets), Italian and English, a right-to-left
 // sanity check, landscape (side panel), a 320 px phone and 130 % page zoom (no header overlap, nothing cut off).
 // News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
+// The sheet under touch (real touch input through the browser, so touch-action and scrolling apply): its header
+// buttons take their taps, drags move it, the list scrolls only when it is full, rows still open their cards.
 // Run with Playwright installed:  node scripts/test_smoke_browser.mjs   (SMOKE_ONLY=app to run one variant)
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -122,11 +124,12 @@ try {
             });
         }
         if (variant === 'site') await step('news: live first, the file\'s time in the header, old headlines dropped; stale, failed and partly failed with Retry', async () => {
-            const now = Date.now(), iso = ms => new Date(ms).toISOString();
-            const story = (id, title, minutesAgo) => ({ id, t: title, u: `https://news.example.org/${id}`, s: 'Example News', l: 'en', ts: iso(now - minutesAgo * 6e4),
+            // Times are relative to each request (this step takes a while): "5 minutes ago" stays 5 minutes.
+            const iso = ms => new Date(ms).toISOString();
+            const story = (id, title, minutesAgo) => ({ id, t: title, u: `https://news.example.org/${id}`, s: 'Example News', l: 'en', ts: iso(Date.now() - minutesAgo * 6e4),
                 topic: 'politics', lat: 41.9, lng: 12.5, cc: 'IT', pl: 'Rome', loc: 'place' });
             // A story from a few seconds ago, and one stamped a minute ahead (a feed's clock): both "0 minutes ago".
-            const quake = { type: 'Feature', id: 'us-smoke', properties: { mag: 4.6, place: '10 km S of Testville', time: now - 30 * 6e4, url: 'https://earthquake.usgs.gov/x', tsunami: 0 },
+            const quake = { type: 'Feature', id: 'us-smoke', properties: { mag: 4.6, place: '10 km S of Testville', time: Date.now() - 30 * 6e4, url: 'https://earthquake.usgs.gov/x', tsunami: 0 },
                 geometry: { type: 'Point', coordinates: [12.5, 41.9, 10] } };
             // The live file as build_news.mjs writes it, built `built` minutes ago; one story per age band, one from last week.
             const live = { built: 5, fail: false, hold: null, quakes: false, asked: 0 };
@@ -137,7 +140,7 @@ try {
                     live.asked++;
                     if (live.hold) await live.hold;
                     if (live.fail) return r.abort();
-                    const at = now - live.built * 6e4;
+                    const at = Date.now() - live.built * 6e4;
                     r.fulfill({ json: { generated_at: iso(at), stale_after: iso(at + 2 * 36e5), feeds: [],
                         items: [story('a0', 'Ahead headline', -1), story('a9', 'Just now headline', .2), story('a1', 'Fresh headline', 5), story('a2', 'Yesterday headline', 26 * 60),
                             story('a3', 'Last week headline', 7 * 24 * 60)] } });
@@ -365,6 +368,85 @@ try {
             assert.equal(await fresh.evaluate(() => document.documentElement.lang), 'en');
             assert.match(await fresh.locator('#sheetMeta').innerText(), /receivers/);
             await fresh.close();
+        });
+        if (variant !== 'mirror') await step('sheet under touch: header buttons, drags from the header and the list, list scroll only when full, landscape panel', async () => {
+            const p = await context.newPage();
+            p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+            await p.goto(`${server.origin}${variant === 'app' ? '/?app=1&hl=en' : '/?hl=en'}#layer=sdr`);
+            await ready(p);
+            const cdp = await context.newCDPSession(p);
+            const touch = (type, x, y, timestamp) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }], ...(timestamp ? { timestamp } : {}) });
+            // A finger moving at a steady speed over `ms`, then the sheet's transition. Each event carries its own time:
+            // a move takes this browser some 50 ms to deliver, more when busy, which would make every drag slow.
+            const drag = async (x, y0, y1, ms = 600, steps = 15) => {
+                const t0 = Date.now() / 1000 - ms / 1000 - .05;
+                await touch('touchStart', x, y0, t0);
+                for (let i = 1; i <= steps; i++) await touch('touchMove', x, y0 + (y1 - y0) * i / steps, t0 + ms / 1000 * i / steps);
+                await touch('touchEnd', 0, 0, t0 + ms / 1000 + .008);
+                await p.waitForTimeout(500);
+            };
+            const sheetState = () => p.evaluate(() => document.getElementById('sheet').dataset.sheet);
+            const box = sel => p.evaluate(sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, top: r.top, w: r.width, h: r.height }; }, sel);
+            const scrolled = () => p.evaluate(() => Math.round(document.getElementById('sheetList').scrollTop));
+            // Taps through the same touch channel as the drags (mixed with Playwright's own, a tap after a drag made no click).
+            const tap = async sel => { const b = await box(sel); await touch('touchStart', b.x, b.y); await touch('touchEnd'); await p.waitForTimeout(500); };
+            assert.equal(await sheetState(), 'half');
+            // A tap on a row opens its card (the list takes vertical drags now; taps stay taps).
+            await tap('#sheetList .dir-item');
+            await p.locator('#sheetCard .dir-card').waitFor({ timeout: 5000 });
+            await p.getByRole('button', { name: 'Back to the list' }).click();
+            await p.locator('#sheetList .dir-item').first().waitFor();
+            // The size button, tapped on its icon: the Galaxy's taps landed there, and the sheet came back at once.
+            const toggle = await box('#sheetToggle');
+            assert.ok(toggle.w >= 48 && toggle.h >= 48, `48 px target: ${toggle.w} × ${toggle.h}`);
+            await tap('#sheetToggle svg');
+            assert.equal(await sheetState(), 'peek', 'the button collapses the sheet');
+            await tap('#sheetToggle svg');
+            assert.equal(await sheetState(), 'half', 'and opens it');
+            await tap('#sheetToggle');
+            assert.equal(await sheetState(), 'peek');
+            // Peek: a drag up from the title takes the sheet to full (the browser took it after 16 px before).
+            const head = await box('#sheetHead');
+            await drag(120, head.y, 70);
+            assert.equal(await sheetState(), 'full', 'header drag from peek');
+            // Full: a drag up on the list scrolls it, the sheet stays; scrolled, a drag down scrolls it back.
+            let list = await box('#sheetList');
+            await drag(120, list.top + 320, list.top + 40, 400);
+            const down = await scrolled();
+            assert.ok(down > 100, `the list scrolled: ${down}`);
+            assert.equal(await sheetState(), 'full');
+            await drag(120, list.top + 40, list.top + 120, 400);
+            assert.equal(await sheetState(), 'full', 'a scrolled list scrolls back, the sheet stays');
+            assert.ok(await scrolled() < down, 'scrolled back');
+            await drag(120, list.top + 40, list.top + 600, 300);
+            await p.waitForTimeout(800);
+            assert.equal(await scrolled(), 0, 'back at the top');
+            assert.equal(await sheetState(), 'full');
+            // At the top of the list, a drag down moves the sheet (slowly: to the nearest height, half).
+            const heights = await p.evaluate(() => [innerHeight, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-full'))]);
+            await drag(120, list.top + 40, list.top + 40 + (heights[1] - heights[0] * .5), 1200);
+            assert.equal(await sheetState(), 'half', 'a drag down from the top of the list');
+            // Half: a drag up on the list opens the sheet; the list does not scroll under the finger.
+            list = await box('#sheetList');
+            await drag(120, list.top + 160, list.top - 160);
+            assert.equal(await sheetState(), 'full', 'a drag up on the list from half');
+            assert.equal(await scrolled(), 0);
+            // A quick flick down from the header goes past the nearest height to the next one.
+            await drag(120, (await box('#sheetHead')).y, (await box('#sheetHead')).y + 140, 90, 6);
+            assert.equal(await sheetState(), 'half', 'a flick down from full');
+            // Landscape: a side panel; its button still collapses and opens it, nothing is dragged. (Clicked: after the
+            // drags above, this headless browser makes no click of a synthetic tap; the Galaxy does, in Chrome.)
+            await p.setViewportSize({ width: 890, height: 359 });
+            await p.waitForTimeout(500);
+            assert.equal(await p.evaluate(() => getComputedStyle(document.getElementById('sheetList')).touchAction), 'auto', 'a panel scrolls as usual');
+            await p.locator('#sheetToggle').click();
+            await p.waitForTimeout(300);
+            assert.equal(await sheetState(), 'peek', 'panel button');
+            await p.locator('#sheetToggle').click();
+            await p.waitForTimeout(300);
+            assert.notEqual(await sheetState(), 'peek');
+            await cdp.detach();
+            await p.close();
         });
         if (variant === 'site') await step('live streams: website frame only after a tap; app preview only while the card is open, capped, and openExternal', async () => {
             for (const app of [false, true]) {
