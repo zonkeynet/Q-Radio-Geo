@@ -46,6 +46,8 @@ export default {
     "tv.menu": "Live TV",
     "tv.menuAbout": "News channels from 17 countries",
     "news.latest": "Latest",
+    "news.latestPause": "Pause the latest stories",
+    "news.latestPlay": "Scroll the latest stories",
     "radio.label": "Radio",
     "radio.about": "Live stations from every country",
     "radio.title": "Radio around the view",

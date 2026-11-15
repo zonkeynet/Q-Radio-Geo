@@ -737,21 +737,65 @@ function markMode() {
     const placeholder = DIRECTORIES[mode]?.placeholder || t('radio.placeholder');
     $('searchInput').placeholder = placeholder; $('searchInput').setAttribute('aria-label', placeholder);
 }
-/** Latest stories (news, large screens): a static row of the newest items, no animation. */
+/**
+ * Latest stories (news): a row at the bottom, under the globe (above the sheet and the player). When the stories do not
+ * fit it scrolls by itself, about 40 px a second, in a loop (a second, hidden copy follows the first); it stops under
+ * the pointer, a finger or the keyboard's focus, and with its pause button. Reduced motion and lite mode: it stays
+ * still and scrolls by hand.
+ */
+let tickerPaused = false;
+const stillMotion = matchMedia('(prefers-reduced-motion: reduce)');
 function renderTicker() {
-    const d = dir(), box = $('newsTicker'), track = $('tickerMove');
+    const d = dir(), box = $('newsTicker'), view = $('tickerMove');
     const items = d?.ticker ? d.ticker(state().items).slice(0, 20) : [];
     box.hidden = !items.length;
-    if (!items.length) return;
-    track.replaceChildren();
-    for (const it of items) {
-        const b = node('button', 'ticker-item');
-        b.type = 'button';
-        b.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
-        b.append(node('i', 'ticker-dot'), node('span', 'ticker-text', d.nameOf(it)), node('small', 'ticker-src', d.subOf(it)));
-        b.onclick = () => selectDir(it);
-        track.appendChild(b);
+    syncLayout();
+    if (!items.length) { view.replaceChildren(); return; }
+    const run = node('div', 'latest-run');
+    for (const copy of [false, true]) {
+        const set = node('div', 'latest-set');
+        if (copy) set.setAttribute('aria-hidden', 'true');
+        for (const it of items) {
+            const b = node('button', 'ticker-item');
+            b.type = 'button';
+            if (copy) b.tabIndex = -1;
+            b.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
+            b.append(node('i', 'ticker-dot'), node('span', 'ticker-text', d.nameOf(it)), node('small', 'ticker-src', d.subOf(it)));
+            b.onclick = () => selectDir(it);
+            set.append(b);
+        }
+        run.append(set);
     }
+    view.replaceChildren(run);
+    fitTicker();
+}
+/** Moving only when the stories do not fit (and motion is welcome); its speed from their length. */
+function fitTicker() {
+    const box = $('newsTicker'), view = $('tickerMove'), run = view.firstElementChild, set = run?.firstElementChild;
+    if (box.hidden || !set) return;
+    const moving = !LITE_MODE && !stillMotion.matches && set.scrollWidth > view.clientWidth + 1;
+    run.classList.toggle('moving', moving);
+    view.classList.toggle('by-hand', !moving && set.scrollWidth > view.clientWidth + 1);
+    if (moving) run.style.setProperty('--ticker-s', `${Math.max(15, Math.round(set.scrollWidth / 40))}s`);
+    let pause = $('tickerPause');
+    if (!pause) {
+        pause = iconButton('pause', t('news.latestPause'), 'icon-btn latest-pause');
+        pause.id = 'tickerPause';
+        pause.onclick = () => { tickerPaused = !tickerPaused; fitTicker(); };
+        box.append(pause);
+        // A finger on the row holds it, and a little longer after it lifts.
+        let release = 0;
+        box.addEventListener('pointerdown', () => { clearTimeout(release); box.classList.add('held'); });
+        const lift = () => { clearTimeout(release); release = setTimeout(() => box.classList.remove('held'), 2500); };
+        box.addEventListener('pointerup', lift); box.addEventListener('pointercancel', lift);
+        new ResizeObserver(() => fitTicker()).observe(view);
+    }
+    pause.hidden = !moving;
+    box.classList.toggle('paused', tickerPaused);
+    pause.replaceChildren(icon(tickerPaused ? 'play' : 'pause'));
+    pause.setAttribute('aria-pressed', String(tickerPaused));
+    pause.setAttribute('aria-label', t(tickerPaused ? 'news.latestPlay' : 'news.latestPause'));
+    pause.title = pause.getAttribute('aria-label');
 }
 function setFilter(key, value) {
     state().values[key] = value;
@@ -1183,13 +1227,17 @@ function syncLayout() {
         // The map tools: above the sheet, the player and (phones) the TV dock, never over the chips; without room, aside.
         const tools = $('mapTools'), toolsH = tools.offsetHeight, tv = $('tvDock');
         const tvH = tv && !tv.hidden && narrow.matches ? tv.offsetHeight + 8 : 0;
+        // The latest stories' row (news) sits above the sheet and the player: what stands above them stands above it too.
+        const ticker = $('newsTicker'), tickerH = ticker.hidden || !ticker.offsetHeight ? 0 : ticker.offsetHeight + 8;
+        root.setProperty('--ticker-h', `${tickerH}px`);
         root.setProperty('--tools-h', `${toolsH}px`);
-        tools.classList.toggle('no-room', innerHeight - Math.max(dock, insetBottom()) - playerH - tvH - 16 - toolsH < chromeBottom + 8);
+        tools.classList.toggle('no-room', innerHeight - Math.max(dock, insetBottom()) - playerH - tickerH - tvH - 16 - toolsH < chromeBottom + 8);
         // The reticle marks the globe's centre: the same insets, as CSS variables.
-        const insets = { top: chromeBottom, bottom: dock + (portrait ? playerH : 0), left: Math.round(left), right: Math.round(right) };
+        const insets = { top: chromeBottom, bottom: dock + (portrait ? playerH + tickerH : 0), left: Math.round(left), right: Math.round(right) };
         for (const [k, v] of Object.entries(insets)) root.setProperty(`--view-${k}`, `${v}px`);
         globe?.setViewInsets(insets);
         centreSearch(insets);
+        centreChips(insets);
     });
 }
 /**
@@ -1216,6 +1264,24 @@ function centreSearch({ left, right }) {
         }
     }
     bar.classList.toggle('search-centred', on);
+}
+/**
+ * Desktops: the filter chips centred on the globe too, as far as their row allows (it starts beside the panel, whose
+ * title bar shares it when collapsed); chips wider than the row start at its beginning and scroll, as on phones.
+ */
+function centreChips({ left, right }) {
+    const row = $('chipsRow'), track = $('chipsTrack');
+    let shift = 0;
+    if (wide.matches && !row.hidden && document.documentElement.dir !== 'rtl') {
+        const box = row.getBoundingClientRect(), style = getComputedStyle(track);
+        const start = parseFloat(style.paddingInlineStart) || 0, end = parseFloat(style.paddingInlineEnd) || 0;
+        const chips = track.scrollWidth - start - end; // the chips themselves: the track's width without its padding
+        if (chips > 0) {
+            const centre = (left + innerWidth - right) / 2;
+            shift = Math.round(Math.max(0, Math.min(centre - box.left - start - chips / 2, box.width - start - end - chips)));
+        }
+    }
+    track.style.setProperty('--chips-shift', `${shift}px`);
 }
 function initSheet() {
     const sheet = $('sheet'), handle = $('sheetHandle'), list = $('sheetList');
@@ -1302,7 +1368,7 @@ function initSheet() {
     $('sheetBody').appendChild(top);
     list.addEventListener('scroll', () => { top.hidden = list.scrollTop < 500; }, { passive: true });
     // The layer's name sizes its button, and with it the room for a centred search.
-    for (const el of [$('topbar'), $('btnMode'), $('chipsRow'), $('sheetHead'), $('sheetStatus'), $('dirLive'), $('bottomPlayer')]) new ResizeObserver(syncLayout).observe(el);
+    for (const el of [$('topbar'), $('btnMode'), $('chipsRow'), $('chipsTrack'), $('newsTicker'), $('sheetHead'), $('sheetStatus'), $('dirLive'), $('bottomPlayer')]) new ResizeObserver(syncLayout).observe(el);
     addEventListener('resize', syncLayout);
     panelMode.addEventListener('change', () => setSheet(sheetState()));
     setSheet(PICK_MODE ? 'peek' : 'half');

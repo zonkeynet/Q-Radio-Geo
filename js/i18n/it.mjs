@@ -46,6 +46,8 @@ export default {
     "tv.menu": "TV in diretta",
     "tv.menuAbout": "Canali di notizie da 17 paesi",
     "news.latest": "Ultime",
+    "news.latestPause": "Ferma le ultime notizie",
+    "news.latestPlay": "Fai scorrere le ultime notizie",
     "radio.label": "Radio",
     "radio.about": "Stazioni in diretta da ogni paese",
     "radio.title": "Radio nella vista",

@@ -10,6 +10,7 @@ const ICONS = {
     wall: '<rect x="3.5" y="4.5" width="7.5" height="6.5" rx="1.6"/><rect x="13" y="4.5" width="7.5" height="6.5" rx="1.6"/><rect x="3.5" y="13" width="7.5" height="6.5" rx="1.6"/><rect x="13" y="13" width="7.5" height="6.5" rx="1.6"/>',
     close: '<path d="m6 6 12 12"/><path d="M18 6 6 18"/>',
     play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
+    pause: '<rect x="6.5" y="5.5" width="3.5" height="13" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5.5" width="3.5" height="13" rx="1" fill="currentColor" stroke="none"/>',
     stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor"/>',
     prev: '<path d="M6.5 5.5v13"/><path d="M18 5.5 9.5 12l8.5 6.5z" fill="currentColor"/>',
     next: '<path d="M17.5 5.5v13"/><path d="M6 5.5 14.5 12 6 18.5z" fill="currentColor"/>',

@@ -297,7 +297,8 @@ button:disabled { opacity: .38; cursor: not-allowed; }
     -webkit-mask-image: linear-gradient(to var(--fade-end, right), #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to var(--fade-end, right), #000 calc(100% - 32px), transparent); }
 :root[dir="rtl"] { --fade-end: left; }
 .chips::-webkit-scrollbar { display: none; }
-.chips-track { display: flex; gap: 8px; width: max-content; padding-inline: var(--g) 40px; pointer-events: auto; }
+.chips-track { display: flex; gap: 8px; width: max-content; padding-inline: var(--g) 40px; pointer-events: auto;
+    margin-inline-start: var(--chips-shift, 0px); transition: margin-inline-start var(--dur) var(--ease); } /* centred on the globe on desktops: js/app.mjs centreChips */
 .chips:empty, .chips-track:empty { display: none; }
 .chip { flex: none; display: flex; align-items: center; height: 48px; padding: 6px 0; }
 .chip > span { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: var(--r-chip); background: var(--glass); color: var(--on-surface);
@@ -315,10 +316,10 @@ button:disabled { opacity: .38; cursor: not-allowed; }
    height and gap, js/tv.mjs); never above the chips: without room for them (a full sheet) they step aside (.no-room,
    js/app.mjs syncLayout). On tablets and large screens the TV dock stands beside them instead. */
 .map-tools { position: fixed; z-index: 20; inset-inline-end: calc(var(--inset-x) + var(--g)); bottom: 0; display: flex; flex-direction: column; gap: 8px;
-    --tools-below: calc(max(var(--dock-h), var(--inset-b)) + var(--player-h) + 16px);
+    --tools-below: calc(max(var(--dock-h), var(--inset-b)) + var(--player-h) + var(--ticker-h, 0px) + 16px);
     transform: translateY(calc(-1 * min(var(--tools-below), 100dvh - var(--chrome-bottom, 120px) - 8px - var(--tools-h, 48px))));
     transition: transform var(--dur) var(--ease); }
-@media (max-width: 719px) { .map-tools { --tools-below: calc(max(var(--dock-h), var(--inset-b)) + var(--player-h) + var(--tv-h, 0px) + 16px); } }
+@media (max-width: 719px) { .map-tools { --tools-below: calc(max(var(--dock-h), var(--inset-b)) + var(--player-h) + var(--ticker-h, 0px) + var(--tv-h, 0px) + 16px); } }
 .map-tools.no-room { visibility: hidden; }
 .fab { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--glass); color: var(--on-surface); box-shadow: var(--shadow); }
 .fab:hover { background: var(--surface-3); }
@@ -565,18 +566,43 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .station-row.playing .station-row-mark { background: var(--primary); color: var(--on-primary); }
 .station-more { justify-self: start; }
 
-/* ---------- Latest stories (news, large screens): a static row, no animation ---------- */
-.latest { position: fixed; z-index: 12; top: calc(var(--chrome-bottom, 120px) + 4px); inset-inline: calc(var(--inset-x) + var(--panel-w) + var(--g)) calc(var(--inset-x) + var(--g));
-    display: flex; align-items: center; gap: 12px; height: 40px; padding-inline: 16px 4px; border-radius: 20px; background: var(--glass); box-shadow: var(--shadow); }
+/* ---------- Latest stories (news): a row at the bottom, under the globe, scrolling when it does not fit ---------- */
+/* Above the sheet and the player (phones), above the bottom safe area and the player beside a side panel, centred under
+   the globe there like the player; js/app.mjs renderTicker / fitTicker; --ticker-h moves the tools and the TV dock up. */
+.latest { position: fixed; z-index: 12; bottom: 0; inset-inline: calc(var(--inset-x) + var(--g)); max-width: 640px; margin-inline: auto;
+    transform: translateY(calc(-1 * min(max(var(--dock-h), var(--inset-b)) + var(--player-h) + 8px, 100dvh - var(--chrome-bottom, 120px) - 48px)));
+    transition: transform var(--dur) var(--ease);
+    display: flex; align-items: center; gap: 8px; height: 40px; padding-inline: 16px 0; border-radius: 20px; background: var(--glass); box-shadow: var(--shadow); }
+@media (min-width: 1051px), (min-aspect-ratio: 3/2) and (max-height: 560px) {
+    .latest { left: calc(var(--inset-x) + var(--view-left, 0px) + var(--g)); right: calc(var(--inset-x) + var(--view-right, 0px) + var(--g));
+        transform: translateY(calc(-1 * (var(--inset-b) + var(--player-h) + 8px)));
+        transition: transform var(--dur) var(--ease), left var(--dur) var(--ease), right var(--dur) var(--ease); }
+}
+/* Phones and tablets in portrait: a full sheet is the list itself, there is no globe to stand under. */
+@media not ((min-width: 1051px) or ((min-aspect-ratio: 3/2) and (max-height: 560px))) {
+    body:has(> .sheet[data-sheet="full"]:not([hidden])) .latest { display: none; }
+}
 .latest-label { flex: none; font: 600 12px/16px var(--font); color: var(--red); }
-.latest-track { display: flex; gap: 24px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding-inline-end: 32px;
-    -webkit-mask-image: linear-gradient(to var(--fade-end, right), #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to var(--fade-end, right), #000 calc(100% - 32px), transparent); }
+.latest-track { flex: 1; min-width: 0; overflow: hidden; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 24px), transparent); }
+.latest-track.by-hand { overflow-x: auto; overscroll-behavior-x: contain; }
 .latest-track::-webkit-scrollbar { display: none; }
+.latest-run { display: flex; width: max-content; }
+.latest-set { display: flex; gap: 24px; padding-inline: 12px; }
+.latest-run:not(.moving) .latest-set + .latest-set { display: none; }
+/* The two copies are equally wide: half the run is one full turn, so the loop has no seam. */
+.latest-run.moving { animation: latest-scroll var(--ticker-s, 60s) linear infinite; will-change: transform; }
+:root[dir="rtl"] .latest-run.moving { animation-name: latest-scroll-rtl; }
+@keyframes latest-scroll { to { transform: translateX(-50%); } }
+@keyframes latest-scroll-rtl { to { transform: translateX(50%); } }
+.latest:is(:hover, :focus-within, .held, .paused) .latest-run { animation-play-state: paused; }
+.latest-pause { flex: none; width: 40px; height: 40px; border-radius: 20px; }
+.latest-pause .icon { width: 18px; height: 18px; }
 .ticker-item { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; white-space: nowrap; font: 400 14px/20px var(--font); }
 .ticker-item:hover .ticker-text { color: var(--primary-text); }
 .ticker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--type-color, var(--primary)); }
 .ticker-src { font: 400 12px/16px var(--font); color: var(--on-surface-variant); }
-@media (max-width: 1050px) { .latest { display: none !important; } }
 
 /* ---------- Dialogs: a bottom sheet on phones, centred on large screens ---------- */
 dialog { color: var(--on-surface); }
@@ -675,12 +701,10 @@ dialog::backdrop { background: var(--scrim); }
    latest stories. It keeps at least its header (92 px); the rest scrolls (.tv-body). */
 .tv-dock { position: fixed; z-index: 30; inset-inline-end: calc(var(--inset-x) + var(--g));
     --tv-top: calc(var(--chrome-bottom, 120px) + 8px);
-    --tv-bottom: min(max(var(--dock-h), var(--inset-b)) + var(--player-h) + 16px, 100dvh - var(--tv-top) - 92px);
+    --tv-bottom: min(max(var(--dock-h), var(--inset-b)) + var(--player-h) + var(--ticker-h, 0px) + 16px, 100dvh - var(--tv-top) - 92px);
     bottom: var(--tv-bottom); max-height: calc(100dvh - var(--tv-top) - var(--tv-bottom));
     width: min(460px, calc(100vw - 2 * var(--g) - 2 * var(--inset-x))); display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 12px; border-radius: 20px;
     background: var(--surface-2); border: 1px solid var(--outline); box-shadow: var(--shadow); container: tv / inline-size; }
-body:has(> #newsTicker:not([hidden])) .tv-dock { --tv-top: calc(var(--chrome-bottom, 120px) + 52px); }
-@media (max-width: 1050px) { body:has(> #newsTicker:not([hidden])) .tv-dock { --tv-top: calc(var(--chrome-bottom, 120px) + 8px); } }
 /* Tablets and large screens: beside the map tools (48 px and a gap), never over the side panel. */
 @media (min-width: 720px) {
     .tv-dock { inset-inline-end: calc(var(--inset-x) + var(--g) + 56px); width: min(460px, calc(100vw - var(--panel-w) - 2 * var(--g) - 56px - 2 * var(--inset-x))); }

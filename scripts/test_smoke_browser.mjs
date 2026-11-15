@@ -7,7 +7,8 @@
 // Layout: the TV dock and the player stay between the chips and the sheet (full sheet too), a webcam card's actions fit
 // the sheet, theme names read on dark and light menus, search results sit under the field on tablets and desktops, and
 // on desktops the search pill sits on the globe's centre.
-// News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
+// News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown; the
+// latest stories scroll in a row above the sheet, with a pause button.
 // Loading: a compact row (the sheet only its title while a layer loads), transient failures retried with "Retrying
 // (n/3)", the error only after the last attempt. Search: the ✕ and the "no results" state. In the app: no page
 // player, the place's stations in its card, a station tapped goes to the app with its name and details; the app's
@@ -183,6 +184,16 @@ try {
             assert.doesNotMatch(s.list, /object Object|in 0 minutes/, 'rows: no stray header text, no "in 0 minutes"');
             assert.equal(s.status, '', 'no error');
             assert.match(s.live, /Checked at \d{1,2}:\d\d( [AP]M)?; earthquakes, alerts,? and natural events unavailable/, s.live);
+            // The latest stories: a row above the sheet, scrolling (four do not fit a phone), held with its pause button.
+            const row = await p.evaluate(() => {
+                const r = id => document.getElementById(id).getBoundingClientRect(), t = r('newsTicker'), sh = r('sheet'), tools = r('mapTools');
+                return { shown: !document.getElementById('newsTicker').hidden, top: Math.round(t.top), bottom: Math.round(t.bottom), sheet: Math.round(sh.top),
+                    tools: Math.round(tools.bottom), moving: Boolean(document.querySelector('.latest-run.moving')) };
+            });
+            assert.ok(row.shown && row.bottom <= row.sheet && row.top > 0 && row.tools <= row.top && row.moving, `the latest stories above the sheet, moving: ${JSON.stringify(row)}`);
+            await p.click('#tickerPause');
+            assert.deepEqual(await p.evaluate(() => [document.getElementById('newsTicker').classList.contains('paused'), document.getElementById('tickerPause').getAttribute('aria-pressed')]), [true, 'true']);
+            await p.click('#tickerPause');
             // The first load counts as the first refresh: the next comes after 10 minutes, not at once.
             await p.waitForTimeout(2500);
             assert.equal(live.asked, 1, `headline requests: ${live.asked}`);
