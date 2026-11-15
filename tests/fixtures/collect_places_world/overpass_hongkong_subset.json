@@ -1,0 +1,270 @@
+{
+"elements": [
+{
+"type": "node",
+"id": 26412045,
+"lat": 22.271123,
+"lon": 114.1501414,
+"tags": {
+"alt_name": "Victoria Peak",
+"funicular": "yes",
+"name": "山頂 The Peak",
+"name:en": "The Peak",
+"name:zh": "山頂",
+"public_transport": "station",
+"railway": "station",
+"station": "funicular",
+"tourism": "attraction",
+"tram": "yes",
+"website": "https://www.thepeak.com.hk/",
+"wikidata": "Q5959277"
+}
+},
+{
+"type": "node",
+"id": 26412171,
+"lat": 22.2760386,
+"lon": 114.1454573,
+"tags": {
+"alt_name:yue": "太平山",
+"alt_name:yue-Hant": "太平山",
+"alt_name:yue-Latn": "Tai Ping Shan",
+"alt_name:yue-Latn-jyutping": "Taai3 Ping4 Saan1",
+"alt_name:zh": "太平山",
+"ele": "552",
+"email": "info@thepeak.com.hk",
+"name": "扯旗山 Victoria Peak",
+"name:en": "Victoria Peak",
+"name:fr": "Pic Victoria",
+"name:hi": "विक्टोरिया पहाड़, हाँगकाँग",
+"name:ko": "빅토리아 피크",
+"name:ru": "Пик Виктория",
+"name:zh": "扯旗山",
+"natural": "peak",
+"note": "peak point in hong kong",
+"phone": "+ 852 2522 0922",
+"prominence": "554",
+"wikidata": "Q17541",
+"wikipedia": "en:Victoria Peak"
+}
+},
+{
+"type": "node",
+"id": 2609991399,
+"lat": 22.493334,
+"lon": 114.124525,
+"tags": {
+"bus": "yes",
+"highway": "bus_stop",
+"name": "風采中學 Elegantia College",
+"name:en": "Elegantia College",
+"name:zh": "風采中學",
+"network": "KMB",
+"network:wikidata": "Q312243",
+"operator": "KMB",
+"public_transport": "platform",
+"ref:hkbus": "風采中學",
+"ref:kmb": "CH36-C-1000-0",
+"route_ref": "273A"
+}
+},
+{
+"type": "node",
+"id": 2609991400,
+"lat": 22.493354,
+"lon": 114.124525,
+"tags": {
+"bus": "yes",
+"highway": "bus_stop",
+"name": "風采中學 Elegantia College",
+"name:en": "Elegantia College",
+"name:zh": "風采中學",
+"network": "KMB",
+"network:wikidata": "Q312243",
+"operator": "KMB",
+"public_transport": "platform",
+"ref:hkbus": "風采中學",
+"ref:kmb": "CH36-C-1050-0",
+"route_ref": "273A"
+}
+},
+{
+"type": "node",
+"id": 5895388319,
+"lat": 22.2355626,
+"lon": 113.9535809,
+"tags": {
+"name": "長沙 Cheung Sha",
+"name:en": "Cheung Sha",
+"name:zh": "長沙",
+"name:zh-Hans": "长沙",
+"name:zh-Hant": "長沙",
+"place": "village",
+"wikidata": "Q15895162",
+"wikipedia": "en:Cheung Sha"
+}
+},
+{
+"type": "node",
+"id": 8776880469,
+"lat": 22.275311,
+"lon": 114.1440302,
+"tags": {
+"name": "太平山 Victoria Peak",
+"name:en": "Victoria Peak",
+"name:yue": "太平山",
+"name:yue-Hant": "太平山",
+"name:yue-Latn": "Tai Ping Shan",
+"name:yue-Latn-jyutping": "Taai3 Ping4 Saan1",
+"name:zh": "太平山",
+"name:zh-Hans": "太平山",
+"place": "quarter"
+}
+},
+{
+"type": "way",
+"id": 25590249,
+"bounds": {
+"minlat": 22.3030159,
+"minlon": 114.1598353,
+"maxlat": 22.3037424,
+"maxlon": 114.1606163
+},
+"tags": {
+"accommodation": "separate",
+"addr": "main",
+"addr:housename": "環球貿易廣場 International Commerce Centre",
+"addr:housename:en": "International Commerce Centre",
+"addr:housename:zh": "環球貿易廣場",
+"addr:housenumber": "1",
+"addr:street": "柯士甸道西 Austin Road West",
+"addr:street:en": "Austin Road West",
+"addr:street:zh": "柯士甸道西",
+"alt_name": "九龍站第七期",
+"alt_name:en": "Phase 7",
+"building": "office",
+"building:function": "tower",
+"building:levels": "118",
+"building:material": "glass",
+"building:min_level": "4",
+"check_date": "2021-06-08",
+"height": "484",
+"hotel": "separate",
+"location": "podium",
+"min_height": "20",
+"name": "環球貿易廣場 International Commerce Centre",
+"name:en": "International Commerce Centre",
+"name:es": "International Commerce Centre",
+"name:hi": "अंतर्राष्ट्रीय वाणिज्य केन्द्र",
+"name:ja": "環球貿易広場",
+"name:ja-Hira": "かんきゅうぼうえきひろば",
+"name:ko": "국제상업센터",
+"name:ru": "Международный коммерческий центр",
+"name:th": "อินเตอร์เนชันแนลคอมเมิร์ซเซ็นเตอร์",
+"name:uk": "Міжнародний Торговий Центр",
+"name:vi": "International Commerce Centre",
+"name:yue": "環球貿易廣場",
+"name:zh": "環球貿易廣場",
+"name:zh-Hans": "环球贸易广场",
+"name:zh-Hant": "環球貿易廣場",
+"name:zh-Latn-pinyin": "Huánqiú màoyì guǎngchǎng",
+"podium": "bulk",
+"roof:material": "concrete",
+"short_name": "ICC",
+"start_date": "2010",
+"website": "https://www.shkp-icc.com/website/Main.do",
+"wikidata": "Q317034",
+"wikimedia_commons": "Category:International Commerce Centre",
+"wikipedia": "en:International Commerce Centre"
+}
+},
+{
+"type": "way",
+"id": 233262091,
+"bounds": {
+"minlat": 22.4924192,
+"minlon": 114.1235624,
+"maxlat": 22.4933417,
+"maxlon": 114.1245157
+},
+"tags": {
+"addr:housenumber": "8",
+"addr:street": "清城路 Ching Shing Road",
+"addr:street:en": "Ching Shing Road",
+"addr:street:wikidata": "Q131722011",
+"addr:street:zh": "清城路",
+"amenity": "school",
+"name": "風采中學 (教育評議會主辦) Elegantia College (Sponsored by Education Convergence)",
+"name:en": "Elegantia College (Sponsored by Education Convergence)",
+"name:zh": "風采中學 (教育評議會主辦)",
+"short_name": "風采中學 Elegantia College",
+"short_name:en": "Elegantia College",
+"short_name:zh": "風采中學"
+}
+},
+{
+"type": "way",
+"id": 342540426,
+"bounds": {
+"minlat": 22.2603958,
+"minlon": 114.1365808,
+"maxlat": 22.2609099,
+"maxlon": 114.1370153
+},
+"tags": {
+"addr:housenumber": "162",
+"addr:street": "薄扶林道 Pok Fu Lam Road",
+"addr:street:en": "Pok Fu Lam Road",
+"addr:street:wikidata": "Q863292",
+"addr:street:zh": "薄扶林道",
+"amenity": "kindergarten",
+"name": "德瑞國際學校 (幼稚園部) German Swiss International School (Kindergarten)",
+"name:en": "German Swiss International School (Kindergarten)",
+"name:zh": "德瑞國際學校 (幼稚園部)",
+"name:zh-Hans": "德瑞国际学校 (幼稚园部)",
+"name:zh-Hant": "德瑞國際學校 (幼稚園部)"
+}
+},
+{
+"type": "way",
+"id": 389820547,
+"bounds": {
+"minlat": 22.2650191,
+"minlon": 114.1601417,
+"maxlat": 22.2659439,
+"maxlon": 114.1612379
+},
+"tags": {
+"addr:housenumber": "22",
+"addr:street": "僑福道 Guildford Road",
+"amenity": "school",
+"name": "德瑞國際學校 German Swiss International School",
+"name:de": "Deutsch-Schweizerische Internationale Schule",
+"name:en": "German Swiss International School",
+"name:zh": "德瑞國際學校",
+"wikipedia": "en:German Swiss International School"
+}
+},
+{
+"type": "way",
+"id": 1214344075,
+"bounds": {
+"minlat": 22.2656817,
+"minlon": 114.1613959,
+"maxlat": 22.2663564,
+"maxlon": 114.1620692
+},
+"tags": {
+"addr:housenumber": "11",
+"addr:street": "僑福道 Guildford Road",
+"amenity": "school",
+"name": "德瑞國際學校 German Swiss International School",
+"name:de": "Deutsch-Schweizerische Internationale Schule",
+"name:en": "German Swiss International School",
+"name:zh": "德瑞國際學校",
+"start_date": "1975",
+"wikipedia": "en:German Swiss International School"
+}
+}
+]
+}

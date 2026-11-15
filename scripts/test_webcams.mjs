@@ -546,3 +546,14 @@ test('a source can give each camera a notice naming its own page (PDL credit)', 
     assert.equal(camera.provider_notice, '出典：川の防災情報（https://www.river.go.jp/kawabou/pc/tm?scamId=1）を加工して作成');
     assert.match(Object.fromEntries(WEBCAMS.facts(camera))['Provider notice'], /scamId=1/);
 });
+
+test('a position placed by QGlobe says where it comes from and how rough it is', () => {
+    const [camera] = prepareWebcams({ schema_version: 2, items: [item({ id: 'md:1', provider: 'md', format: 'official_page',
+        rights_status: 'official_page_only', official_page: 'https://www.border.gov.md/camere-web', stream_url: null, snapshot_url: null,
+        coordinate_role: 'named_feature', coordinate_feature: 'Leova–Bumbăta border crossing (Moldovan post)',
+        coordinate_source: 'osm:node/123', coordinate_source_licence: 'ODbL 1.0', coordinate_uncertainty_m: 150 })] });
+    assert.equal(Object.fromEntries(WEBCAMS.facts(camera)).Coordinates,
+        'Approximate position: Leova–Bumbăta border crossing (Moldovan post) (osm:node/123, ODbL 1.0), within about 150 m. The exact camera position is unknown.');
+    const centre = { ...camera, coordinate_role: 'place_centre', coordinate_feature: 'Bansko', coordinate_uncertainty_m: 3000 };
+    assert.match(Object.fromEntries(WEBCAMS.facts(centre)).Coordinates, /^Approximate position: Bansko .*within about 3 km/);
+});

@@ -230,6 +230,90 @@ Collector `collect_japan_rivers.py`, `collect_europe2.py`, `collect_world2.py` (
 - **Duplicati**: 1.269 link comunitari coperti da un record ufficiale entro 100 m (tra cui 579 USGS, 347 Madrid, 140 WSDOT, 37 Land OÖ) e 35 pagine fiumi → Kanto; i parametri anti-cache nelle query non contano nel confronto.
 - **In attesa**: ARPA FVG (robots.txt rimanda a HTTP), BfG (403), polizia di frontiera moldava (12 pagine senza coordinate ufficiali; 18 ai valichi verso l'Ucraina, esclusi per prudenza), Trafikverket, Arpae, Amburgo, JCG HLS, NEXCO, uffici MLIT senza coordinate, IPGP/OVPF, NOIRLab, LCO, SANParks, Africam, CCTV, Muro del Pianto, Transalvador, Shymbulak, Macao, le fonti senza coordinate ufficiali (Plzeň, PKL, Bansko, porti, Visit Finland, Øresund, Turku, sci in Italia) e Gazprom Polyana (sanzioni non valutate).
 
+## Posizioni collocate da Q-Globe (14 novembre 2026, notte)
+
+Le fonti tenute in attesa solo perché il gestore non pubblica coordinate sono entrate con una posizione **collocata da Q-Globe** e dichiarata come tale. Collector: `collect_places_europe.py`, `collect_places_japan.py` e `collect_places_world.py`, con le regole comuni in `scripts/webcam_places.py`. Valgono le stesse regole di rete: robots.txt RFC 9309, almeno 1 s per host e risposte in cache negli input.
+
+Catalogo: **64.559 → 64.988 record**, visualizzabili **24.027 → 24.263**, **136 → 153 fonti**. I record collocati sono 429: 178 `named_feature` e 251 `place_centre`. Di questi, 236 sono immagini visualizzabili (uffici MLIT); gli altri sono pagine ufficiali.
+
+### Regole
+
+- **Ordine delle fonti.** Prima la posizione ufficiale. Poi l'elemento esatto nominato dalla pagina in un dataset aperto:
+  - OpenStreetMap (ODbL 1.0): valico, porto, impianto, monumento, svincolo;
+  - OurAirports (pubblico dominio) per le piste;
+  - Wikidata (CC0) per i luoghi noti;
+  - per le strade giapponesi, i dati aperti MLIT: svincoli 国土数値情報 N06 (CC BY 4.0) e centri di 大字・町丁目 del 位置参照情報.
+
+  Solo in ultima istanza il centro del luogo nominato.
+- **Campi del record.** Ogni record collocato porta `coordinate_role` (`named_feature` o `place_centre`), `coordinate_source`, `coordinate_feature`, `coordinate_uncertainty_m`, `coordinate_source_licence` e `identity_confirmed=false`. Il builder rifiuta un record collocato a cui manca uno di questi campi.
+- **Scheda.** Mostra «Approximate position: <elemento> (<fonte>, <licenza>), within about N m/km. The exact camera position is unknown.»
+- **Abbinamenti esclusi.** I record collocati non entrano nell'abbinamento entro 100 m né nelle regole sui duplicati.
+- **Controlli di plausibilità.**
+  - Il paese di Natural Earth deve coincidere con quello della fonte. I valichi moldavi sono quindi in MD e passano la regola Ucraina/Crimea.
+  - Nessun punto in mare, salvo porti e opere offshore.
+  - Distanza ragionevole dal centro del luogo.
+- **Casi incerti.** Se l'abbinamento non è chiaro si usa il centro del luogo con un'incertezza maggiore, oppure il record resta in attesa. Non si indovina mai un incrocio.
+
+### Fonti
+
+| Fonte | Elemento nominato | Centro del luogo | Incertezza tipica |
+| --- | ---: | ---: | --- |
+| Polizia di frontiera moldava (30 pagine, comprese le 18 verso l'Ucraina) | 15 | 12 | 150–450 m (posto moldavo OSM); 2–5 km (centro del paese) |
+| Plzeň | 7 | — | 150–450 m (viale intero ~3 km) |
+| Porto di Helsinki / Visit Finland / Turku | 6 / 5 / 1 | — / 1 / — | 150 m–2,3 km; Kilpisjärvi 3 km |
+| Porto di Kiel / Øresund (piloni, lato svedese) | 2 / 2 | — | 100–450 m |
+| Sci: Bormio / Campiglio / Cervinia | 1 / — / — | — / 1 / 1 | 3–5 km |
+| Aggiunte a fonti già presenti: Macedonia del Nord +4, Tirol +3, RMI +2, SHMÚ +5 | 6 | 8 | 100 m–4 km |
+| Muro del Pianto, Karbala (Imam Hussain) | 2 | — | 150 m |
+| Transalvador (portale) / Macao DSAT (portale) | — | 1 / 1 | 15 km / 6 km |
+| Hong Kong Observatory | 4 | 1 | 100 m–1,5 km |
+| Kenya, Aero Club (pista OurAirports indicata dalla pagina) | 27 | — | 0,5–5,5 km (mediana 3 km) |
+| MLIT Kinki (immagini) | 23 | 89 | 400 m / 1,4 km (mediane) |
+| MLIT Kyushu (immagini) | 1 | 35 | 500 m / 3,3 km |
+| MLIT Tohoku (74 immagini e 18 pagine) | 18 | 74 | 500 m / 1,9 km |
+| NEXCO East (pagine) | 58 | 13 | 500 m / 3 km |
+| MLIT Kanto (uffici stradali aggiunti) | — | 14 | mediana 950 m |
+
+Per Kinki, Kyushu e Tohoku è stato eseguito un controllo immagine (64 KiB, robots.txt prima) per fornitore: firma JPEG confermata.
+
+### In attesa, con il motivo
+
+Il server Overpass (overpass.kumi.systems) ha risposto con HTTP 502/504 o è andato in timeout per quasi tutta la sessione. Ogni richiesta è stata tentata al massimo 3 volte; i record che dipendevano da quelle risposte restano in attesa, con il motivo scritto nella policy o nel rapporto:
+
+- PKL (7) e Bansko (6);
+- RMI Wideumont (2) e SHMÚ Senica (1);
+- Shymbulak, Nova Scotia (55) e OVSICORI (8);
+- 39 camere dell'Aero Club non legate a una pista;
+- Mayapur e la camera MLO a Mauna Kea;
+- gran parte degli uffici MLIT: Kinki 198, Kyushu 24, Tohoku 150, NEXCO East 45, Kanto 43.
+
+Parte delle camere MLIT resta in attesa anche perché l'etichetta non nomina un luogo collocabile, per esempio un sottopasso senza nome o una sezione 'A～B'.
+
+Altri casi:
+
+- **Valichi moldavi.** Grimăncăuți e Mirnoe (2): Natural Earth colloca i nodi di quei paesi fuori dalla Moldavia e il posto di frontiera non è univoco.
+- **Hong Kong.** ICC, Sai Wan Ho e Cheung Sha (5): Natural Earth li pone in mare.
+- **Macao.** Le 111 camere singole: le 52 indicate solo da vie o incroci non si indovinano; per gli elementi e i distretti serve OSM.
+- **Uffici esclusi.** Hokuriku (elenco non leggibile), Hokkaido (blocco F5) e Shikoku restano fuori.
+- **Già decisi.** Gazprom Polyana (sanzioni non valutate) e le fonti già in attesa per termini, chiavi, robots.txt o relay restano invariate.
+
+La vecchia policy `md_border_police_webcams_ukraine_facing` è ritirata: le sue pagine sono ora record di `md_border_police_webcams`.
+
+### Collector
+
+I collector dei giri precedenti non riscrivono più le policy delle fonti ora collocate:
+
+- `collect_europe2.py` (`BUILT_BY_PLACES`);
+- `collect_world2.py` e `collect_americas_pages.py`;
+- `collect_apac_pages.py` (Muro del Pianto);
+- `collect_japan.py` (Kanto).
+
+`mlit_kanto_cctv_places.json` sostituisce il documento Kanto del secondo giro, che passa in `unused/`.
+
+### File del viewer
+
+`webcams-live.json`: **6.390.861 → 6.714.072 byte** (gzip 980.929 → 1.000.479 byte). I campi di posizione sono codificati a tabella. Preparazione nel viewer: ~0,41 s, invariata.
+
 ## Pubblicazione del database
 
 `db/qp1ng-webcams.sqlite.gz` (circa 30 MB) è tracciato nel repository e pubblicato dal sito e dal mirror IPFS come gli altri due database (`db/` è escluso solo dal riscaldamento del gateway: si carica a richiesta). La guida (scheda Sources) lo collega a `db/qp1ng-webcams.sqlite.gz` e riporta le licenze: record e collegamenti OpenStreetMap ODbL 1.0, metadati Illinois DOT CC BY-SA 2.0, Wikidata CC0, le altre fonti secondo la tabella `sources`; nessuna licenza copre immagini e video collegati.

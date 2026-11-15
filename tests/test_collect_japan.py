@@ -141,7 +141,11 @@ class PolicyTest(unittest.TestCase):
             else:
                 self.assertEqual(policy["source"]["review_status"], "reviewed_for_snapshot_and_reference_use")
                 self.assertTrue(policy["media_hosts"] and set(policy["media_hosts"]) <= set(policy["source"]["allowed_hosts"]))
-            # Merged into the repository registry exactly as the collector writes it.
+            # Merged into the repository registry exactly as the collector writes it (or, for the sources whose
+            # fragment the placement round writes, as collect_places_japan derives it from this one).
+            if pid in M.POLICY_WRITTEN_BY_PLACES_ROUND:
+                import collect_places_japan
+                policy = collect_places_japan.kanto_policy(policy)
             self.assertEqual(existing.get(pid), policy)
         held = dict(M.HELD)
         held.update(M.held("mlit_kyushu_road_cameras", "n", "https://www.qsr.mlit.go.jp/", "r", "u", []))

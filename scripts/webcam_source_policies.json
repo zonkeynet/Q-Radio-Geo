@@ -3621,16 +3621,21 @@
   },
   "costa_rica_ovsicori_cameras": {
     "status": "held",
-    "held_reason": "Per-camera pages only, no published camera positions; all rights reserved.",
-    "held_until": "camera positions published by OVSICORI (or a documented volcano gazetteer accepted as associated_feature)",
+    "held_reason": "placement round: not placed (no open-data position: OpenStreetMap (Overpass) did not answer during the round (HTTP 504/timeouts, at most 3 attempts per query) and no Wikidata or OurAirports record identifies the named features or places)",
+    "held_until": "an open-data position for the named feature or place (retry the cached Overpass lookups when the host answers)",
     "evidence": [
-      "https://www.ovsicori.una.ac.cr/"
+      "https://www.ovsicori.una.ac.cr/index.php/camaras",
+      "https://www.ovsicori.una.ac.cr/",
+      "https://www.openstreetmap.org/copyright",
+      "https://www.wikidata.org/wiki/Wikidata:Licensing",
+      "https://ourairports.com/data/"
     ],
     "source": {
       "id": "costa_rica_ovsicori_cameras",
       "name": "OVSICORI-UNA volcano cameras",
       "url": "https://www.ovsicori.una.ac.cr/index.php/camaras"
-    }
+    },
+    "reviewed_at": "2026-11-14"
   },
   "dgt_nap_cameras": {
     "status": "held",
@@ -4116,7 +4121,7 @@
       "media_rights": "Official page links only: HKO strictly prohibits commercial use of its materials without prior written authorisation, so this paid app neither embeds nor fetches the photos.",
       "rights_note": "「the use of the Materials for commercial purposes is strictly prohibited unless …」 prior written authorisation of the Observatory. Robots: /wxinfo/ (the image path) is disallowed; the /en/wxinfo/ photo pages are not. Positions are HKO weather-station positions (station list), not surveyed camera mounts.",
       "attribution": "Hong Kong Observatory",
-      "provider_notice": "Opens the official Hong Kong Observatory photo page. The marker is the HKO weather station the camera belongs to.",
+      "provider_notice": "Opens the official Hong Kong Observatory photo page. The marker is the HKO weather station the camera belongs to or, where HKO publishes none for the site, a position placed by Q-Globe at the named site (the card says so; collect_places_world.py).",
       "rights_status": "official_page_only",
       "allowed_hosts": [],
       "review_status": "reviewed_for_external_references_only",
@@ -4363,19 +4368,41 @@
     }
   },
   "israel_western_wall_cameras": {
-    "status": "held",
-    "held_reason": "Page found (re-read 2026-11-14): the three camera URLs (western-wall-cameras, cameras-prayer-plaza, camera-wilsons-arch) now redirect to one live page with three pop-up players (The Western Wall, Prayer Plaza, Wilson's Arch). No position is published on the foundation's pages read (live, directions, visitor centre); the register's 31.7767,35.2345 cites no source.",
-    "held_until": "an official position (operator or agency), or the coordinator accepting the register position as approximate",
-    "evidence": [
-      "https://thekotel.org/en/connect-remotely-to-the-western-wall/",
-      "https://thekotel.org/en/visitor_information/directions/"
-    ],
     "source": {
       "id": "israel_western_wall_cameras",
-      "name": "Western Wall Heritage Foundation live cameras",
-      "url": "https://thekotel.org/en/connect-remotely-to-the-western-wall/#live"
+      "name": "Western Wall Heritage Foundation live cameras (Western Wall, Prayer Plaza, Wilson's Arch)",
+      "url": "https://thekotel.org/en/connect-remotely-to-the-western-wall/#live",
+      "catalog_url": "https://thekotel.org/en/connect-remotely-to-the-western-wall/",
+      "terms_url": "https://thekotel.org/en/connect-remotely-to-the-western-wall/",
+      "metadata_license": "None stated (no terms page found); factual link to the foundation's own live page",
+      "license": "None stated (no terms page found); factual link to the foundation's own live page",
+      "media_rights": "No terms or reuse text; the three players open as pop-ups on the foundation's page: link only.",
+      "rights_note": "The old per-camera URLs (western-wall-cameras, cameras-prayer-plaza, camera-wilsons-arch) redirect to this one live page (re-read 2026-11-14). Positions placed by Q-Globe where the operator publishes none (placement round, 2026-11-14): the named feature in OpenStreetMap (ODbL 1.0), Wikidata (CC0 1.0) or OurAirports (public domain) or, last resort, the place centre; each card shows the feature, its source and the uncertainty.",
+      "attribution": "Western Wall Heritage Foundation (thekotel.org)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://thekotel.org/en/connect-remotely-to-the-western-wall/",
+        "https://thekotel.org/en/visitor_information/directions/",
+        "https://www.openstreetmap.org/copyright",
+        "https://www.wikidata.org/wiki/Wikidata:Licensing",
+        "https://ourairports.com/data/"
+      ]
     },
-    "reviewed_at": "2026-11-14"
+    "media_hosts": [],
+    "page_hosts": [
+      "thekotel.org"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "IL"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature"
   },
   "jcg_mics_livecamera": {
     "status": "held",
@@ -4801,8 +4828,8 @@
       "license": "Public Data License 1.0 (PDL1.0)",
       "license_url": "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
       "media_rights": "Site content, including camera stills, is usable under PDL1.0 (copy, public transmission, adaptation, commercial use) unless a page carries its own rights notice; the camera pages used carry none. Source attribution (出典 + page URL) and an edit notice are mandatory; QGlobe must not present the result as made by the agency.",
-      "rights_note": "「関東地方整備局ウェブサイトで掲載・発信している情報…の著作権は、特記されていない限り関東地方整備局に帰属し、権利表記の記載がない限り「公共データ利用規約(第1.0版)」(PDL1.0)に準拠した利用条件の下で、利用することができます。」 Required: 出典：関東地方整備局ウェブサイト(当該ページのURL), plus an edit notice; must not look government-made. Only offices publishing official coordinates are included (Tone upstream river office cameradb.json; Kita-shuto national highway office CCTV.kml).",
-      "attribution": "出典：関東地方整備局ウェブサイト（利根川上流河川事務所 河川ライブカメラ映像 https://www.ktr.mlit.go.jp/tonejo/cctv/ ・北首都国道事務所 国道298号ライブカメラ https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.html ・各カメラのページURL）を加工して作成。QGlobeが名称・位置等のデータを正規化・編集し、画像を縮小表示しています（国土交通省が作成したものではありません）。Source: MLIT Kanto Regional Development Bureau website; data normalized and edited by QGlobe, not an MLIT product. PDL1.0.",
+      "rights_note": "「関東地方整備局ウェブサイトで掲載・発信している情報…の著作権は、特記されていない限り関東地方整備局に帰属し、権利表記の記載がない限り「公共データ利用規約(第1.0版)」(PDL1.0)に準拠した利用条件の下で、利用することができます。」 Required: 出典：関東地方整備局ウェブサイト(当該ページのURL), plus an edit notice; must not look government-made. Only offices publishing official coordinates are included (Tone upstream river office cameradb.json; Kita-shuto national highway office CCTV.kml). Placement round 2026-11-14: cameras of the Utsunomiya, Takasaki and Omiya national-road offices added with QGlobe placements (No official camera positions are published. Positions are QGlobe placements (identity_confirmed=false): an interchange / junction / SA-PA from 国土数値情報 N06-25 (CC BY 4.0), a named bridge, tunnel, pass or rest area from OpenStreetMap (ODbL), or the representative point of the named 大字・町丁目 from 位置参照情報 (PDL1.0 / 位置参照情報利用約款); each record says which, with its uncertainty.)",
+      "attribution": "出典：関東地方整備局ウェブサイト（利根川上流河川事務所・北首都国道事務所・宇都宮国道事務所・高崎河川国道事務所・大宮国道事務所の各ライブカメラページURL）を加工して作成。QGlobeが名称・位置等のデータを正規化・編集し、画像を縮小表示しています（国土交通省が作成したものではありません）。位置の一部はQGlobeの推定（位置参照情報・国土数値情報・OpenStreetMap）。Source: MLIT Kanto Regional Development Bureau website; data normalized and edited by QGlobe, not an MLIT product. PDL1.0.",
       "rights_status": "official_public_feed",
       "allowed_hosts": [
         "www.ktr.mlit.go.jp"
@@ -4815,7 +4842,11 @@
         "https://www.ktr.mlit.go.jp/guide/copyright.html",
         "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
         "https://www.ktr.mlit.go.jp/tonejo/cctv/cameraimage/cameradb.json",
-        "https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.kml"
+        "https://www.ktr.mlit.go.jp/kitasyuto/public/CCTV.kml",
+        "https://nlftp.mlit.go.jp/isj/",
+        "https://nlftp.mlit.go.jp/isj/agreement.html",
+        "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html",
+        "https://nlftp.mlit.go.jp/ksj/other/agreement.html"
       ]
     },
     "media_hosts": [
@@ -4838,20 +4869,53 @@
     "coordinate_role": "camera_location"
   },
   "mlit_kyushu_road_cameras": {
-    "status": "held",
-    "held_reason": "No office page publishes camera coordinates (pixel image maps, route/km labels or JS maps only), so none of the cameras can be placed: at least 77 stills/camera pages counted on the office directory pages fetched. PDL1.0 terms are fine (bureau /pp/ and Kumamoto office).",
-    "held_until": "An official camera list with coordinates (or MLIT DPF records, held for a key). Fukuoka office (road-info-prvs.mlit.go.jp) and NEXCO links stay out.",
-    "evidence": [
-      "https://www.qsr.mlit.go.jp/pp/index.html",
-      "https://www.qsr.mlit.go.jp/kumamoto/link_copyright.html",
-      "https://www.qsr.mlit.go.jp/useful/road_livecam.html"
-    ],
     "source": {
       "id": "mlit_kyushu_road_cameras",
-      "name": "MLIT Kyushu Regional Development Bureau national-highway live cameras",
-      "url": "https://www.qsr.mlit.go.jp/useful/road_livecam.html"
+      "name": "MLIT Kyushu Regional Development Bureau national-highway live cameras (九州地方整備局 道路ライブカメラ)",
+      "url": "https://www.qsr.mlit.go.jp/useful/road_livecam.html",
+      "catalog_url": "https://www.qsr.mlit.go.jp/useful/road_livecam.html",
+      "terms_url": "https://www.qsr.mlit.go.jp/pp/index.html",
+      "metadata_license": "Public Data License 1.0 (PDL1.0), CC BY 4.0 compatible",
+      "license": "Public Data License 1.0 (PDL1.0)",
+      "license_url": "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+      "media_rights": "Site content, including camera stills, is usable under PDL1.0 (copy, public transmission, adaptation, commercial use) unless a page carries its own rights notice; the camera pages used carry none. Source attribution (出典 + page URL) and an edit notice are mandatory; QGlobe must not present the result as made by the agency.",
+      "rights_note": "Bureau site policy (/pp/) and the Kumamoto office copyright page apply PDL1.0 to site content unless a rights notice says otherwise (research register). Required: 出典 (bureau website + page URL) and an edit notice; must not look government-made. No official camera positions are published. Positions are QGlobe placements (identity_confirmed=false): an interchange / junction / SA-PA from 国土数値情報 N06-25 (CC BY 4.0), a named bridge, tunnel, pass or rest area from OpenStreetMap (ODbL), or the representative point of the named 大字・町丁目 from 位置参照情報 (PDL1.0 / 位置参照情報利用約款); each record says which, with its uncertainty.",
+      "attribution": "出典：国土交通省 九州地方整備局ホームページ（各事務所のライブカメラページURL）を加工して作成。QGlobeが画像を縮小表示し、名称・位置等を正規化・編集しています（国土交通省が作成したものではありません）。位置はQGlobeの推定（国土数値情報・位置参照情報・OpenStreetMap）。Source: MLIT Kyushu Regional Development Bureau website; data normalized and edited by QGlobe, not an MLIT product. PDL1.0.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.qsr.mlit.go.jp"
+      ],
+      "minimum_refresh_seconds": 600,
+      "provider_notice": "Approximate position placed by QGlobe from the camera's name (see the card); not an official camera position.",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.qsr.mlit.go.jp/pp/index.html",
+        "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+        "https://www.qsr.mlit.go.jp/useful/road_livecam.html",
+        "https://nlftp.mlit.go.jp/isj/",
+        "https://nlftp.mlit.go.jp/isj/agreement.html",
+        "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html",
+        "https://nlftp.mlit.go.jp/ksj/other/agreement.html"
+      ]
     },
-    "reviewed_at": "2026-11-14"
+    "media_hosts": [
+      "www.qsr.mlit.go.jp"
+    ],
+    "page_hosts": [
+      "www.qsr.mlit.go.jp"
+    ],
+    "formats": [
+      "snapshot"
+    ],
+    "countries": [
+      "JP"
+    ],
+    "operator_hints": [
+      "九州地方整備局",
+      "国土交通省",
+      "mlit"
+    ]
   },
   "mlit_regional_bureaus_other": {
     "status": "held",
@@ -4914,22 +4978,46 @@
     ]
   },
   "nexco_east_driveplaza": {
-    "status": "held",
-    "held_reason": "No camera has coordinates: the camera index lists 42 route pages and the route page read (shinetsu.html: 20 cameras) names cameras by interchange section only ('X IC ～ Y IC'), with 0 coordinates. Terms (e-nexco.co.jp/site_info): company copyright, no reposting on other sites; linking needs no procedure.",
-    "held_until": "Official camera (or interchange) positions from NEXCO East; then page links only (images may not be reposted).",
-    "evidence": [
-      "https://www.driveplaza.com/traffic/camera/",
-      "https://www.e-nexco.co.jp/site_info/index.html"
-    ],
     "source": {
       "id": "nexco_east_driveplaza",
       "name": "NEXCO East expressway live cameras (ドラぷら)",
-      "url": "https://www.driveplaza.com/traffic/camera/"
+      "url": "https://www.driveplaza.com/traffic/camera/",
+      "catalog_url": "https://www.driveplaza.com/traffic/camera/",
+      "terms_url": "https://www.e-nexco.co.jp/site_info/index.html",
+      "metadata_license": "Company copyright (East Nippon Expressway Co.); factual links only",
+      "license": "All rights reserved; linking needs no procedure",
+      "media_rights": "No images shown: reposting on other sites is not allowed. Official page links only.",
+      "rights_note": "「当サイトに収録されているコンテンツの著作権は、基本的に当社に帰属しています。」「これを他のサイトや印刷媒体に転載したりすることはできません。」 リンク: 「当サイトは、手続不要です。」「当社のホームページへのリンクと分かるように表示してください。」 No official camera positions are published. Positions are QGlobe placements (identity_confirmed=false): an interchange / junction / SA-PA from 国土数値情報 N06-25 (CC BY 4.0), a named bridge, tunnel, pass or rest area from OpenStreetMap (ODbL), or the representative point of the named 大字・町丁目 from 位置参照情報 (PDL1.0 / 位置参照情報利用約款); each record says which, with its uncertainty.",
+      "attribution": "NEXCO東日本「ドラぷら」高速道路ライブカメラ（https://www.driveplaza.com/traffic/camera/）へのリンク。",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "provider_notice": "Link to NEXCO East's camera page (images may not be reposted). Approximate position placed by QGlobe from the camera's name, not an official camera position.",
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.e-nexco.co.jp/site_info/index.html",
+        "https://www.driveplaza.com/traffic/camera/",
+        "https://nlftp.mlit.go.jp/isj/",
+        "https://nlftp.mlit.go.jp/isj/agreement.html",
+        "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html",
+        "https://nlftp.mlit.go.jp/ksj/other/agreement.html"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.driveplaza.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "JP"
-    ]
+    ],
+    "operator_hints": [
+      "NEXCO東日本",
+      "東日本高速道路"
+    ],
+    "official_map_url": "https://www.driveplaza.com/traffic/camera/"
   },
   "nexco_west_ihighway": {
     "status": "held",
@@ -5047,17 +5135,21 @@
   },
   "novascotia_highway_cameras": {
     "status": "held",
-    "held_reason": "List re-read 2026-11-14: 55 per-camera pages, but neither the list nor a camera page publishes a position.",
-    "held_until": "published camera positions (or a documented gazetteer accepted as approximate)",
+    "held_reason": "placement round: not placed (no open-data position: OpenStreetMap (Overpass) did not answer during the round (HTTP 504/timeouts, at most 3 attempts per query) and no Wikidata or OurAirports record identifies the named features or places)",
+    "held_until": "an open-data position for the named feature or place (retry the cached Overpass lookups when the host answers)",
     "evidence": [
       "https://novascotia.ca/tran/cameras/all.asp",
-      "https://511.novascotia.ca/about/about"
+      "https://511.novascotia.ca/about/about",
+      "https://www.openstreetmap.org/copyright",
+      "https://www.wikidata.org/wiki/Wikidata:Licensing",
+      "https://ourairports.com/data/"
     ],
     "source": {
       "id": "novascotia_highway_cameras",
       "name": "Nova Scotia highway cameras",
       "url": "https://novascotia.ca/tran/cameras/all.asp"
-    }
+    },
+    "reviewed_at": "2026-11-14"
   },
   "nyc_dot_tmc": {
     "status": "held",
@@ -5776,14 +5868,16 @@
   },
   "bansko_ski_webcams": {
     "status": "held",
-    "held_reason": "no official coordinates: 6 named ski-area webcam pages; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
+    "held_reason": "no record could be placed (6 records): Overpass lookup 'extra' failed three times (overpass.kumi.systems answered HTTP 504) and no Wikidata item of the feature is known without it; re-run the lookup stage when the server answers",
+    "held_until": "an official position, or an open-data feature that identifies the named place and passes the checks",
     "evidence": [
-      "https://www.banskoski.com/"
+      "https://www.banskoski.com/",
+      "https://www.banskoski.com/en/webcam/todorka",
+      "https://www.banskoski.com/en/page/general-terms"
     ],
     "source": {
       "id": "bansko_ski_webcams",
-      "name": "Bansko ski area — webcams",
+      "name": "Bansko ski area — webcams (banskoski.com)",
       "url": "https://www.banskoski.com/"
     },
     "reviewed_at": "2026-11-14",
@@ -5814,7 +5908,8 @@
       "evidence": [
         "https://www.meteo.be/de/uber-das-kmi/rechtsinformation",
         "https://www.meteo.be/fr/meteo/observations/webcams",
-        "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
+        "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv",
+        "https://www.openstreetmap.org/copyright"
       ],
       "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
       "raw_files": [
@@ -5833,6 +5928,20 @@
           "status": 200,
           "sha256": "1994747ab4af1b97e63adb434b4d0d022f2daee76f0c144ea9ab46be2d906604",
           "bytes": 2914601
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ],
+      "not_placed": [
+        {
+          "id": "be_rmi_kmi_webcams:webcam-wideumont",
+          "reason": "Overpass lookup 'extra' failed three times (overpass.kumi.systems answered HTTP 504) and no Wikidata item of the feature is known without it; re-run the lookup stage when the server answers"
+        },
+        {
+          "id": "be_rmi_kmi_webcams:snowcam-wideumont",
+          "reason": "Overpass lookup 'extra' failed three times (overpass.kumi.systems answered HTTP 504) and no Wikidata item of the feature is known without it; re-run the lookup stage when the server answers"
         }
       ]
     },
@@ -5868,19 +5977,42 @@
     ]
   },
   "brazil_transalvador_cameras": {
-    "status": "held",
-    "held_reason": "Portal and terms answer, but no position: the camera list loads only after a Cloudflare Turnstile check (not bypassed), and neither the portal, its script nor the agency home page publishes a map or coordinates for the city-level link.",
-    "held_until": "an official position for a city-level marker (or a public camera list)",
-    "evidence": [
-      "https://cameras-transalvador.salvador.ba.gov.br/termos.html",
-      "https://transalvador.salvador.ba.gov.br/"
-    ],
     "source": {
       "id": "brazil_transalvador_cameras",
       "name": "Transalvador live traffic cameras portal (Salvador, BA)",
-      "url": "https://cameras-transalvador.salvador.ba.gov.br/"
+      "url": "https://cameras-transalvador.salvador.ba.gov.br/",
+      "catalog_url": "https://cameras-transalvador.salvador.ba.gov.br/",
+      "terms_url": "https://cameras-transalvador.salvador.ba.gov.br/termos.html",
+      "metadata_license": "None (restrictive terms); one factual link to the agency's portal",
+      "license": "None (restrictive terms); one factual link to the agency's portal",
+      "media_rights": "Viewers must not record, copy or redistribute the images, use them commercially or circumvent the platform's access controls: one city-level link only, nothing embedded.",
+      "rights_note": "'Ao assistir, você se compromete a: não gravar, copiar ou redistribuir as imagens; não usar o conteúdo para finalidade comercial [...]; não tentar contornar os controles de acesso da plataforma' (termos.html). The camera list loads only after a Cloudflare Turnstile check, which Q-Globe does not bypass. Positions placed by Q-Globe where the operator publishes none (placement round, 2026-11-14): the named feature in OpenStreetMap (ODbL 1.0), Wikidata (CC0 1.0) or OurAirports (public domain) or, last resort, the place centre; each card shows the feature, its source and the uncertainty.",
+      "attribution": "Transalvador - Superintendência de Trânsito de Salvador",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://cameras-transalvador.salvador.ba.gov.br/termos.html",
+        "https://transalvador.salvador.ba.gov.br/",
+        "https://www.openstreetmap.org/copyright",
+        "https://www.wikidata.org/wiki/Wikidata:Licensing",
+        "https://ourairports.com/data/"
+      ],
+      "provider_notice": "Opens Transalvador's camera portal (it asks for a human check before the list). The marker is Salvador's centre, not a camera."
     },
-    "reviewed_at": "2026-11-14"
+    "media_hosts": [],
+    "page_hosts": [
+      "cameras-transalvador.salvador.ba.gov.br"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "BR"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature"
   },
   "budapest_kozut_figyelo": {
     "status": "held",
@@ -6469,15 +6601,15 @@
   "iraq_karbala_shrine_live": {
     "source": {
       "id": "iraq_karbala_shrine_live",
-      "name": "Al-Abbas Holy Shrine official live broadcast (Karbala)",
+      "name": "Karbala holy shrines official live broadcasts (Imam Hussain and Al-Abbas shrines)",
       "url": "https://alkafeel.net/",
       "catalog_url": "https://alkafeel.net/stream",
       "terms_url": "https://alkafeel.net/",
       "metadata_license": "None stated; factual link to the shrine's own live page",
       "license": "None stated; factual link to the shrine's own live page",
       "media_rights": "No terms or stream licence: link only.",
-      "rights_note": "The live page is the site's 'live' route (/stream). Position: the map marker on the shrine's own contact page.",
-      "attribution": "Al-Abbas Holy Shrine (alkafeel.net)",
+      "rights_note": "The live page is the site's 'live' route (/stream). Position: the map marker on the shrine's own contact page. Positions placed by Q-Globe where the operator publishes none (placement round, 2026-11-14): the named feature in OpenStreetMap (ODbL 1.0), Wikidata (CC0 1.0) or OurAirports (public domain) or, last resort, the place centre; each card shows the feature, its source and the uncertainty.",
+      "attribution": "Imam Hussain Holy Shrine (imamhussain.org); Al-Abbas Holy Shrine (alkafeel.net)",
       "rights_status": "official_page_only",
       "allowed_hosts": [],
       "review_status": "reviewed_for_external_references_only",
@@ -6485,12 +6617,17 @@
       "evidence": [
         "https://alkafeel.net/",
         "https://alkafeel.net/stream",
-        "https://alkafeel.net/js/contact.5f98b45b.js"
+        "https://alkafeel.net/js/contact.5f98b45b.js",
+        "https://imamhussain.org/arabic/live",
+        "https://www.openstreetmap.org/copyright",
+        "https://www.wikidata.org/wiki/Wikidata:Licensing",
+        "https://ourairports.com/data/"
       ]
     },
     "media_hosts": [],
     "page_hosts": [
-      "alkafeel.net"
+      "alkafeel.net",
+      "imamhussain.org"
     ],
     "formats": [
       "official_page"
@@ -6520,55 +6657,160 @@
     ]
   },
   "it_ski_bormio": {
-    "status": "held",
-    "held_reason": "no official coordinates: the resort webcam page; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.bormioski.eu/webcam-bormio/"
-    ],
     "source": {
       "id": "it_ski_bormio",
       "name": "Bormio Ski — webcam page",
-      "url": "https://www.bormioski.eu/webcam-bormio/"
+      "url": "https://www.bormioski.eu/webcam-bormio/",
+      "catalog_url": "https://www.bormioski.eu/webcam-bormio/",
+      "terms_url": "https://www.bormioski.eu/",
+      "metadata_license": "All rights reserved (operator/vendor)",
+      "license": "All rights reserved (operator/vendor)",
+      "license_url": null,
+      "media_rights": "Embedded vendor and operator cameras without reuse rights: one resort-level link.",
+      "rights_note": "Embedded vendor and operator cameras without reuse rights: one resort-level link.",
+      "attribution": "Bormio Ski - bormioski.eu",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.bormioski.eu"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.bormioski.eu/webcam-bormio/",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/it_ski_bormio/webcam-bormio.html",
+          "url": "https://www.bormioski.eu/webcam-bormio/",
+          "observed_at": "2026-11-14T14:11:03Z",
+          "status": 200,
+          "sha256": "9eead33a390456f36daecb692537d762892e5d3511712ae12bf8a27473bbbc81",
+          "bytes": 125045
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.bormioski.eu"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "IT"
-    ]
+    ],
+    "operator_hints": []
   },
   "it_ski_campiglio_apt": {
-    "status": "held",
-    "held_reason": "no official coordinates: the resort webcam page; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.campigliodolomiti.it/it/live-info/webcam"
-    ],
     "source": {
       "id": "it_ski_campiglio_apt",
-      "name": "APT Madonna di Campiglio — webcam page",
-      "url": "https://www.campigliodolomiti.it/it/live-info/webcam"
+      "name": "APT Madonna di Campiglio Pinzolo Val Rendena — webcam page",
+      "url": "https://www.campigliodolomiti.it/it/live-info/webcam",
+      "catalog_url": "https://www.campigliodolomiti.it/it/live-info/webcam",
+      "terms_url": "https://www.campigliodolomiti.it/",
+      "metadata_license": "All rights reserved (operator/vendor)",
+      "license": "All rights reserved (operator/vendor)",
+      "license_url": null,
+      "media_rights": "Embedded vendor and lift-company cameras without reuse rights: one resort-level link.",
+      "rights_note": "Embedded vendor and lift-company cameras without reuse rights: one resort-level link.",
+      "attribution": "APT Madonna di Campiglio Pinzolo Val Rendena",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.campigliodolomiti.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.campigliodolomiti.it/it/live-info/webcam",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/it_ski_campiglio_apt/webcam.html",
+          "url": "https://www.campigliodolomiti.it/it/live-info/webcam",
+          "observed_at": "2026-11-14T14:11:05Z",
+          "status": 200,
+          "sha256": "a2f81cd935e2f5fe4a971e8614225b9a1a4fa21ecb4c1a4388c9763112cf503e",
+          "bytes": 112081
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.campigliodolomiti.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "IT"
-    ]
+    ],
+    "operator_hints": []
   },
   "it_ski_cervinia": {
-    "status": "held",
-    "held_reason": "no official coordinates: the resort webcam page; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.cervinia.it/webcam"
-    ],
     "source": {
       "id": "it_ski_cervinia",
-      "name": "Cervino S.p.A. — webcam page",
-      "url": "https://www.cervinia.it/webcam"
+      "name": "Cervino S.p.A. — Breuil-Cervinia/Valtournenche webcam page",
+      "url": "https://www.cervinia.it/webcam",
+      "catalog_url": "https://www.cervinia.it/webcam",
+      "terms_url": "https://www.cervinia.it/",
+      "metadata_license": "All rights reserved ('©Cervino S.p.A - 2026')",
+      "license": "All rights reserved ('©Cervino S.p.A - 2026')",
+      "license_url": null,
+      "media_rights": "Embedded vendor and operator cameras without reuse rights: one resort-level link.",
+      "rights_note": "Embedded vendor and operator cameras without reuse rights: one resort-level link.",
+      "attribution": "Cervino S.p.A. - cervinia.it",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.cervinia.it"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.cervinia.it/webcam",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/it_ski_cervinia/webcam.html",
+          "url": "https://www.cervinia.it/webcam",
+          "observed_at": "2026-11-14T14:11:07Z",
+          "status": 200,
+          "sha256": "d9c48d8dd615ea51b7d7bb04556d858a727ff0796c87da23bfda9704cd968b19",
+          "bytes": 224983
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.cervinia.it"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "IT"
-    ]
+    ],
+    "operator_hints": []
   },
   "it_ski_livigno": {
     "status": "held",
@@ -6690,7 +6932,7 @@
       "metadata_license": "No licence stated (the site has only an 'as is' disclaimer); factual links to the club's camera pages",
       "license": "No licence stated (the site has only an 'as is' disclaimer); factual links to the club's camera pages",
       "media_rights": "No reuse terms for the images: page links only. Display would need the club's permission (webcams@aeroclubea.com), which would make about 117 cameras viewable.",
-      "rights_note": "'The images provided are on an 'as is' and 'as available basis' with no warranty as to the accuracy, completeness and uninterrupted provision of the images.' Positions: the club's own camera map (KML).",
+      "rights_note": "'The images provided are on an 'as is' and 'as available basis' with no warranty as to the accuracy, completeness and uninterrupted provision of the images.' Positions: the club's own camera map (KML). Positions placed by Q-Globe where the operator publishes none (placement round, 2026-11-14): the named feature in OpenStreetMap (ODbL 1.0), Wikidata (CC0 1.0) or OurAirports (public domain) or, last resort, the place centre; each card shows the feature, its source and the uncertainty.",
       "attribution": "Aero Club of East Africa - webcams.aeroclubea.com",
       "rights_status": "official_page_only",
       "allowed_hosts": [],
@@ -6699,7 +6941,10 @@
       "evidence": [
         "https://webcams.aeroclubea.com/",
         "https://webcams.aeroclubea.com/map.html",
-        "https://www.google.com/maps/d/kml?mid=1-jKp3FFsfqZ7rqExMt3E2C6QT54&forcekml=1"
+        "https://www.google.com/maps/d/kml?mid=1-jKp3FFsfqZ7rqExMt3E2C6QT54&forcekml=1",
+        "https://www.openstreetmap.org/copyright",
+        "https://www.wikidata.org/wiki/Wikidata:Licensing",
+        "https://ourairports.com/data/"
       ]
     },
     "media_hosts": [],
@@ -6732,10 +6977,13 @@
   },
   "kz_shymbulak_webcams": {
     "status": "held",
-    "held_reason": "Page answers (script-rendered shell) but no official position was read; the register's 43.128,77.081 is marked 'to be confirmed' and cites no source.",
-    "held_until": "an official resort position",
+    "held_reason": "placement round: not placed (no open-data position: OpenStreetMap (Overpass) did not answer during the round (HTTP 504/timeouts, at most 3 attempts per query) and no Wikidata or OurAirports record identifies the named features or places)",
+    "held_until": "an open-data position for the named feature or place (retry the cached Overpass lookups when the host answers)",
     "evidence": [
-      "https://shymbulak.com/en/webcams/"
+      "https://shymbulak.com/en/webcams/",
+      "https://www.openstreetmap.org/copyright",
+      "https://www.wikidata.org/wiki/Wikidata:Licensing",
+      "https://ourairports.com/data/"
     ],
     "source": {
       "id": "kz_shymbulak_webcams",
@@ -6797,19 +7045,42 @@
     ]
   },
   "macau_dsat_realtime_cameras": {
-    "status": "held",
-    "held_reason": "Index re-read 2026-11-14: 111 cameras grouped by district, 'All rights reserved', no coordinates; the DSAT contact page publishes no position, so even the city-level link has no official position.",
-    "held_until": "an official position (camera list with coordinates, or an agency position for a city-level marker)",
-    "evidence": [
-      "https://www.dsat.gov.mo/dsat/realtime.aspx",
-      "https://www.dsat.gov.mo/dsat/subpage.aspx?a_id=1614843871"
-    ],
     "source": {
       "id": "macau_dsat_realtime_cameras",
-      "name": "DSAT Macau real-time road condition cameras",
-      "url": "https://www.dsat.gov.mo/dsat/realtime.aspx"
+      "name": "DSAT Macau real-time road condition cameras (即時路面情況)",
+      "url": "https://www.dsat.gov.mo/dsat/realtime.aspx",
+      "catalog_url": "https://www.dsat.gov.mo/dsat/realtime.aspx",
+      "terms_url": "https://www.dsat.gov.mo/dsat/realtime.aspx",
+      "metadata_license": "All rights reserved (footer); factual links to DSAT's own per-camera pages",
+      "license": "All rights reserved (footer); factual links to DSAT's own per-camera pages",
+      "media_rights": "'Copyright © 2026 DSAT. All rights reserved.' The live streams are not embedded or fetched: each record opens DSAT's per-camera page.",
+      "rights_note": "111 cameras grouped by district on the index; DSAT publishes no positions. Positions placed by Q-Globe where the operator publishes none (placement round, 2026-11-14): the named feature in OpenStreetMap (ODbL 1.0), Wikidata (CC0 1.0) or OurAirports (public domain) or, last resort, the place centre; each card shows the feature, its source and the uncertainty.",
+      "attribution": "Direcção dos Serviços para os Assuntos de Tráfego (DSAT), Macau SAR",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.dsat.gov.mo/dsat/realtime.aspx",
+        "https://www.dsat.gov.mo/robots.txt",
+        "https://www.openstreetmap.org/copyright",
+        "https://www.wikidata.org/wiki/Wikidata:Licensing",
+        "https://ourairports.com/data/"
+      ],
+      "provider_notice": "Opens DSAT's camera index (111 cameras). The marker is Macau's centre, not a camera."
     },
-    "reviewed_at": "2026-11-14"
+    "media_hosts": [],
+    "page_hosts": [
+      "www.dsat.gov.mo"
+    ],
+    "formats": [
+      "official_page"
+    ],
+    "countries": [
+      "MO"
+    ],
+    "operator_hints": [],
+    "coordinate_role": "associated_feature"
   },
   "marche_rete_mir_webcams": {
     "status": "held",
@@ -6865,73 +7136,72 @@
     "coordinate_role": "approximate"
   },
   "md_border_police_webcams": {
-    "status": "held",
-    "held_reason": "no official coordinates: the 12 pages at Moldova–Romania crossings (bumbata, cahul-iesire, cahul-intrare, costesti-iesire-0, costesti-intrare, leova, leuseni-iesire, leuseni-intrare, lipcani-iesire, lipcani-intrare, sculeni-iesire, sculeni-intrare) name the crossing only; the Border Police site publishes no positions and the register gives none (round-2 hand-placement rule)",
-    "held_until": "an official position per crossing (operator map or an agency table), or the coordinator's approval to hand-place at the named crossings",
-    "evidence": [
-      "https://www.border.gov.md/camere-web",
-      "https://www.border.gov.md/camere-web/leuseni-iesire"
-    ],
     "source": {
       "id": "md_border_police_webcams",
-      "name": "Poliția de Frontieră a Republicii Moldova — camere web (Romania-facing crossings)",
-      "url": "https://www.border.gov.md/camere-web"
+      "name": "Poliția de Frontieră a Republicii Moldova — camere web la punctele de trecere a frontierei",
+      "url": "https://www.border.gov.md/camere-web",
+      "catalog_url": "https://www.border.gov.md/camere-web",
+      "terms_url": "https://www.border.gov.md/camere-web/leuseni-iesire",
+      "metadata_license": "All rights reserved ('Copyright 2026 IGPF Poliția de Frontieră / Toate drepturile rezervate')",
+      "license": "All rights reserved ('Copyright 2026 IGPF Poliția de Frontieră / Toate drepturile rezervate')",
+      "license_url": null,
+      "media_rights": "HLS streams on mediaserver.border.gov.md:50793 (non-standard port); the camera pages state all rights reserved. Links to the per-crossing camera pages only.",
+      "rights_note": "HLS streams on mediaserver.border.gov.md:50793 (non-standard port); the camera pages state all rights reserved. Links to the per-crossing camera pages only.",
+      "attribution": "Poliția de Frontieră a Republicii Moldova (border.gov.md)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.border.gov.md"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.border.gov.md/camere-web",
+        "https://www.border.gov.md/camere-web/leuseni-iesire",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/md_border_police_webcams/camere-web.html",
+          "url": "https://www.border.gov.md/camere-web",
+          "observed_at": "2026-11-14T14:10:35Z",
+          "status": 200,
+          "sha256": "1e56ca3970a0c12cda016e4ac9b73fc08ad01f1bc13962e10cce1bd619347eeb",
+          "bytes": 100826
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ],
+      "retires": "md_border_police_webcams_ukraine_facing (held in round 2): its 18 pages are records of this source; the user lifted the hold (Moldovan official public pages, Moldovan-side posts)",
+      "not_placed": [
+        {
+          "id": "md_border_police_webcams:grimancauti-iesire",
+          "reason": "osm:node/2603089747: names another crossing of the list; the place node osm:node/283841452 lies outside Natural Earth's Moldova: no centre fallback"
+        },
+        {
+          "id": "md_border_police_webcams:mirnoe-intrare",
+          "reason": "0 strong and 3 weak candidate posts: unclear, place centre only; the place node osm:node/277352978 lies outside Natural Earth's Moldova: no centre fallback"
+        },
+        {
+          "id": "md_border_police_webcams:mirnoe-iesire",
+          "reason": "0 strong and 3 weak candidate posts: unclear, place centre only; the place node osm:node/277352978 lies outside Natural Earth's Moldova: no centre fallback"
+        }
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.border.gov.md"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "MD"
     ],
-    "pages": [
-      "bumbata",
-      "cahul-iesire",
-      "cahul-intrare",
-      "costesti-iesire-0",
-      "costesti-intrare",
-      "leova",
-      "leuseni-iesire",
-      "leuseni-intrare",
-      "lipcani-iesire",
-      "lipcani-intrare",
-      "sculeni-iesire",
-      "sculeni-intrare"
-    ]
-  },
-  "md_border_police_webcams_ukraine_facing": {
-    "status": "held",
-    "held_reason": "Ukraine exclusion, decided conservatively: 18 pages at Moldova–Ukraine or dual crossings (briceni-iesire, criva-iesire, giurgiulesti-iesire, giurgiulesti-intrare, grimancauti-iesire, larga-iesire, mirnoe-iesire, mirnoe-intrare, ocnita-iesire, otaci-iesire, palanca-iesire, palanca-intrare, saiti-iesire, saiti-intrare, tudora-iesire, tudora-intrare, vulcanesti-iesire, vulcanesti-intrare) show Ukraine-bound traffic; the round holds them rather than decide how the martial-law exclusion applies",
-    "held_until": "the user's decision on Moldovan-side cameras facing Ukraine-bound traffic (and official positions)",
-    "evidence": [
-      "https://www.border.gov.md/camere-web"
-    ],
-    "source": {
-      "id": "md_border_police_webcams_ukraine_facing",
-      "name": "Poliția de Frontieră — camere web at Ukraine-facing or dual crossings",
-      "url": "https://www.border.gov.md/camere-web"
-    },
-    "reviewed_at": "2026-11-14",
-    "countries": [
-      "MD"
-    ],
-    "pages": [
-      "briceni-iesire",
-      "criva-iesire",
-      "giurgiulesti-iesire",
-      "giurgiulesti-intrare",
-      "grimancauti-iesire",
-      "larga-iesire",
-      "mirnoe-iesire",
-      "mirnoe-intrare",
-      "ocnita-iesire",
-      "otaci-iesire",
-      "palanca-iesire",
-      "palanca-intrare",
-      "saiti-iesire",
-      "saiti-intrare",
-      "tudora-iesire",
-      "tudora-intrare",
-      "vulcanesti-iesire",
-      "vulcanesti-intrare"
-    ]
+    "operator_hints": []
   },
   "me_mup_border_cameras": {
     "status": "held",
@@ -6973,7 +7243,8 @@
       "reviewed_at": "2026-11-14",
       "evidence": [
         "https://roads.org.mk/patna-mreza/video-kameri/",
-        "https://roads.org.mk/wp-json/wp/v2/video-kamera?per_page=100&_fields=id,link,slug,title,lang,translations"
+        "https://roads.org.mk/wp-json/wp/v2/video-kamera?per_page=100&_fields=id,link,slug,title,lang,translations",
+        "https://www.openstreetmap.org/copyright"
       ],
       "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
       "raw_files": [
@@ -6993,6 +7264,10 @@
           "sha256": "c8cc6965e4d065e90ab1f5cb4e09b8442fc91ce8c30f85b65e61664112a2fccb",
           "bytes": 21943
         }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
       ]
     },
     "media_hosts": [],
@@ -7011,8 +7286,8 @@
   },
   "mlit_hokkaido_road_info": {
     "status": "held",
-    "held_reason": "The site rejects scripted clients (F5 'Request Rejected' page, also for robots.txt); terms not read; no bypass attempted.",
-    "held_until": "A human reads the terms and finds an official camera list with coordinates.",
+    "held_reason": "Re-checked 2026-11-14 (placement round): the site still answers every scripted request, robots.txt included, with the F5 'Request Rejected' page; terms not read; no bypass attempted.",
+    "held_until": "A human reads the terms and finds a camera list reachable without the block.",
     "evidence": [],
     "source": {
       "id": "mlit_hokkaido_road_info",
@@ -7026,10 +7301,12 @@
   },
   "mlit_hokuriku_road_cameras": {
     "status": "held",
-    "held_reason": "PDL1.0 verified (hrr.mlit.go.jp/help.html); stills on www.hrr.mlit.go.jp/bosai/img/; no coordinates (Niigata portal SVG pixel positions, Ishikawa image maps); about 200 cameras. MLIT road bureaus publish no camera coordinates (as for mlit_kyushu_road_cameras, held in round 1); mlit_kanto_cctv admits only offices with official coordinates.",
-    "held_until": "Official camera coordinates (office KML/JSON) or MLIT DPF records.",
+    "held_reason": "PDL1.0 verified, but no bureau page lists the cameras in a readable form: top/live.html carries no list, the Toyama office page now forwards to the prefecture's winter-road site, the Ishikawa みちナビ (MLIT Kanazawa office) loads its cameras by script (text mode lists owners only), and the Niigata list is on the prefectural portal (no terms). Nothing to place.",
+    "held_until": "A camera list on an MLIT host (names + stills); then placement as for the other bureaus.",
     "evidence": [
-      "https://www.hrr.mlit.go.jp/help.html"
+      "https://www.hrr.mlit.go.jp/help.html",
+      "https://www.hrr.mlit.go.jp/top/live.html",
+      "https://www.hrr.mlit.go.jp/kanazawa/douro/michinavi/text.html"
     ],
     "source": {
       "id": "mlit_hokuriku_road_cameras",
@@ -7042,30 +7319,62 @@
     ]
   },
   "mlit_kinki_road_cameras": {
-    "status": "held",
-    "held_reason": "PDL1.0 verified (kkr.mlit.go.jp/link.html) and stills are fresh HTTPS JPEGs, but none of the 11 office pages publishes camera coordinates (Nara: clickable image map); about 300 cameras. MLIT road bureaus publish no camera coordinates (as for mlit_kyushu_road_cameras, held in round 1); mlit_kanto_cctv admits only offices with official coordinates.",
-    "held_until": "An office KML/JSON with coordinates, or MLIT DPF records (held for a key).",
-    "evidence": [
-      "https://www.kkr.mlit.go.jp/link.html",
-      "https://www.kkr.mlit.go.jp/road/strategy/camera.html"
-    ],
     "source": {
       "id": "mlit_kinki_road_cameras",
-      "name": "MLIT Kinki Regional Development Bureau national-road live cameras",
-      "url": "https://www.kkr.mlit.go.jp/road/strategy/camera.html"
+      "name": "MLIT Kinki Regional Development Bureau national-road live cameras (近畿地方整備局 道路ライブカメラ)",
+      "url": "https://www.kkr.mlit.go.jp/road/strategy/camera.html",
+      "catalog_url": "https://www.kkr.mlit.go.jp/road/strategy/camera.html",
+      "terms_url": "https://www.kkr.mlit.go.jp/link.html",
+      "metadata_license": "Public Data License 1.0 (PDL1.0), CC BY 4.0 compatible",
+      "license": "Public Data License 1.0 (PDL1.0)",
+      "license_url": "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+      "media_rights": "Site content, including camera stills, is usable under PDL1.0 (copy, public transmission, adaptation, commercial use) unless a page carries its own rights notice; the camera pages used carry none. Source attribution (出典 + page URL) and an edit notice are mandatory; QGlobe must not present the result as made by the agency.",
+      "rights_note": "「当ホームページで公開している情報（以下「コンテンツ」といいます。）の著作権は、特記されていない限り国土交通省近畿地方整備局に帰属し、権利表記の記載がない限り「 公共データ利用規約（第1.0版） 」（PDL1.0）に準拠した利用条件の下で、利用することができます。」 Required: 出典 (bureau website + page URL) and an edit notice; must not look government-made. No official camera positions are published. Positions are QGlobe placements (identity_confirmed=false): an interchange / junction / SA-PA from 国土数値情報 N06-25 (CC BY 4.0), a named bridge, tunnel, pass or rest area from OpenStreetMap (ODbL), or the representative point of the named 大字・町丁目 from 位置参照情報 (PDL1.0 / 位置参照情報利用約款); each record says which, with its uncertainty.",
+      "attribution": "出典：国土交通省 近畿地方整備局ホームページ（各事務所のライブカメラページURL）を加工して作成。QGlobeが画像を縮小表示し、名称・位置等を正規化・編集しています（国土交通省が作成したものではありません）。位置はQGlobeの推定（国土数値情報・位置参照情報・OpenStreetMap）。Source: MLIT Kinki Regional Development Bureau website; data normalized and edited by QGlobe, not an MLIT product. PDL1.0.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www.seishiga.kkr.mlit.go.jp"
+      ],
+      "minimum_refresh_seconds": 600,
+      "provider_notice": "Approximate position placed by QGlobe from the camera's name (see the card); not an official camera position.",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.kkr.mlit.go.jp/link.html",
+        "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+        "https://www.kkr.mlit.go.jp/road/strategy/camera.html",
+        "https://nlftp.mlit.go.jp/isj/",
+        "https://nlftp.mlit.go.jp/isj/agreement.html",
+        "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html",
+        "https://nlftp.mlit.go.jp/ksj/other/agreement.html"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [
+      "www.seishiga.kkr.mlit.go.jp"
+    ],
+    "page_hosts": [
+      "www.kkr.mlit.go.jp",
+      "www.seishiga.kkr.mlit.go.jp"
+    ],
+    "formats": [
+      "snapshot"
+    ],
     "countries": [
       "JP"
+    ],
+    "operator_hints": [
+      "近畿地方整備局",
+      "国土交通省",
+      "mlit"
     ]
   },
   "mlit_other_bureaus_road_cameras": {
     "status": "held",
-    "held_reason": "Shikoku PDL1.0 verified; Chubu and Chugoku terms not read; office pages give no coordinates and the Chugoku/Shikoku lists sit on road-info-prvs (no stable endpoint); about 400 cameras.",
-    "held_until": "Per bureau: terms read, one image check, official camera coordinates.",
+    "held_reason": "Shikoku (PDL1.0 verified): MLIT's national list links only the road-info-prvs system for the Shikoku bureau (no stable endpoint, held as mlit_road_info_prvs); no office camera page found. Chubu and Chugoku: terms not read (out of this round's scope).",
+    "held_until": "Shikoku office camera pages on skr.mlit.go.jp, or a stable road-info-prvs list; Chubu/Chugoku terms.",
     "evidence": [
       "https://www.skr.mlit.go.jp/manual.html",
-      "https://www.cbr.mlit.go.jp/livecamera.htm"
+      "https://www.mlit.go.jp/road/bosai/LIVEcamera.html"
     ],
     "source": {
       "id": "mlit_other_bureaus_road_cameras",
@@ -7095,20 +7404,53 @@
     ]
   },
   "mlit_tohoku_bureau_terms": {
-    "status": "held",
-    "held_reason": "PDL1.0 verified (thr.mlit.go.jp/policy.pdf), but the road camera pages and image host were not located; no coordinates; about 200 cameras.",
-    "held_until": "Camera pages with an official list of positions.",
-    "evidence": [
-      "https://www.thr.mlit.go.jp/policy.pdf"
-    ],
     "source": {
       "id": "mlit_tohoku_bureau_terms",
-      "name": "MLIT Tohoku Regional Development Bureau road cameras",
-      "url": "https://www.thr.mlit.go.jp/"
+      "name": "MLIT Tohoku Regional Development Bureau road cameras (東北地方整備局 道路ライブカメラ)",
+      "url": "https://www.mlit.go.jp/road/bosai/LIVEcamera.html",
+      "catalog_url": "https://www.mlit.go.jp/road/bosai/LIVEcamera.html",
+      "terms_url": "https://www.thr.mlit.go.jp/policy.pdf",
+      "metadata_license": "Public Data License 1.0 (PDL1.0), CC BY 4.0 compatible",
+      "license": "Public Data License 1.0 (PDL1.0)",
+      "license_url": "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+      "media_rights": "Site content, including camera stills, is usable under PDL1.0 (copy, public transmission, adaptation, commercial use) unless a page carries its own rights notice; the camera pages used carry none. Source attribution (出典 + page URL) and an edit notice are mandatory; QGlobe must not present the result as made by the agency.",
+      "rights_note": "「当ホームページのコンテンツの利用については、【 公共データ利用規約（第 1.0 版） (digital.go.jp) ［デジタル庁］】に定めるとおりです。」「当ホームページは、原則リンクフリーです。」 Required: 出典 (bureau website + page URL) and an edit notice; must not look government-made. No official camera positions are published. Positions are QGlobe placements (identity_confirmed=false): an interchange / junction / SA-PA from 国土数値情報 N06-25 (CC BY 4.0), a named bridge, tunnel, pass or rest area from OpenStreetMap (ODbL), or the representative point of the named 大字・町丁目 from 位置参照情報 (PDL1.0 / 位置参照情報利用約款); each record says which, with its uncertainty.",
+      "attribution": "出典：国土交通省 東北地方整備局ホームページ（各事務所のライブカメラページURL）を加工して作成。QGlobeが画像を縮小表示し、名称・位置等を正規化・編集しています（国土交通省が作成したものではありません）。位置はQGlobeの推定（国土数値情報・位置参照情報・OpenStreetMap）。Source: MLIT Tohoku Regional Development Bureau website; data normalized and edited by QGlobe, not an MLIT product. PDL1.0.",
+      "rights_status": "official_public_feed",
+      "allowed_hosts": [
+        "www2.thr.mlit.go.jp"
+      ],
+      "minimum_refresh_seconds": 600,
+      "provider_notice": "Approximate position placed by QGlobe from the camera's name (see the card); not an official camera position.",
+      "review_status": "reviewed_for_snapshot_and_reference_use",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.thr.mlit.go.jp/policy.pdf",
+        "https://www.digital.go.jp/resources/open_data/public_data_license_v1.0",
+        "https://www.mlit.go.jp/road/bosai/LIVEcamera.html",
+        "https://nlftp.mlit.go.jp/isj/",
+        "https://nlftp.mlit.go.jp/isj/agreement.html",
+        "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-2025.html",
+        "https://nlftp.mlit.go.jp/ksj/other/agreement.html"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [
+      "www2.thr.mlit.go.jp"
+    ],
+    "page_hosts": [
+      "www.thr.mlit.go.jp"
+    ],
+    "formats": [
+      "official_page",
+      "snapshot"
+    ],
     "countries": [
       "JP"
+    ],
+    "operator_hints": [
+      "東北地方整備局",
+      "国土交通省",
+      "mlit"
     ]
   },
   "namibia_nwr_okaukuejo": {
@@ -7373,21 +7715,56 @@
     "official_map_url": "https://www.land-oberoesterreich.gv.at/webcam.htm"
   },
   "oresundsbron_pylon_cams": {
-    "status": "held",
-    "held_reason": "no official coordinates: 2 pylon cameras (and the DK/SE side of each pylon); the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.oresundsbron.com/sv/pylonkamera"
-    ],
     "source": {
       "id": "oresundsbron_pylon_cams",
-      "name": "Øresundsbron — pylon cameras",
-      "url": "https://www.oresundsbron.com/sv/pylonkamera"
+      "name": "Øresundsbron — pylonkameror (east and west pylons)",
+      "url": "https://www.oresundsbron.com/sv/pylonkamera",
+      "catalog_url": "https://www.oresundsbron.com/sv/pylonkamera",
+      "terms_url": "https://www.oresundsbron.com/sv/pylonkamera",
+      "metadata_license": "None stated",
+      "license": "None stated",
+      "license_url": null,
+      "media_rights": "No rights statement on the page. Links to the operator's pylon-camera page only.",
+      "rights_note": "No rights statement on the page. Links to the operator's pylon-camera page only.",
+      "attribution": "Øresundsbron",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.oresundsbron.com"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.oresundsbron.com/sv/pylonkamera",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/oresundsbron_pylon_cams/pylonkamera.html",
+          "url": "https://www.oresundsbron.com/sv/pylonkamera",
+          "observed_at": "2026-11-14T14:10:55Z",
+          "status": 200,
+          "sha256": "3ded7a0fee381f150b187805fb53961f2e8a437943134411ded8508dafc79f44",
+          "bytes": 352863
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.oresundsbron.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "SE"
-    ]
+    ],
+    "operator_hints": []
   },
   "oulu_kelikamerat": {
     "source": {
@@ -7462,14 +7839,15 @@
   },
   "pkl_webcams": {
     "status": "held",
-    "held_reason": "no official coordinates: 7 cable-car venue pages (upper stations); the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
+    "held_reason": "no record could be placed (7 records): Overpass lookup 'extra' failed three times (overpass.kumi.systems answered HTTP 504) and no Wikidata item of the feature is known without it; re-run the lookup stage when the server answers",
+    "held_until": "an official position, or an open-data feature that identifies the named place and passes the checks",
     "evidence": [
-      "https://www.pkl.pl/kamery-online.html"
+      "https://www.pkl.pl/kamery-online.html",
+      "https://www.pkl.pl/kasprowy-wierch/kamery-online.html"
     ],
     "source": {
       "id": "pkl_webcams",
-      "name": "Polskie Koleje Linowe — kamery online",
+      "name": "Polskie Koleje Linowe (PKL) — kamery online",
       "url": "https://www.pkl.pl/kamery-online.html"
     },
     "reviewed_at": "2026-11-14",
@@ -7478,55 +7856,160 @@
     ]
   },
   "plzen_city_webcams": {
-    "status": "held",
-    "held_reason": "no official coordinates: 7 city cameras at named squares and junctions; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.plzen.eu/o-meste/multimedia/webkamery"
-    ],
     "source": {
       "id": "plzen_city_webcams",
       "name": "Statutární město Plzeň — webkamery",
-      "url": "https://www.plzen.eu/o-meste/multimedia/webkamery"
+      "url": "https://www.plzen.eu/o-meste/multimedia/webkamery",
+      "catalog_url": "https://www.plzen.eu/o-meste/multimedia/webkamery",
+      "terms_url": "https://www.plzen.eu/o-meste/multimedia/webkamery",
+      "metadata_license": "None stated (© 2026 Statutární město Plzeň)",
+      "license": "None stated (© 2026 Statutární město Plzeň)",
+      "license_url": null,
+      "media_rights": "Footer copyright of the city; the streams are not archived (GDPR note). The per-camera players are HTTP only (webkamery.plzen.eu), so every record links the city's HTTPS webcam page.",
+      "rights_note": "Footer copyright of the city; the streams are not archived (GDPR note). The per-camera players are HTTP only (webkamery.plzen.eu), so every record links the city's HTTPS webcam page.",
+      "attribution": "Statutární město Plzeň, plzen.eu",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.plzen.eu"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.plzen.eu/o-meste/multimedia/webkamery",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/plzen_city_webcams/webkamery.html",
+          "url": "https://www.plzen.eu/o-meste/multimedia/webkamery",
+          "observed_at": "2026-11-14T14:10:39Z",
+          "status": 200,
+          "sha256": "85816077ad6e22858e2c7dc146f102743b4b34d84098b8a6d3d0683b48ee01ee",
+          "bytes": 59451
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.plzen.eu"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "CZ"
-    ]
+    ],
+    "operator_hints": []
   },
   "port_of_helsinki_webcams": {
-    "status": "held",
-    "held_reason": "no official coordinates: 6 harbour camera pages; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/"
-    ],
     "source": {
       "id": "port_of_helsinki_webcams",
-      "name": "Port of Helsinki — web cameras",
-      "url": "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/"
+      "name": "Port of Helsinki — web cameras (South, West and Vuosaari harbours)",
+      "url": "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/",
+      "catalog_url": "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/",
+      "terms_url": "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/",
+      "metadata_license": "None stated",
+      "license": "None stated",
+      "license_url": null,
+      "media_rights": "No statement on reuse; the player loads only after marketing-cookie consent (third-party video host). Links to the camera pages only.",
+      "rights_note": "No statement on reuse; the player loads only after marketing-cookie consent (third-party video host). Links to the camera pages only.",
+      "attribution": "Port of Helsinki",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.portofhelsinki.fi"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/port_of_helsinki_webcams/web-camera-south-harbour.html",
+          "url": "https://www.portofhelsinki.fi/en/about-us/port-of-helsinki/web-camera-south-harbour/",
+          "observed_at": "2026-11-14T14:10:49Z",
+          "status": 200,
+          "sha256": "2e6137c58acf17887e4adc2508308ec8e4212e919b55d187026a9d49a199111d",
+          "bytes": 102408
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.portofhelsinki.fi"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "FI"
-    ]
+    ],
+    "operator_hints": []
   },
   "port_of_kiel_webcams": {
-    "status": "held",
-    "held_reason": "no official coordinates: 2 port cameras; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.portofkiel.com/webcam.html"
-    ],
     "source": {
       "id": "port_of_kiel_webcams",
-      "name": "Port of Kiel — webcams Schwedenkai / Hafenhaus",
-      "url": "https://www.portofkiel.com/webcam.html"
+      "name": "PORT OF KIEL — webcams Schwedenkai and HafenHaus",
+      "url": "https://www.portofkiel.com/webcam.html",
+      "catalog_url": "https://www.portofkiel.com/webcam.html",
+      "terms_url": "https://www.portofkiel.com/Impressum.html",
+      "metadata_license": "Not stated",
+      "license": "Not stated",
+      "license_url": null,
+      "media_rights": "No licence read; 'Webcam Kieler Förde' is a feratel stream already in the catalogue and is not listed. Links to the port's webcam page only.",
+      "rights_note": "No licence read; 'Webcam Kieler Förde' is a feratel stream already in the catalogue and is not listed. Links to the port's webcam page only.",
+      "attribution": "PORT OF KIEL (portofkiel.com)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.portofkiel.com"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.portofkiel.com/webcam.html",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/port_of_kiel_webcams/webcam.html",
+          "url": "https://www.portofkiel.com/webcam.html",
+          "observed_at": "2026-11-14T14:10:52Z",
+          "status": 200,
+          "sha256": "a5f5396c07fcd9266ec367954166859b2e827a1d30ef38226574ac66e8a8860f",
+          "bytes": 29104
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.portofkiel.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "DE"
-    ]
+    ],
+    "operator_hints": []
   },
   "provincia_bz_meteo_webcams": {
     "status": "held",
@@ -7687,7 +8170,8 @@
       "evidence": [
         "https://www.shmu.sk/sk/?page=1&id=webkamery",
         "https://opendata.shmu.sk/README.txt",
-        "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
+        "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv",
+        "https://www.openstreetmap.org/copyright"
       ],
       "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
       "raw_files": [
@@ -7708,7 +8192,17 @@
           "bytes": 2914601
         }
       ],
-      "robots_note": "www.shmu.sk disallows /data/ (the image folder): no image is fetched or embedded"
+      "robots_note": "www.shmu.sk disallows /data/ (the image folder): no image is fetched or embedded",
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ],
+      "not_placed": [
+        {
+          "id": "shmu_webcams:hdcam02",
+          "reason": "Overpass lookup 'extra' failed three times (overpass.kumi.systems answered HTTP 504) and no Wikidata item of the feature is known without it; re-run the lookup stage when the server answers"
+        }
+      ]
     },
     "media_hosts": [],
     "page_hosts": [
@@ -7815,7 +8309,8 @@
       "reviewed_at": "2026-11-14",
       "evidence": [
         "https://www.tirol.gv.at/impressum/",
-        "https://www.tirol.gv.at/umwelt/luftqualitaet/livebilder"
+        "https://www.tirol.gv.at/umwelt/luftqualitaet/livebilder",
+        "https://www.openstreetmap.org/copyright"
       ],
       "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
       "raw_files": [
@@ -7859,6 +8354,10 @@
           "sha256": "d502ca45e79b2e5d8a009a9137be458f4fa3a58021563ca375f6857b4c6e4b17",
           "bytes": 243838
         }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
       ]
     },
     "media_hosts": [],
@@ -7913,21 +8412,56 @@
     ]
   },
   "turku_cathedral_tower_cams": {
-    "status": "held",
-    "held_reason": "no official coordinates: the cathedral tower camera; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/"
-    ],
     "source": {
       "id": "turku_cathedral_tower_cams",
-      "name": "Turku Cathedral — tower camera",
-      "url": "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/"
+      "name": "Turku Cathedral — tower camera (Turun ja Kaarinan seurakuntayhtymä)",
+      "url": "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/",
+      "catalog_url": "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/",
+      "terms_url": "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/",
+      "metadata_license": "None stated",
+      "license": "None stated",
+      "license_url": null,
+      "media_rights": "No rights statement; third-party viewer. A link to the cathedral's tower-camera page only.",
+      "rights_note": "No rights statement; third-party viewer. A link to the cathedral's tower-camera page only.",
+      "attribution": "Turun ja Kaarinan seurakuntayhtymä",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "turunseurakunnat.fi"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/",
+        "https://www.wikidata.org/wiki/Wikidata:Licensing"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/turku_cathedral_tower_cams/tower-camera.html",
+          "url": "https://turunseurakunnat.fi/en/turun-tuomiokirkko/explore-turku-cathedral-virtually/tower-camera/",
+          "observed_at": "2026-11-14T14:11:00Z",
+          "status": 200,
+          "sha256": "0ea1f6ff6adcd3be620308559f6a42fff2f295df789da88805673acdee4749c7",
+          "bytes": 157474
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "Wikidata (CC0 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "turunseurakunnat.fi"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "FI"
-    ]
+    ],
+    "operator_hints": []
   },
   "usap_antarctic_webcams": {
     "source": {
@@ -7986,21 +8520,58 @@
     ]
   },
   "visitfinland_live_streams": {
-    "status": "held",
-    "held_reason": "no official coordinates: 6 streams at named places; the operator page publishes no position and no agency table or register value covers it (round-2 hand-placement rule)",
-    "held_until": "an official position (operator map/coordinates or an agency table), or the coordinator's approval to hand-place at the named place",
-    "evidence": [
-      "https://www.visitfinland.com/en/practical-tips/live-from-finland/"
-    ],
     "source": {
       "id": "visitfinland_live_streams",
-      "name": "Visit Finland — live streams (YouTube channels)",
-      "url": "https://www.visitfinland.com/en/practical-tips/live-from-finland/"
+      "name": "Visit Finland — 'Live from Finland' webcam streams (operators' YouTube channels)",
+      "url": "https://www.visitfinland.com/en/practical-tips/live-from-finland/",
+      "catalog_url": "https://www.visitfinland.com/en/practical-tips/live-from-finland/",
+      "terms_url": "https://www.visitfinland.com/en/practical-tips/live-from-finland/",
+      "metadata_license": "None stated",
+      "license": "None stated",
+      "license_url": null,
+      "media_rights": "YouTube streams of the operators Visit Finland credits; no rights statement. Links to the operator's channel (or Visit Finland's page when the credit links a single video); no embedding.",
+      "rights_note": "YouTube streams of the operators Visit Finland credits; no rights statement. Links to the operator's channel (or Visit Finland's page when the credit links a single video); no embedding.",
+      "attribution": "Stream provided by the named operator (via Visit Finland)",
+      "rights_status": "official_page_only",
+      "allowed_hosts": [],
+      "official_page_hosts": [
+        "www.visitfinland.com",
+        "www.youtube.com"
+      ],
+      "review_status": "reviewed_for_external_references_only",
+      "reviewed_at": "2026-11-14",
+      "evidence": [
+        "https://www.visitfinland.com/en/practical-tips/live-from-finland/",
+        "https://www.openstreetmap.org/copyright"
+      ],
+      "review_note": "Approved scope is limited to the formats and origins in this registry; no upstream liveness claim is accepted.",
+      "raw_files": [
+        {
+          "file": "raw/visitfinland_live_streams/live-from-finland.html",
+          "url": "https://www.visitfinland.com/en/practical-tips/live-from-finland/",
+          "observed_at": "2026-11-14T14:10:51Z",
+          "status": 200,
+          "sha256": "9484fec96c4c08821a4c1249db94292595b829b2651a8421d8beb5b9b1d70e80",
+          "bytes": 239781
+        }
+      ],
+      "coordinate_placement": "No camera position is published by the operator: QGlobe placed each record at the named feature in an open dataset, or at the named place's centre, with coordinate_source, coordinate_feature and coordinate_uncertainty_m on every record (identity not confirmed).",
+      "coordinate_datasets": [
+        "OpenStreetMap (ODbL 1.0)"
+      ]
     },
-    "reviewed_at": "2026-11-14",
+    "media_hosts": [],
+    "page_hosts": [
+      "www.visitfinland.com",
+      "www.youtube.com"
+    ],
+    "formats": [
+      "official_page"
+    ],
     "countries": [
       "FI"
-    ]
+    ],
+    "operator_hints": []
   },
   "vmz_bremen_webcams": {
     "status": "held",

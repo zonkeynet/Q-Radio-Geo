@@ -1,0 +1,91 @@
+font-size: 13px;
+            font-weight: bold;
+        }
+        .noborder
+        {
+            border-top-style: none;
+            border-right-style: none;
+            border-bottom-style: none;
+            border-left-style: none;
+        }
+        .lineAlpha
+        {
+            filter: Alpha(Opacity=80,style=1);
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+            border-bottom-color: #CCCCCC;
+        }
+
+/* for js off, css on */
+ul.tabnavs { 
+    display:none; 
+    }
+	
+.tab_size { 
+    display:block;
+    width:150px;
+	height:30px;
+	line-height:30px;
+	text-align:center;
+    }	
+
+@media print {
+    ul.tabnavs { display: none; }
+}
+
+</style>
+        
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body >
+沙梨頭南街<br />
+
+
+
+	<div align=center>
+
+	
+		
+		 <div id="J_prismPlayer"></div>
+
+		<script>
+  var player = new Aliplayer({
+    id: 'J_prismPlayer',
+    source: 'https://streaming1.dsatmacau.com/traffic/m2169.m3u8', 
+    isLive: true, // Specifies whether to play live streams. 
+    mute : true,
+    skinLayout: [
+    {name: "bigPlayButton", align: "blabs", x: 30, y: 80},
+
+    {
+      name: "controlBar", align: "blabs", x: 0, y: 0,
+      children: [
+                 {
+          "name": "liveDisplay",
+          "align": "tlabs",
+          "x": 15,
+          "y": 6
+        },
+        {
+          "name": "fullScreenButton",
+          "align": "tr",
+          "x": 10,
+          "y": 10
+        }
+        ]
+    }
+  ],
+    },function(player){
+      console.log('The player is created.')
+    });  
+		</script>
+					
+
+
+</div>
+
+<p><span class="content">&nbsp;&nbsp;註：可選擇不同地區即時交通影像或直播，影像更新時間為每5秒一次</span></p>
+
+ <p><img src="images/player.png" width="12" height="12" /> 為了能正常瀏覽交通直播，建議使用Chrome 或 Edge 瀏覽器。</p>
+</body>
+</html>

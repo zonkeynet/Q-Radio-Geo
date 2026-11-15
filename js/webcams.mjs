@@ -310,6 +310,14 @@ function element(tag, className, content) {
 }
 
 function coordinateLabel(camera) {
+    // Placed by QGlobe where the operator publishes no position: say where and from which open dataset.
+    if (['named_feature', 'place_centre'].includes(camera.coordinate_role)) {
+        const where = text(camera.coordinate_feature, 160) || 'the named place';
+        const source = [text(camera.coordinate_source, 120), text(camera.coordinate_source_licence, 60)].filter(Boolean).join(', ');
+        const metres = Number(camera.coordinate_uncertainty_m);
+        return `Approximate position: ${where}${source ? ` (${source})` : ''}${metres > 0 ? `, within about ${metres >= 1000
+            ? `${Math.round(metres / 100) / 10} km` : `${Math.round(metres)} m`}` : ''}. The exact camera position is unknown.`;
+    }
     const roles = { camera_location: 'Camera location reported by the provider',
         station_location: 'Station location; the camera position may differ',
         associated_feature: 'Associated place; the exact camera position is unknown',

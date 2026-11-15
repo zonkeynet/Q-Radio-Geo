@@ -78,6 +78,12 @@ if WORLD_POLICY_PATH.exists():
         EXTRA_CATALOG_PROVIDERS.add(_provider)
 INCOMPLETE_PROBE_STATUSES = {"budget_exhausted", "stopped", "interrupted"}
 OSM_ATTRIBUTION = "© OpenStreetMap contributors, ODbL 1.0; https://www.openstreetmap.org/copyright"
+# Positions placed by QGlobe where the operator publishes none: at the named feature in an open dataset
+# (OSM, Wikidata, OurAirports) or, last resort, at the place centre. They carry coordinate_source,
+# coordinate_feature, coordinate_uncertainty_m and identity_confirmed=false, and never take part in
+# proximity matching or the duplicate rule.
+PLACED_ROLES = ("named_feature", "place_centre")
+IMPRECISE_ROLES = ("associated_feature", "feature_center", "approximate", *PLACED_ROLES)
 
 # Privacy filter. Whatever its source, a published URL never carries a login in its query
 # (or fragment), never names a home dynamic-DNS host, and, for community-sourced records
@@ -439,9 +445,10 @@ def same_name(a, b):
 def drop_duplicates(items, radius):
     """Remove the two kinds of duplicate above; returns kept items and one log entry per removed record."""
     community = {x["id"] for x in items if community_source(x.get("provider"))}
+    placed = {x["id"] for x in items if x.get("coordinate_role") in PLACED_ROLES}  # never matched by position
     grid = collections.defaultdict(list)
     for x in items:
-        if x["id"] not in community:
+        if x["id"] not in community and x["id"] not in placed:
             grid[(round(x["lat"], 2), round(x["lng"], 2))].append(x)
 
     def near(x):
@@ -452,7 +459,7 @@ def drop_duplicates(items, radius):
     gone, log = set(), []
     firsts = {a for a, _ in SAME_CAMERA_PAGE_PAIRS}
     for x in sorted(items, key=lambda i: i["id"]):  # same camera from a reviewed provider pair -> the viewable record
-        if x["id"] in community or x["provider"] not in firsts:
+        if x["id"] in community or x["id"] in placed or x["provider"] not in firsts:
             continue
         for d, v in near(x):
             if (x["provider"], v["provider"]) in SAME_CAMERA_PAGE_PAIRS and v["format"] in ("hls", "snapshot") \
@@ -465,7 +472,7 @@ def drop_duplicates(items, radius):
                             "rule": "page-duplicate-of-viewable", "note": SAME_CAMERA_PAGE_PAIRS[(x["provider"], v["provider"])]})
                 break
     for x in sorted(items, key=lambda i: i["id"]):  # community link -> official record with every one of its links
-        if x["id"] not in community:
+        if x["id"] not in community or x["id"] in placed:
             continue
         own = record_links(x) - ({link_key(x["source_page"])} if x.get("source_page") else set())
         for d, o in near(x):
@@ -832,8 +839,14 @@ def normalize_world_item(raw, observed_at, privacy_log=None):
     if not source_page or not source_catalog:
         raise ValueError("Source provenance URL missing or unsafe")
     role = policy.get("force_coordinate_role") or raw.get("coordinate_role") or policy.get("coordinate_role", "camera_location")
-    if role not in ("camera_location", "station_location", "associated_feature", "feature_center", "approximate"):
+    if role not in ("camera_location", "station_location", *IMPRECISE_ROLES):
         raise ValueError("Unknown coordinate role")
+    if role in PLACED_ROLES:
+        uncertainty = raw.get("coordinate_uncertainty_m")
+        if not (raw.get("coordinate_source") and raw.get("coordinate_feature")
+                and isinstance(uncertainty, (int, float)) and uncertainty > 0 and raw.get("identity_confirmed") is False):
+            raise ValueError("A placed position needs coordinate_source, coordinate_feature, coordinate_uncertainty_m "
+                             "and identity_confirmed=false")
     # Preserve factual adapter metadata, but source policy and evidence win over
     # any claims embedded in downloaded catalog files.
     item = {k: v for k, v in raw.items() if k not in ("health", "url_repair", "media_access")}
@@ -1159,7 +1172,7 @@ def wgs84_coordinates(item):
 
 def candidate_matches(db, item, radius=100):
     """Return geographic associations, never an identity merge; all SQL values are bound."""
-    if item.get("coordinate_role") in ("associated_feature", "feature_center", "approximate"):
+    if item.get("coordinate_role") in IMPRECISE_ROLES:
         return []  # A city's/landmark's coordinates do not locate its camera.
     if not wgs84_coordinates(item):
         return []  # Preserve a supplied datum; don't silently call it WGS84.
@@ -1259,7 +1272,8 @@ def viewer_catalog(catalog):
               "format", "stream_url", "snapshot_url", "official_page", "source_page", "rights_status",
               "provider_in_service", "observed_at", "coordinate_role", "country_inferred",
               "coordinate_reference_system", "coordinate_crs", "coordinate_transform_applied",
-              "image_observed_at", "requires_catalog_refresh", "minimum_refresh_seconds", "provider_notice", "media_access"}
+              "image_observed_at", "requires_catalog_refresh", "minimum_refresh_seconds", "provider_notice", "media_access",
+              "coordinate_source", "coordinate_feature", "coordinate_uncertainty_m", "coordinate_source_licence"}
     rows = []
     for item in catalog["items"]:
         row = {k: v for k, v in item.items() if k in fields and v not in (None, "")}
@@ -1285,7 +1299,9 @@ LIVE_TABLE_FIELDS = frozenset({
     "provider", "country", "region", "road", "road_number", "format", "source_page", "official_page", "observed_at",
     "rights_status", "coordinate_role", "coordinate_reference_system", "coordinate_crs", "coordinate_transform_applied",
     "image_observed_at", "requires_catalog_refresh", "minimum_refresh_seconds", "provider_in_service",
-    "provider_notice", "media_access", "health", "country_inferred"})
+    "provider_notice", "media_access", "health", "country_inferred", "coordinate_source_licence",
+    # Placed positions (few distinct values, null on almost every row): an index costs less than an inline null.
+    "coordinate_source", "coordinate_feature", "coordinate_uncertainty_m"})
 # Source fields the viewer reads (prepareWebcams); the rest stays in the full catalog.
 LIVE_SOURCE_FIELDS = ("id", "name", "terms_url", "license_url", "license", "metadata_license",
                       "coordinate_reference_system", "coordinate_crs", "provider_notice", "requires_catalog_refresh",
@@ -1569,7 +1585,9 @@ def main():
         "country_counts": dict(sorted(collections.Counter(x["country"] for x in items).items())),
         "known_country_codes": len({x["country"] for x in items if x["country"] != "ZZ"}),
         "coordinate_role_counts": dict(collections.Counter(x.get("coordinate_role", "camera_location") for x in items)),
-        "records_excluded_from_proximity_matching": sum(x.get("coordinate_role") in ("associated_feature", "feature_center", "approximate") for x in items),
+        "records_excluded_from_proximity_matching": sum(x.get("coordinate_role") in IMPRECISE_ROLES for x in items),
+        "records_placed_by_qglobe": dict(sorted(collections.Counter(x["coordinate_role"] for x in items
+                                                                    if x.get("coordinate_role") in PLACED_ROLES).items())),
         "records_with_untransformed_crs_excluded_from_matching": sum(not wgs84_coordinates(x) for x in items),
         "geojson_null_geometry_records": sum(not wgs84_coordinates(x) for x in items),
         "country_inferred_records": sum(bool(x.get("country_inferred")) for x in items),

@@ -602,16 +602,20 @@ def policies():
             "The streams are the trusts' own YouTube lives with all rights reserved: links only.",
             "'© 2026 Shri Mahalaxmi Temple Trust, Mumbai. All rights reserved.' Positions from the maps on each trust's "
             "contact / how-to-reach page.",
-            "Shri Arasuri Ambaji Mata Devasthan Trust; Shri Mahalaxmi Temple Trust, Mumbai",
-            ["www.ambajitemple.in", "mahalakshmi-temple.com"], ["IN"],
-            [AMBAJI_LIVE, AMBAJI_CONTACT, MAHALAXMI_LIVE, MAHALAXMI_REACH]),
+            "Shri Arasuri Ambaji Mata Devasthan Trust; Shri Mahalaxmi Temple Trust, Mumbai; ISKCON Mayapur (Mayapur TV)",
+            # www.mayapur.tv: Mayapur TV is placed by collect_places_world.py (placement round)
+            ["www.ambajitemple.in", "mahalakshmi-temple.com", "www.mayapur.tv"], ["IN"],
+            [AMBAJI_LIVE, AMBAJI_CONTACT, MAHALAXMI_LIVE, MAHALAXMI_REACH, "https://www.mayapur.tv/"]),
         "iraq_karbala_shrine_live": page_policy(
-            "iraq_karbala_shrine_live", "Al-Abbas Holy Shrine official live broadcast (Karbala)", "https://alkafeel.net/",
+            "iraq_karbala_shrine_live", "Karbala holy shrines official live broadcasts (Imam Hussain and Al-Abbas shrines)",
+            "https://alkafeel.net/",
             ALKAFEEL_STREAM, "https://alkafeel.net/", "None stated; factual link to the shrine's own live page",
             "No terms or stream licence: link only.",
             "The live page is the site's 'live' route (/stream). Position: the map marker on the shrine's own contact "
-            "page.", "Al-Abbas Holy Shrine (alkafeel.net)", ["alkafeel.net"], ["IQ"],
-            ["https://alkafeel.net/", ALKAFEEL_STREAM, ALKAFEEL_CONTACT_JS], role="approximate"),
+            "page.", "Imam Hussain Holy Shrine (imamhussain.org); Al-Abbas Holy Shrine (alkafeel.net)",
+            # imamhussain.org: the Imam Hussain live page is placed by collect_places_world.py (placement round)
+            ["alkafeel.net", "imamhussain.org"], ["IQ"],
+            ["https://alkafeel.net/", ALKAFEEL_STREAM, ALKAFEEL_CONTACT_JS, IMAM_HUSSAIN_LIVE], role="approximate"),
         "sri_lanka_dalada_maligawa_live": page_policy(
             "sri_lanka_dalada_maligawa_live", "Sri Dalada Maligawa (Temple of the Tooth) official live page",
             DALADA_LIVE, DALADA_LIVE, "https://sridaladamaligawa.lk/", "None (all rights reserved); factual link",
@@ -726,6 +730,10 @@ HELD = {
         "legal constraints to check before even linking.", "a robots-allowed list and a legal/sanctions review",
         ["https://141.ir/robots.txt"]),
 }
+# Placement round (2026-11-14): these were held only for lack of a position. scripts/collect_places_world.py places
+# them (or keeps them held with its own reason) and writes their policy fragments: this collector no longer does.
+PLACED_BY_PLACES_ROUND = {"israel_western_wall_cameras", "brazil_transalvador_cameras", "kz_shymbulak_webcams",
+                          "macau_dsat_realtime_cameras"}
 ALREADY_HELD = {"explore_org_africa": "explore_org_livecams (held: no list; terms allow deep links but not automated "
                                       "harvesting; only a hand-made list is possible)"}
 
@@ -1046,7 +1054,8 @@ def run(out, reuse=False):
                         (["maunakea_mkwc_other_observatory_cams"], mkwc)):
         attempt(sources, fn)
     for source, entry in HELD.items():
-        hold(source, entry)
+        if source not in PLACED_BY_PLACES_ROUND:
+            hold(source, entry)
     report["register_viewable_others"] = ("No other world-2 record is viewable + integrate_viewable without a condition: "
                                           "the only other one, japan_mlit_rivers, belongs to the Japan family.")
     report["changes_from_register"] = [
