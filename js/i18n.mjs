@@ -16,7 +16,7 @@ export function supported(tag) {
     return LANGS.includes(primary) ? primary : null;
 }
 /** hl from the address wins (an unsupported one means English); then, in a browser, its languages; else English. */
-export function resolveLanguage(search = globalThis.location?.search || '', browser = globalThis.document ? globalThis.navigator : null) {
+export function resolveLanguage(search = globalThis.location?.search || '', browser = globalThis.window === globalThis && globalThis.document ? globalThis.navigator : null) {
     const hl = new URLSearchParams(search).get('hl');
     if (hl !== null) return supported(hl) || 'en';
     for (const tag of browser?.languages?.length ? browser.languages : [browser?.language]) { const lang = supported(tag); if (lang) return lang; }

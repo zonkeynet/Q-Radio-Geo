@@ -3,10 +3,14 @@
 // loads (hospitals via Overpass, outages via IODA) only run when the user asks, because those servers see the
 // user's IP address and the area or country requested.
 import { loadJSON } from './catalog.mjs';
-let regionNames = null;
-const country = cc => { try { regionNames ??= new Intl.DisplayNames(['en'], { type: 'region' }); return cc ? regionNames.of(cc) : ''; } catch { return cc || ''; } };
+import { t, tn, num, date, region } from './i18n.mjs';
+// Country names in the UI language from their codes; the data's (English) name when there is no code.
+const country = cc => cc ? region(cc) : '';
+const hostName = it => it.hostCc ? region(it.hostCc) : it.host;
 const osmUrl = id => `https://www.openstreetmap.org/${({ n: 'node', w: 'way', r: 'relation' })[id[0]]}/${id.slice(1)}`;
-const OSM_CREDIT = '© OpenStreetMap contributors (ODbL): may be incomplete or out of date.';
+const OSM_CREDIT = t('osint.osmCredit');
+const OSM_DATA = t('osint.osmData');
+const OPEN_OSM = t('osint.openOsm');
 
 // ---------- live OpenStreetMap queries for the area in view ----------
 // Public Overpass instances, tried in order. overpass-api.de comes last because it currently refuses browser
@@ -14,7 +18,7 @@ const OSM_CREDIT = '© OpenStreetMap contributors (ODbL): may be incomplete or o
 // journalists are deliberately left out.
 const OVERPASS = ['https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter'];
 const OVERPASS_WAIT_MS = 40000; // per server: public instances can queue a request for a long time
-const OVERPASS_NOTE = 'Public OpenStreetMap servers (overpass.kumi.systems, else private.coffee or overpass-api.de) see your IP address and the area in view.';
+const OVERPASS_NOTE = t('osint.overpassNote');
 async function overpass(query, signal) {
     let last = null;
     for (const url of OVERPASS) {
@@ -23,14 +27,14 @@ async function overpass(query, signal) {
         try {
             const res = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: query }), signal: attempt.signal });
             if (res.ok) return (await res.json()).elements || [];
-            last = res.status === 429 ? 'too many requests' : `error ${res.status}`;
+            last = res.status === 429 ? t('osint.overpass.tooMany') : t('osint.overpass.status', { status: String(res.status) });
         } catch (e) {
             if (signal?.aborted) throw e;
             // Overloaded servers often answer without CORS headers, which the browser reports as a network error.
-            last = attempt.signal.aborted ? 'too slow' : 'no answer';
+            last = attempt.signal.aborted ? t('osint.overpass.slow') : t('osint.overpass.noAnswer');
         } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
     }
-    throw new Error(`OpenStreetMap servers unavailable (${last}); they are often overloaded.`);
+    throw new Error(t('osint.overpass.unavailable', { reason: last }));
 }
 const box = b => `(${b.s},${b.w},${b.n},${b.e})`;
 const point = el => el.type === 'node' ? [el.lat, el.lon] : el.center ? [el.center.lat, el.center.lon] : [NaN, NaN];
@@ -43,49 +47,52 @@ function liveItem(el, kind, extra) {
 
 // ---------- 🏛️ Diplomatic missions (+ hospitals live) ----------
 const EMB_COLORS = { EMBASSY: '--accent', CONSULATE: '--accent-2', MISSION: '--approx', REFUGE: '--accent-3', HOSPITAL: '--red' };
-const EMB_LABEL = { EMBASSY: 'Embassy', CONSULATE: 'Consulate', MISSION: 'Mission / delegation', REFUGE: 'Refugee site', HOSPITAL: 'Hospital' };
-const EMB_PLURAL = { EMBASSY: 'Embassies', CONSULATE: 'Consulates', MISSION: 'Missions & delegations', REFUGE: 'Refugee sites', HOSPITAL: 'Hospitals' };
+const EMB_LABEL = Object.fromEntries(Object.keys(EMB_COLORS).map(k => [k, t(`osint.embassies.kind.${k}`)]));
+const EMB_PLURAL = Object.fromEntries(Object.keys(EMB_COLORS).map(k => [k, t(`osint.embassies.plural.${k}`)]));
 const DIPLOMATIC = new Set(['EMBASSY', 'CONSULATE', 'MISSION']);
+const missionOf = it => t('osint.embassies.of', { kind: EMB_LABEL[it.kind], country: country(it.from) });
 export const EMBASSIES = {
-    id: 'embassies', label: 'EMBASSIES', group: 'Safety & OSINT', noun: 'places', dataUrl: 'data/embassies.json',
-    sidebarTitle: 'Embassies & havens', placeholder: 'Search country represented, city or name…', randomTitle: 'Show a random mission',
+    id: 'embassies', label: t('osint.embassies.label'), group: 'safety', noun: t('osint.embassies.noun'), dataUrl: 'data/embassies.json',
+    countOf: n => tn('osint.embassies.count', n),
+    sidebarTitle: t('osint.embassies.title'), placeholder: t('osint.embassies.placeholder'), randomTitle: t('osint.embassies.random'),
     prepare: json => json.items || [],
-    searchText: it => `${it.name} ${country(it.from)} ${it.from || ''} ${it.host || ''} ${it.city || ''} ${EMB_LABEL[it.kind]} ${it.detail || ''} ${it.operator || ''}`,
-    filters: [{ key: 'kind', label: 'Type', options: [{ id: 'all', label: 'ALL', name: 'All' },
-        ...Object.keys(EMB_COLORS).map(k => ({ id: k, label: k === 'MISSION' ? 'MISSIONS' : EMB_PLURAL[k].toUpperCase(), name: k === 'HOSPITAL' ? 'Hospitals (live, in view)' : EMB_PLURAL[k], color: EMB_COLORS[k], live: k === 'HOSPITAL' }))],
+    searchText: it => `${it.name} ${country(it.from)} ${it.from || ''} ${it.host || ''} ${it.hostCc ? hostName(it) : ''} ${it.city || ''} ${EMB_LABEL[it.kind]} ${it.detail || ''} ${it.operator || ''}`,
+    filters: [{ key: 'kind', label: t('osint.type'), options: [{ id: 'all', label: t('common.all'), name: t('osint.embassies.all') },
+        ...Object.keys(EMB_COLORS).map(k => ({ id: k, label: k === 'MISSION' ? t('osint.embassies.missions') : EMB_PLURAL[k], name: k === 'HOSPITAL' ? t('osint.embassies.hospitalsLive') : EMB_PLURAL[k], color: EMB_COLORS[k], live: k === 'HOSPITAL' }))],
         test: (it, v) => it.kind === v }],
     palette: Object.values(EMB_COLORS),
     colorOf: it => EMB_COLORS[it.kind],
     sizeOf: it => it.kind === 'EMBASSY' ? 6 : 5,
-    nameOf: it => it.name || (it.from ? `${EMB_LABEL[it.kind]} of ${country(it.from)}` : EMB_LABEL[it.kind]),
-    placeOf: it => [it.city, it.host].filter(Boolean).join(', '),
-    subOf: it => [it.from ? `${EMB_LABEL[it.kind]} of ${country(it.from)}` : it.detail || EMB_LABEL[it.kind], it.city || it.host].filter(Boolean).join(' · '),
+    nameOf: it => it.name || (it.from ? missionOf(it) : EMB_LABEL[it.kind]),
+    placeOf: it => [it.city, hostName(it)].filter(Boolean).join(', '),
+    subOf: it => [it.from ? missionOf(it) : it.detail || EMB_LABEL[it.kind], it.city || hostName(it)].filter(Boolean).join(' · '),
     badgeOf: it => EMB_LABEL[it.kind], shortBadge: it => ({ EMBASSY: 'EMB', CONSULATE: 'CONS', MISSION: 'MISS', REFUGE: 'REF', HOSPITAL: 'HOSP' })[it.kind],
-    describe: it => `${it.name || EMB_LABEL[it.kind]}\n${[it.from && `represents ${country(it.from)}`, it.city || it.host].filter(Boolean).join(' · ')}`,
-    facts: it => [['Represents', it.from && country(it.from)], ['Facility', it.detail], ['Host country', it.host], ['City', it.city], ['Phone', it.phone],
-        ['Emergency', it.emergency], ['Operator', it.operator], ['Source', it.live ? 'OpenStreetMap (live)' : 'OpenStreetMap']],
-    actions: it => [...(it.web ? [{ label: 'OFFICIAL WEBSITE ↗', href: it.web }] : []), { label: 'OPENSTREETMAP ↗', href: osmUrl(it.id), secondary: Boolean(it.web) }],
-    note: `Verify contacts on the mission's official site before relying on them. ${OSM_CREDIT}`,
-    titleOf: v => v.kind === 'all' ? 'Embassies, refugee sites & hospitals' : EMB_PLURAL[v.kind],
-    stats: items => `${items.filter(it => DIPLOMATIC.has(it.kind)).length.toLocaleString('en')} DIPLOMATIC MISSIONS · ${items.filter(it => it.kind === 'REFUGE').length.toLocaleString('en')} REFUGEE SITES`,
+    describe: it => `${it.name || EMB_LABEL[it.kind]}\n${[it.from && t('osint.embassies.represents', { country: country(it.from) }), it.city || hostName(it)].filter(Boolean).join(' · ')}`,
+    facts: it => [[t('osint.embassies.fact.represents'), it.from && country(it.from)], [t('osint.embassies.fact.emergency'), it.emergency], [t('osint.phone'), it.phone],
+        [t('osint.embassies.fact.facility'), it.detail], [t('osint.embassies.fact.city'), it.city], [t('osint.embassies.fact.host'), hostName(it)],
+        [t('osint.operator'), it.operator], [t('osint.source'), it.live ? t('osint.osmLive') : 'OpenStreetMap']],
+    actions: it => [...(it.web ? [{ label: t('osint.embassies.website'), href: it.web }] : []), { label: OPEN_OSM, href: osmUrl(it.id), secondary: Boolean(it.web) }],
+    note: `${t('osint.embassies.note')} ${OSM_CREDIT}`,
+    titleOf: v => v.kind === 'all' ? t('osint.embassies.titleAll') : EMB_PLURAL[v.kind],
+    stats: items => `${tn('osint.embassies.statsMissions', items.filter(it => DIPLOMATIC.has(it.kind)).length)} · ${tn('osint.embassies.statsRefuge', items.filter(it => it.kind === 'REFUGE').length)}`,
     live: {
-        label: 'Load hospitals in view',
+        label: t('osint.embassies.live'),
         note: OVERPASS_NOTE,
         boxKm: 200, slow: true, // a polite request to a free public server, which can queue it
         async load(b, base, signal) {
             const els = await overpass(`[out:json][timeout:30];(nwr["amenity"="hospital"]${box(b)};nwr["healthcare"="hospital"]${box(b)};);out center tags 3000;`, signal);
-            const items = els.map(el => liveItem(el, 'HOSPITAL', t => ({ phone: clean(t.phone || t['contact:phone'], 40) || undefined, emergency: t.emergency === 'yes' ? 'Emergency department' : undefined })))
+            const items = els.map(el => liveItem(el, 'HOSPITAL', tags => ({ phone: clean(tags.phone || tags['contact:phone'], 40) || undefined, emergency: tags.emergency === 'yes' ? t('osint.embassies.emergencyDept') : undefined })))
                 .filter(Boolean);
             return { items: [...base, ...new Map(items.map(it => [it.id, it])).values()] };
         }
     },
-    links: [['Help for people at risk', [
-        ['Front Line Defenders — emergency support for human rights defenders', 'https://www.frontlinedefenders.org/en/emergency-contact'],
+    links: [[t('osint.embassies.links'), [
+        [t('osint.embassies.link.fld'), 'https://www.frontlinedefenders.org/en/emergency-contact'],
         ['Access Now Digital Security Helpline', 'https://www.accessnow.org/help/'],
-        ['ICRC — Restoring Family Links', 'https://familylinks.icrc.org/'],
-        ['Committee to Protect Journalists — safety kit', 'https://cpj.org/2019/07/digital-safety-kit-journalists/']
+        [t('osint.embassies.link.icrc'), 'https://familylinks.icrc.org/'],
+        [t('osint.embassies.link.cpj'), 'https://cpj.org/2019/07/digital-safety-kit-journalists/']
     ]]],
-    credit: 'Data: © OpenStreetMap contributors (ODbL).'
+    credit: OSM_DATA
 };
 
 // ---------- 🚨 Security sites (+ police and cameras live) ----------
@@ -159,184 +166,208 @@ async function loadSurveillance(b, base, signal) {
     const inView = lists.flat().filter(it => it.lat >= b.s && it.lat <= b.n && it.lng >= b.w && it.lng <= b.e);
     const { items, cut } = nearestPerKind(inView, lat, lng);
     const complete = chosen.length === hits.length && !cut;
-    return { items: [...base, ...items], complete, note: `${complete ? 'for the area in view' : `nearest the view center, at most ${SURV_CAP.toLocaleString('en')} of each kind (zoom in for all)`} · OpenStreetMap of ${index.generated_at.slice(0, 10)}` };
+    return { items: [...base, ...items], complete, note: `${complete ? t('osint.security.inView') : t('osint.security.nearest', { n: SURV_CAP })} · ${snapshotOf(index)}` };
 }
+const snapshotOf = index => t('osint.security.snapshot', { date: date(index.generated_at, { dateStyle: 'medium', timeZone: 'UTC' }) || String(index.generated_at ?? '').slice(0, 10) });
 async function surveillanceSummary(base) {
     const index = await loadSurvIndex();
     survOverview ??= surveillanceOverview(index);
     const tiles = new Set(survOverview.map(it => it.id.split(':')[1])).size;
     return { items: [...base, ...survOverview],
-        note: `Zoomed out: ${tiles.toLocaleString('en')} areas with ${Number(index.cameras || 0).toLocaleString('en')} cameras and ${Number(index.police || 0).toLocaleString('en')} police stations · OpenStreetMap of ${String(index.generated_at).slice(0, 10)}. Tap a bubble to zoom in.` };
+        note: t('osint.security.overview', { areas: tn('osint.security.areas', tiles), cameras: tn('osint.security.cameras', Number(index.cameras || 0)),
+            police: tn('osint.security.policeStations', Number(index.police || 0)), snapshot: snapshotOf(index) }) };
 }
 const secGroup = it => /MILITARY|NAVAL/.test(it.kind) ? 'MILITARY' : /BORDER/.test(it.kind) ? 'BORDER' : it.kind;
+// Type labels of the data's kinds; an unknown kind shows as itself, in sentence case.
+const SEC_KIND = { PRISON: 'prison', 'BORDER CONTROL': 'borderControl', 'MILITARY BASE': 'militaryBase', 'MILITARY AIRFIELD': 'militaryAirfield', 'NAVAL BASE': 'navalBase', POLICE: 'police', CAMERA: 'camera' };
+const SEC_KIND_LABEL = Object.fromEntries(Object.entries(SEC_KIND).map(([kind, key]) => [kind, t(`osint.security.kind.${key}`)]));
+const secKind = it => SEC_KIND_LABEL[it.kind] || it.kind.charAt(0) + it.kind.slice(1).toLowerCase();
+const SEC_FILTERS = ['PRISON', 'MILITARY', 'BORDER', 'POLICE', 'CAMERA'];
 export const SECURITY = {
-    id: 'security', label: 'SECURITY', group: 'Safety & OSINT', noun: 'sites', dataUrl: 'data/security.json',
-    sidebarTitle: 'Security & surveillance', placeholder: 'Search prison, base, border, operator or country…', randomTitle: 'Show a random site',
+    id: 'security', label: t('osint.security.label'), group: 'safety', noun: t('osint.security.noun'), dataUrl: 'data/security.json',
+    countOf: n => tn('osint.security.count', n),
+    sidebarTitle: t('osint.security.title'), placeholder: t('osint.security.placeholder'), randomTitle: t('osint.security.random'),
     prepare: json => json.items || [],
-    searchText: it => `${it.name} ${it.kind} ${it.operator || ''} ${it.host || ''} ${it.detail || ''}`,
-    filters: [{ key: 'kind', label: 'Type', options: [{ id: 'all', label: 'ALL', name: 'All sites' },
-        { id: 'PRISON', label: 'PRISONS', name: 'Prisons & detention', color: SEC_COLORS.PRISON },
-        { id: 'MILITARY', label: 'MILITARY', name: 'Bases, naval bases, airfields', color: SEC_COLORS.MILITARY },
-        { id: 'BORDER', label: 'BORDERS', name: 'Border controls', color: SEC_COLORS.BORDER },
-        { id: 'POLICE', label: 'POLICE', name: 'Police (in view)', color: SEC_COLORS.POLICE, live: true },
-        { id: 'CAMERA', label: 'CAMERAS', name: 'Surveillance cameras (in view)', color: SEC_COLORS.CAMERA, live: true }],
+    searchText: it => `${it.name} ${it.kind} ${secKind(it)} ${it.operator || ''} ${it.host || ''} ${it.hostCc ? hostName(it) : ''} ${it.detail || ''}`,
+    filters: [{ key: 'kind', label: t('osint.type'), options: [{ id: 'all', label: t('common.all'), name: t('osint.security.all') },
+        ...SEC_FILTERS.map(k => ({ id: k, label: t(`osint.security.chip.${k}`), name: t(`osint.security.name.${k}`), color: SEC_COLORS[k], ...(k === 'POLICE' || k === 'CAMERA' ? { live: true } : {}) }))],
         test: (it, v) => secGroup(it) === v }],
     palette: Object.values(SEC_COLORS),
     colorOf: it => SEC_COLORS[secGroup(it)],
     sizeOf: it => it.cluster ? clusterSize(it.count) : it.kind === 'CAMERA' ? 4 : 5.5,
-    nameOf: it => it.cluster ? `${it.count.toLocaleString('en')} ${it.kind === 'CAMERA' ? 'surveillance cameras' : 'police stations'} in this area`
-        : it.name || (it.kind === 'CAMERA' ? `Camera${it.camType ? ` (${it.camType})` : ''}` : it.kind.charAt(0) + it.kind.slice(1).toLowerCase()),
-    placeOf: it => it.host,
-    subOf: it => it.cluster ? 'Area summary · tap to zoom in' : [it.kind.toLowerCase(), it.operator, it.host].filter(Boolean).join(' · '),
-    badgeOf: it => it.kind, shortBadge: it => ({ PRISON: 'PRIS', POLICE: 'POL', CAMERA: 'CAM', 'BORDER CONTROL': 'BORD' })[it.kind] || 'MIL',
-    describe: it => it.cluster ? `${SECURITY.nameOf(it)}\nTap to zoom in and show them`
-        : `${it.name || it.kind.toLowerCase()}\n${[it.kind.toLowerCase(), it.operator].filter(Boolean).join(' · ')}`,
-    facts: it => it.cluster ? [['Points', it.count.toLocaleString('en')], ['Area', `${it.tile}° × ${it.tile}° tile`], ['Source', 'OpenStreetMap']]
-        : [['Type', it.kind.toLowerCase()], ['Operator', it.operator], ['Detail', it.detail], ['Access', it.access],
-        ['Surveillance', it.survType], ['Camera', it.camType], ['Direction', it.direction], ['Zone', it.zone], ['Phone', it.phone], ['Host country', it.host],
-        ['Source', 'OpenStreetMap']],
-    actions: it => it.cluster ? [] : [{ label: 'OPENSTREETMAP ↗', href: osmUrl(it.id), secondary: true }],
+    nameOf: it => it.cluster ? tn(it.kind === 'CAMERA' ? 'osint.security.clusterCameras' : 'osint.security.clusterPolice', it.count)
+        : it.name || (it.kind === 'CAMERA' && it.camType ? t('osint.security.cameraType', { type: it.camType }) : secKind(it)),
+    placeOf: it => hostName(it),
+    subOf: it => it.cluster ? t('osint.security.clusterSub') : [secKind(it), it.operator, hostName(it)].filter(Boolean).join(' · '),
+    badgeOf: it => secKind(it), shortBadge: it => ({ PRISON: 'PRIS', POLICE: 'POL', CAMERA: 'CAM', 'BORDER CONTROL': 'BORD' })[it.kind] || 'MIL',
+    describe: it => it.cluster ? `${SECURITY.nameOf(it)}\n${t('osint.security.clusterTip')}`
+        : `${it.name || secKind(it)}\n${[secKind(it), it.operator].filter(Boolean).join(' · ')}`,
+    facts: it => it.cluster ? [[t('osint.security.fact.points'), num(it.count)], [t('osint.security.fact.area'), t('osint.security.tile', { size: it.tile })], [t('osint.source'), 'OpenStreetMap']]
+        : [[t('osint.operator'), it.operator], [t('osint.phone'), it.phone], [t('osint.security.fact.surveillance'), it.survType], [t('osint.security.fact.camera'), it.camType],
+        [t('osint.security.fact.direction'), it.direction], [t('osint.security.fact.zone'), it.zone], [t('osint.security.fact.access'), it.access], [t('osint.security.fact.detail'), it.detail],
+        [t('osint.type'), secKind(it)], [t('osint.country'), hostName(it)], [t('osint.source'), 'OpenStreetMap']],
+    actions: it => it.cluster ? [] : [{ label: OPEN_OSM, href: osmUrl(it.id), secondary: true }],
     note: OSM_CREDIT,
-    titleOf: v => ({ all: 'Security sites', PRISON: 'Prisons & detention', MILITARY: 'Military sites', BORDER: 'Border controls', POLICE: 'Police', CAMERA: 'Surveillance cameras' })[v.kind],
-    stats: items => `${items.filter(it => !it.live).length.toLocaleString('en')} PRISONS, MILITARY & BORDER SITES`,
+    titleOf: v => v.kind === 'all' ? t('osint.security.titleAll') : t(`osint.security.titleOf.${v.kind}`),
+    stats: items => tn('osint.security.stats', items.filter(it => !it.live).length),
     live: {
-        label: 'Show police & cameras in view',
-        note: 'Loaded from this site (an OpenStreetMap snapshot): no other server learns which area you view.',
+        label: t('osint.security.live'),
+        note: t('osint.security.liveNote'),
         load: loadSurveillance,
         overview: surveillanceSummary // zoomed out: one bubble per tile from the index
     },
-    links: [['Surveillance research', [
+    links: [[t('osint.security.links'), [
         ['EFF Atlas of Surveillance (US)', 'https://atlasofsurveillance.org/'],
-        ['Surveillance under Surveillance (OSM cameras)', 'https://sunders.uber.space/'],
+        [t('osint.security.link.sunders'), 'https://sunders.uber.space/'],
         ['Amnesty — Ban the Scan', 'https://banthescan.amnesty.org/']
     ]]],
-    credit: 'Data: © OpenStreetMap contributors (ODbL).'
+    credit: OSM_DATA
 };
 
 // ---------- 🔥 Thermal anomalies (NASA FIRMS, last 24 h) ----------
 const FIRE_COLORS = { big: '--red', mid: '--approx', small: '--accent-2' };
 const fireBand = it => it.frp >= 100 ? 'big' : it.frp >= 10 ? 'mid' : 'small';
+// Detection time ("2026-10-12 00:41", UTC) as day, month and 24-hour time in the UI language, still in UTC.
+const fireTime = it => `${date(`${String(it.t).replace(' ', 'T')}:00Z`, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' }) || it.t} UTC`;
+const firePower = it => t('osint.fires.mw', { mw: it.frp });
 export const FIRES = {
-    id: 'fires', label: 'FIRES', group: 'Safety & OSINT', noun: 'hotspots', dataUrl: 'data/fires.json',
-    sidebarTitle: 'Thermal anomalies · 24 h', placeholder: 'Search country, date or hour (UTC)…', randomTitle: 'Show a random hotspot',
+    id: 'fires', label: t('osint.fires.label'), group: 'safety', noun: t('osint.fires.noun'), dataUrl: 'data/fires.json',
+    countOf: n => tn('osint.fires.count', n),
+    sidebarTitle: t('osint.fires.title'), placeholder: t('osint.fires.placeholder'), randomTitle: t('osint.fires.random'),
     prepare: json => json.items || [],
     searchText: it => `${it.host || ''} ${it.t}`,
     searchOrder: (a, b) => b.frp - a.frp, // strongest first
-    filters: [{ key: 'power', label: 'Radiative power', options: [{ id: 'all', label: 'ALL', name: 'Any power' },
-        { id: 'big', label: '≥100 MW', name: '100 MW or more', color: FIRE_COLORS.big },
+    filters: [{ key: 'power', label: t('osint.fires.power'), options: [{ id: 'all', label: t('common.all'), name: t('osint.fires.anyPower') },
+        { id: 'big', label: '≥100 MW', name: t('osint.fires.big'), color: FIRE_COLORS.big },
         { id: 'mid', label: '10–100 MW', name: '10–100 MW', color: FIRE_COLORS.mid },
-        { id: 'small', label: '<10 MW', name: 'Under 10 MW', color: FIRE_COLORS.small }], test: (it, v) => fireBand(it) === v },
-        { key: 'conf', label: 'Confidence', options: [{ id: 'all', name: 'Any confidence' }, { id: 'h', name: 'High' }, { id: 'n', name: 'Nominal' }], test: (it, v) => it.c === v },
-        { key: 'dn', label: 'Time of pass', options: [{ id: 'all', name: 'Day and night' }, { id: 'D', name: 'Day' }, { id: 'N', name: 'Night' }], test: (it, v) => it.dn === v }],
+        { id: 'small', label: '<10 MW', name: t('osint.fires.small'), color: FIRE_COLORS.small }], test: (it, v) => fireBand(it) === v },
+        { key: 'conf', label: t('osint.fires.confidence'), options: [{ id: 'all', name: t('osint.fires.anyConfidence') }, { id: 'h', name: t('osint.fires.high') }, { id: 'n', name: t('osint.fires.nominal') }], test: (it, v) => it.c === v },
+        { key: 'dn', label: t('osint.fires.pass'), options: [{ id: 'all', name: t('osint.fires.dayNight') }, { id: 'D', name: t('osint.fires.day') }, { id: 'N', name: t('osint.fires.night') }], test: (it, v) => it.dn === v }],
     palette: Object.values(FIRE_COLORS),
     colorOf: it => FIRE_COLORS[fireBand(it)],
     sizeOf: it => it.frp >= 100 ? 6.5 : it.frp >= 10 ? 4.5 : 3.5,
-    nameOf: it => `Hotspot · ${it.frp} MW`,
+    nameOf: it => t('osint.fires.name', { mw: it.frp }),
     placeOf: it => it.host,
-    subOf: it => [`${it.t} UTC`, `${it.frp} MW`, it.host].filter(Boolean).join(' · '),
-    badgeOf: it => `${it.frp} MW`, shortBadge: it => ({ big: 'BIG', mid: 'MID', small: 'LOW' })[fireBand(it)],
-    describe: it => `Thermal anomaly · ${it.frp} MW\n${it.t} UTC${it.host ? ` · ${it.host}` : ''}`,
-    facts: it => [['Detected', `${it.t} UTC (${it.dn === 'D' ? 'day' : 'night'} pass)`], ['Satellite', it.s === 'J' ? 'NOAA-20 VIIRS' : 'Suomi NPP VIIRS'],
-        ['Radiative power', `${it.frp} MW`], ['Brightness', `${it.bt} K (I4 band)`], ['Confidence', it.c === 'h' ? 'high' : 'nominal'],
-        ['Position', `${it.lat.toFixed(4)}, ${it.lng.toFixed(4)} (375 m pixel)`], ['Country', it.host]],
-    actions: it => [{ label: 'OPEN IN NASA FIRMS ↗', href: `https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@${it.lng.toFixed(3)},${it.lat.toFixed(3)},12.0z` }],
-    note: 'A hotspot is a heat signal (fire, gas flare, industry, explosion), not a confirmed event. Snapshot from the last build.',
-    titleOf: v => `Hotspots${v.power !== 'all' ? ` · ${({ big: '≥ 100 MW', mid: '10–100 MW', small: '< 10 MW' })[v.power]}` : ''}`,
-    stats: items => `${items.length.toLocaleString('en')} HOTSPOTS · LAST 24 H`,
-    links: [['Satellite imagery', [
-        ['NASA FIRMS fire map', 'https://firms.modaps.eosdis.nasa.gov/map/'],
+    subOf: it => [fireTime(it), firePower(it), it.host].filter(Boolean).join(' · '),
+    badgeOf: it => firePower(it), shortBadge: it => ({ big: 'BIG', mid: 'MID', small: 'LOW' })[fireBand(it)],
+    describe: it => `${t('osint.fires.describe', { mw: it.frp })}\n${fireTime(it)}${it.host ? ` · ${it.host}` : ''}`,
+    facts: it => [[t('osint.fires.fact.detected'), t(it.dn === 'D' ? 'osint.fires.dayPass' : 'osint.fires.nightPass', { time: fireTime(it) })],
+        [t('osint.fires.power'), firePower(it)], [t('osint.fires.confidence'), t(it.c === 'h' ? 'osint.fires.high' : 'osint.fires.nominal')],
+        [t('osint.fires.fact.satellite'), it.s === 'J' ? 'NOAA-20 VIIRS' : 'Suomi NPP VIIRS'], [t('osint.fires.fact.brightness'), t('osint.fires.brightness', { k: it.bt })],
+        [t('osint.fires.fact.position'), t('osint.fires.position', { lat: it.lat.toFixed(4), lng: it.lng.toFixed(4) })], [t('osint.country'), it.host]],
+    actions: it => [{ label: t('osint.fires.open'), href: `https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@${it.lng.toFixed(3)},${it.lat.toFixed(3)},12.0z` }],
+    note: t('osint.fires.note'),
+    titleOf: v => `${t('osint.fires.titleAll')}${v.power !== 'all' ? ` · ${({ big: '≥ 100 MW', mid: '10–100 MW', small: '< 10 MW' })[v.power]}` : ''}`,
+    stats: items => tn('osint.fires.stats', items.length),
+    links: [[t('osint.fires.links'), [
+        [t('osint.fires.link.firms'), 'https://firms.modaps.eosdis.nasa.gov/map/'],
         ['NASA Worldview', 'https://worldview.earthdata.nasa.gov/'],
         ['Copernicus Browser (Sentinel)', 'https://browser.dataspace.copernicus.eu/']
     ]]],
-    credit: 'Data: NASA FIRMS (VIIRS 375 m, Suomi NPP and NOAA-20).'
+    credit: t('osint.fires.credit')
 };
 
 // ---------- 💥 Conflict events (UCDP) ----------
 const WAR_COLORS = { 'State-based': '--red', 'Non-state': '--approx', 'One-sided': '--accent-2' };
-const PRECISION = { 1: 'exact location', 2: 'within 25 km', 3: 'district', 4: 'region / province', 5: 'approximate', 6: 'country only', 7: 'sea or airspace' };
+const WAR_KEY = { 'State-based': 'state', 'Non-state': 'nonState', 'One-sided': 'oneSided' };
+const warKind = it => WAR_KEY[it.kind] ? t(`osint.conflict.kind.${WAR_KEY[it.kind]}`) : it.kind;
+const PRECISION = Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map(p => [p, t(`osint.conflict.prec.${p}`)]));
+const day = d => date(d, { dateStyle: 'medium', timeZone: 'UTC' }) || d;
 export const CONFLICT = {
-    id: 'conflict', label: 'CONFLICT', group: 'Safety & OSINT', noun: 'events', dataUrl: 'data/conflict.json',
-    sidebarTitle: 'Conflict events', placeholder: 'Search conflict, actor, place or country…', randomTitle: 'Show a random event',
+    id: 'conflict', label: t('osint.conflict.label'), group: 'safety', noun: t('osint.conflict.noun'), dataUrl: 'data/conflict.json',
+    countOf: n => tn('osint.conflict.count', n),
+    sidebarTitle: t('osint.conflict.title'), placeholder: t('osint.conflict.placeholder'), randomTitle: t('osint.conflict.random'),
     prepare: json => json.items || [],
     searchText: it => `${it.conflict} ${it.a} ${it.b} ${it.place || ''} ${it.adm || ''} ${it.cc} ${it.d}`,
     searchOrder: (a, b) => b.d.localeCompare(a.d), // newest first
-    filters: [{ key: 'kind', label: 'Violence', options: [{ id: 'all', label: 'ALL', name: 'All events' },
-        ...Object.keys(WAR_COLORS).map(k => ({ id: k, label: k.toUpperCase(), name: k === 'One-sided' ? 'One-sided (against civilians)' : k, color: WAR_COLORS[k] }))],
+    filters: [{ key: 'kind', label: t('osint.conflict.violence'), options: [{ id: 'all', label: t('common.all'), name: t('osint.conflict.allEvents') },
+        ...Object.keys(WAR_COLORS).map(k => ({ id: k, label: t(`osint.conflict.kind.${WAR_KEY[k]}`), name: t(`osint.conflict.kindName.${WAR_KEY[k]}`), color: WAR_COLORS[k] }))],
         test: (it, v) => it.kind === v },
-        { key: 'year', label: 'Year', options: [{ id: 'all', name: 'All years' }, { id: '2026', name: '2026 (preliminary)' }, { id: '2025', name: '2025' }, { id: '2024', name: '2024' }],
+        { key: 'year', label: t('osint.conflict.year'), options: [{ id: 'all', name: t('osint.conflict.allYears') }, { id: '2026', name: t('osint.conflict.preliminary', { year: '2026' }) }, { id: '2025', name: '2025' }, { id: '2024', name: '2024' }],
           test: (it, v) => it.d.startsWith(v) },
-        { key: 'deaths', label: 'Deaths (best estimate)', options: [{ id: 'all', name: 'Any' }, { id: '10', name: '10 or more' }, { id: '1', name: '1–9' }, { id: '0', name: 'None recorded' }],
+        { key: 'deaths', label: t('osint.conflict.deathsFilter'), options: [{ id: 'all', name: t('osint.any') }, { id: '10', name: t('osint.conflict.tenOrMore') }, { id: '1', name: '1–9' }, { id: '0', name: t('osint.conflict.noneRecorded') }],
           test: (it, v) => v === '10' ? it.best >= 10 : v === '1' ? it.best >= 1 && it.best < 10 : it.best === 0 }],
     palette: Object.values(WAR_COLORS),
     colorOf: it => WAR_COLORS[it.kind] || '--text-dim',
     sizeOf: it => it.best >= 10 ? 6.5 : it.best >= 1 ? 4.5 : 3.5,
     nameOf: it => it.conflict,
     placeOf: it => [it.place, it.adm, it.cc].filter(Boolean).join(', '),
-    subOf: it => [it.d, `${it.best} death${it.best === 1 ? '' : 's'}`, it.place || it.cc].filter(Boolean).join(' · '),
-    badgeOf: it => it.kind, shortBadge: it => ({ 'State-based': 'STATE', 'Non-state': 'NONST', 'One-sided': '1-SIDE' })[it.kind],
-    describe: it => `${it.conflict}\n${it.d} · ${it.best} deaths · ${it.place || it.cc}`,
-    facts: it => [['Date', it.d2 ? `${it.d} → ${it.d2}` : it.d], ['Type', it.kind], ['Side A', it.a], ['Side B', it.b],
-        ['Deaths (best)', String(it.best)], ['Civilian deaths', it.civ && String(it.civ)], ['Location', PRECISION[it.prec] || null], ['Country', it.cc]],
-    actions: () => [{ label: 'UCDP CONFLICT DATA ↗', href: 'https://ucdp.uu.se/', secondary: true }],
-    note: 'UCDP records events with at least one death; the latest months are preliminary candidate data.',
-    titleOf: v => `${v.kind === 'all' ? 'Conflict events' : `${v.kind} events`}${v.year !== 'all' ? ` · ${v.year}` : ''}`,
-    stats: items => `${items.length.toLocaleString('en')} CONFLICT EVENTS · UCDP`,
-    links: [['Conflict and crisis data', [
+    subOf: it => [day(it.d), tn('osint.conflict.deaths', it.best), it.place || it.cc].filter(Boolean).join(' · '),
+    badgeOf: it => warKind(it), shortBadge: it => ({ 'State-based': 'STATE', 'Non-state': 'NONST', 'One-sided': '1-SIDE' })[it.kind],
+    describe: it => `${it.conflict}\n${day(it.d)} · ${tn('osint.conflict.deaths', it.best)} · ${it.place || it.cc}`,
+    facts: it => [[t('osint.conflict.fact.date'), it.d2 ? `${day(it.d)} – ${day(it.d2)}` : day(it.d)], [t('osint.conflict.fact.deaths'), num(it.best)],
+        [t('osint.conflict.fact.sideA'), it.a], [t('osint.conflict.fact.sideB'), it.b], [t('osint.conflict.fact.civilians'), it.civ && num(it.civ)],
+        [t('osint.type'), warKind(it)], [t('osint.conflict.fact.location'), PRECISION[it.prec] || null], [t('osint.country'), it.cc]],
+    actions: () => [{ label: t('osint.conflict.data'), href: 'https://ucdp.uu.se/', secondary: true }],
+    note: t('osint.conflict.note'),
+    titleOf: v => `${v.kind === 'all' ? t('osint.conflict.titleAll') : WAR_KEY[v.kind] ? t(`osint.conflict.kindTitle.${WAR_KEY[v.kind]}`) : v.kind}${v.year !== 'all' ? ` · ${v.year}` : ''}`,
+    stats: items => tn('osint.conflict.stats', items.length),
+    links: [[t('osint.conflict.links'), [
         ['UCDP — Uppsala Conflict Data Program (CC BY 4.0)', 'https://ucdp.uu.se/'],
-        ['ACLED (registration; no redistribution)', 'https://acleddata.com/'],
+        [t('osint.conflict.link.acled'), 'https://acleddata.com/'],
         ['HDX — Humanitarian Data Exchange', 'https://data.humdata.org/'],
-        ['ReliefWeb — crisis updates', 'https://reliefweb.int/']
-    ]], ['Investigations', [
-        ['OCCRP Aleph — company and asset records', 'https://aleph.occrp.org/'],
-        ['EJAtlas — environmental justice conflicts', 'https://ejatlas.org/'],
+        [t('osint.conflict.link.reliefweb'), 'https://reliefweb.int/']
+    ]], [t('osint.conflict.investigations'), [
+        [t('osint.conflict.link.aleph'), 'https://aleph.occrp.org/'],
+        [t('osint.conflict.link.ejatlas'), 'https://ejatlas.org/'],
         ['Global Forest Watch', 'https://www.globalforestwatch.org/']
     ]]],
-    credit: 'Data: UCDP Georeferenced Event Dataset and candidate events (CC BY 4.0).'
+    credit: t('osint.conflict.credit')
 };
 
 // ---------- 🌐 Network interference (OONI) and outages (IODA, live) ----------
 const NET_COLORS = { severe: '--red', notable: '--approx', some: '--accent-2', 'none confirmed': '--accent', 'little data': '--text-dim' };
-const TEST_NAMES = { web_connectivity: 'Websites', tor: 'Tor', signal: 'Signal', whatsapp: 'WhatsApp', telegram: 'Telegram', facebook_messenger: 'Messenger', psiphon: 'Psiphon' };
-const pct = (n, m) => m ? `${(100 * n / m).toFixed(n / m < .1 ? 1 : 0)}%` : '–';
+const NET_KEY = { severe: 'severe', notable: 'notable', some: 'some', 'none confirmed': 'none', 'little data': 'noData' };
+const netLevel = level => NET_KEY[level] ? t(`osint.internet.level.${NET_KEY[level]}`) : level;
+const TEST_NAMES = { web_connectivity: t('osint.internet.websites'), tor: 'Tor', signal: 'Signal', whatsapp: 'WhatsApp', telegram: 'Telegram', facebook_messenger: 'Messenger', psiphon: 'Psiphon' };
+const ALERT_LEVEL = { critical: t('osint.internet.alertLevel.critical'), warning: t('osint.internet.alertLevel.warning') };
+const pct = (n, m) => m ? num(n / m, { style: 'percent', minimumFractionDigits: n / m < .1 ? 1 : 0, maximumFractionDigits: n / m < .1 ? 1 : 0 }) : '–';
+const INTERNET_LIVE = t('osint.internet.live');
 export const INTERNET = {
-    id: 'internet', label: 'INTERNET', group: 'Connectivity', noun: 'countries', dataUrl: 'data/internet.json',
-    sidebarTitle: 'Network interference', placeholder: 'Search country…', randomTitle: 'Show a random country',
+    id: 'internet', label: t('osint.internet.label'), group: 'connectivity', noun: t('osint.internet.noun'), dataUrl: 'data/internet.json',
+    countOf: n => tn('osint.internet.count', n),
+    sidebarTitle: t('osint.internet.title'), placeholder: t('osint.internet.placeholder'), randomTitle: t('osint.internet.random'),
     prepare: json => json.items || [],
-    searchText: it => `${it.name} ${it.cc} ${it.level}`,
-    filters: [{ key: 'level', label: 'Website blocking', options: [{ id: 'all', label: 'ALL', name: 'All countries' },
-        ...Object.keys(NET_COLORS).map(k => ({ id: k, label: ({ 'none confirmed': 'NONE', 'little data': 'NO DATA' })[k] || k.toUpperCase(), name: k.charAt(0).toUpperCase() + k.slice(1), color: NET_COLORS[k] }))],
+    searchText: it => `${it.name} ${country(it.cc)} ${it.cc} ${it.level} ${netLevel(it.level)}`,
+    filters: [{ key: 'level', label: t('osint.internet.blocking'), options: [{ id: 'all', label: t('common.all'), name: t('osint.internet.allCountries') },
+        ...Object.keys(NET_COLORS).map(k => ({ id: k, label: t(`osint.internet.chip.${NET_KEY[k]}`), name: t(`osint.internet.levelName.${NET_KEY[k]}`), color: NET_COLORS[k] }))],
         test: (it, v) => it.level === v },
-        { key: 'outage', label: 'IODA outages (live)', options: [{ id: 'all', name: 'Any' }, { id: 'yes', name: 'Outage alerts, last 24 h', live: true }], test: it => Boolean(it.outages?.length) }],
+        { key: 'outage', label: t('osint.internet.outageFilter'), options: [{ id: 'all', name: t('osint.any') }, { id: 'yes', name: t('osint.internet.outageYes'), live: true }], test: it => Boolean(it.outages?.length) }],
     palette: Object.values(NET_COLORS),
     colorOf: it => NET_COLORS[it.level],
     sizeOf: it => it.outages?.length ? 11 : 8,
-    nameOf: it => it.name,
+    nameOf: it => country(it.cc) || it.name,
     placeOf: () => '',
-    subOf: it => [`websites: ${it.level}`, it.tests.web_connectivity && `${pct(it.tests.web_connectivity.c, it.tests.web_connectivity.m)} confirmed blocked`, it.outages?.length && '⚠ outage alerts'].filter(Boolean).join(' · '),
-    badgeOf: it => `Website blocking: ${it.level}`, shortBadge: it => ({ severe: 'SEV', notable: 'NOT', some: 'SOME', 'none confirmed': 'OK', 'little data': '?' })[it.level],
-    describe: it => `${it.name}\nWebsite blocking: ${it.level}${it.outages?.length ? ' · outage alerts' : ''}`,
-    facts: it => [
-        ...Object.entries(TEST_NAMES).map(([k, label]) => {
-            const t = it.tests[k];
-            return [label, t && (k === 'web_connectivity'
-                ? `${t.c.toLocaleString('en')} confirmed blocks, ${pct(t.a, t.m)} anomalies of ${t.m.toLocaleString('en')} tests`
-                : `${pct(t.a, t.m)} anomalies of ${t.m.toLocaleString('en')} tests`)];
-        }),
-        ['Outages (IODA)', it.outages ? (it.outages.length ? it.outages.map(o => `${o.level} on ${o.source} at ${o.time} UTC`).join('; ') : 'no alerts in 24 h') : 'not checked: use the button in the side panel']
-    ],
-    actions: it => [{ label: 'OONI EXPLORER ↗', href: `https://explorer.ooni.org/country/${it.cc}` }, { label: 'IODA DASHBOARD ↗', href: `https://ioda.inetintel.cc.gatech.edu/country/${it.cc}`, secondary: true }],
-    note: 'OONI anomalies are signs of possible interference over the last 30 days; blocking is confirmed only from known block pages or DNS answers.',
-    titleOf: v => `${v.level === 'all' ? 'Countries' : `Website blocking: ${v.level}`}${v.outage === 'yes' ? ' · outages' : ''}`,
-    stats: items => `${items.length} COUNTRIES · OONI 30 DAYS`,
+    subOf: it => [t('osint.internet.sub', { level: netLevel(it.level) }),
+        it.tests.web_connectivity && t('osint.internet.confirmedBlocked', { pct: pct(it.tests.web_connectivity.c, it.tests.web_connectivity.m) }),
+        it.outages?.length && t('osint.internet.alerts')].filter(Boolean).join(' · '),
+    badgeOf: it => t('osint.internet.badge', { level: netLevel(it.level) }), shortBadge: it => ({ severe: 'SEV', notable: 'NOT', some: 'SOME', 'none confirmed': 'OK', 'little data': '?' })[it.level],
+    describe: it => `${INTERNET.nameOf(it)}\n${t('osint.internet.badge', { level: netLevel(it.level) })}${it.outages?.length ? ` · ${t('osint.internet.alerts')}` : ''}`,
+    facts: it => {
+        const tests = Object.entries(TEST_NAMES).map(([k, label]) => {
+            const res = it.tests[k];
+            return [label, res && (k === 'web_connectivity'
+                ? t('osint.internet.webResult', { blocks: tn('osint.internet.blocks', res.c), pct: pct(res.a, res.m), tests: tn('osint.internet.tests', res.m) })
+                : t('osint.internet.result', { pct: pct(res.a, res.m), tests: tn('osint.internet.tests', res.m) }))];
+        });
+        const outages = [t('osint.internet.fact.outages'), it.outages
+            ? (it.outages.length ? it.outages.map(o => t('osint.internet.alert', { level: ALERT_LEVEL[o.level] || o.level, source: o.source, time: o.time })).join('; ') : t('osint.internet.noAlerts'))
+            : t('osint.internet.notChecked', { button: INTERNET_LIVE })];
+        return [tests[0], outages, ...tests.slice(1)]; // websites and outages first: the key facts
+    },
+    actions: it => [{ label: t('osint.internet.ooni'), href: `https://explorer.ooni.org/country/${it.cc}` }, { label: t('osint.internet.ioda'), href: `https://ioda.inetintel.cc.gatech.edu/country/${it.cc}`, secondary: true }],
+    note: t('osint.internet.note'),
+    titleOf: v => `${v.level === 'all' ? t('osint.internet.titleAll') : t('osint.internet.badge', { level: netLevel(v.level) })}${v.outage === 'yes' ? ` · ${t('osint.internet.titleOutages')}` : ''}`,
+    stats: items => tn('osint.internet.stats', items.length),
     live: {
-        label: 'Check internet outages now (IODA)',
-        note: 'Asks IODA (Georgia Tech) for outage alerts of the last 24 hours; IODA sees your IP address.',
+        label: INTERNET_LIVE,
+        note: t('osint.internet.liveNote'),
         slow: true,
         needsView: false,
         async load(_b, base, signal) {
             const until = Math.floor(Date.now() / 1000), from = until - 86400;
             const res = await fetch(`https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts?from=${from}&until=${until}&entityType=country`, { signal });
-            if (!res.ok) throw new Error(`IODA error ${res.status}`);
+            if (!res.ok) throw new Error(t('osint.internet.error', { status: String(res.status) }));
             const alerts = ((await res.json()).data || []).filter(a => a.level === 'critical' || a.level === 'warning');
             const byCc = new Map();
             for (const a of alerts) {
@@ -347,18 +378,18 @@ export const INTERNET = {
             return { items: base.map(it => ({ ...it, outages: (byCc.get(it.cc) || []).slice(-6) })) };
         }
     },
-    links: [['Censorship and shutdowns', [
-        ['OONI Explorer — censorship measurements', 'https://explorer.ooni.org/'],
-        ['IODA — internet outage detection', 'https://ioda.inetintel.cc.gatech.edu/'],
-        ['Cloudflare Radar — outages', 'https://radar.cloudflare.com/outage-center'],
-        ['Access Now #KeepItOn — shutdown tracker', 'https://www.accessnow.org/keepiton/'],
+    links: [[t('osint.internet.links.censorship'), [
+        [t('osint.internet.link.ooni'), 'https://explorer.ooni.org/'],
+        [t('osint.internet.link.ioda'), 'https://ioda.inetintel.cc.gatech.edu/'],
+        [t('osint.internet.link.cloudflare'), 'https://radar.cloudflare.com/outage-center'],
+        [t('osint.internet.link.keepItOn'), 'https://www.accessnow.org/keepiton/'],
         ['Freedom House — Freedom on the Net', 'https://freedomhouse.org/report/freedom-net']
-    ]], ['Infrastructure', [
-        ['TeleGeography — submarine cable map', 'https://www.submarinecablemap.com/'],
-        ['PeeringDB — exchange points', 'https://www.peeringdb.com/']
-    ]], ['Digital safety guides', [
+    ]], [t('osint.internet.links.infrastructure'), [
+        [t('osint.internet.link.cables'), 'https://www.submarinecablemap.com/'],
+        [t('osint.internet.link.peeringDb'), 'https://www.peeringdb.com/']
+    ]], [t('osint.internet.links.safety'), [
         ['EFF Surveillance Self-Defense', 'https://ssd.eff.org/'],
         ['Security in a Box', 'https://securityinabox.org/']
     ]]],
-    credit: 'Data: OONI (CC BY 4.0), last 30 days; live outages from IODA.'
+    credit: t('osint.internet.credit')
 };

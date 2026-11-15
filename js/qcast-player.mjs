@@ -3,6 +3,7 @@
 // decoded (WebCodecs, Opus), and the audio is played through Web Audio. A relay can delay or stop the audio, never
 // change it unnoticed. Only HTTPS relay addresses the station announced with its consent are ever contacted.
 import { RecordReader, StreamVerifier, TYPE, QCastError, isStreamUrl, webEndpoints } from './qcast-protocol.mjs';
+import { t } from './i18n.mjs';
 
 const START_DELAY_S = 0.4;   // first audio this far ahead of now; the relay starts with two seconds in hand
 const REBUFFER_S = 1.2;      // after running dry, wait this much before starting again
@@ -44,17 +45,17 @@ export class QCastAudio {
     }
 
     async start() {
-        if (!this.endpoints.length) { this.onState('error', 'This station is not offered to browsers.'); return; }
+        if (!this.endpoints.length) { this.onState('error', t('qcast.player.notOffered')); return; }
         if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const first = Math.floor(Math.random() * this.endpoints.length); // listeners spread over the relays
         for (let attempt = 0; !this.stopped; attempt++) {
             const url = this.endpoints[(first + attempt) % this.endpoints.length];
-            this.onState(this.playing ? 'buffering' : 'connecting', attempt ? 'Reconnecting to the station\'s relay…' : 'Connecting to the station\'s relay…');
+            this.onState(this.playing ? 'buffering' : 'connecting', t(attempt ? 'qcast.player.reconnecting' : 'qcast.player.connecting'));
             const outcome = await this.#session(url).catch(e => e);
             if (this.stopped || outcome === 'ended' || outcome === 'withdrawn') return;
-            if (outcome instanceof QCastError) this.onState('buffering', `A relay sent audio that failed the signature check (${outcome.message}): trying another.`);
+            if (outcome instanceof QCastError) this.onState('buffering', t('qcast.player.badSignature', { reason: outcome.message }));
             const wait = RETRY_MS[Math.min(attempt, RETRY_MS.length - 1)];
-            if (attempt >= 8) { this.onState('error', 'The station\'s relays do not answer. Try again later.'); return; }
+            if (attempt >= 8) { this.onState('error', t('qcast.player.noAnswer')); return; }
             await new Promise(r => setTimeout(r, wait));
         }
     }
@@ -68,7 +69,7 @@ export class QCastAudio {
         const local = this.allowLocal && /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/v1\/s\//.test(final);
         if (!local && (!isStreamUrl(final, this.station.station, this.station.session) || !final.startsWith('https://'))) throw new Error('redirected elsewhere');
         this.stats.relay = new URL(final).host;
-        if (response.status === 403) { this.onState('withdrawn', 'The station has stopped offering this broadcast to browsers. It may still be on air through Tor.'); return 'withdrawn'; }
+        if (response.status === 403) { this.onState('withdrawn', t('qcast.player.withdrawn')); return 'withdrawn'; }
         if (!response.ok || !response.body) throw new Error(`relay answered ${response.status}`);
         const reader = response.body.getReader(), records = new RecordReader();
         const verifier = new StreamVerifier({ station: this.station.station, session: this.station.session, sessionKey: this.station.sessionKey });
@@ -85,7 +86,7 @@ export class QCastAudio {
                         const config = { codec: 'opus', sampleRate: 48000, numberOfChannels: r.header.channels };
                         const support = await AudioDecoder.isConfigSupported(config).catch(() => ({ supported: false }));
                         if (this.stopped) return 'ended';
-                        if (!support.supported) { this.onState('error', 'This browser cannot decode Opus with WebCodecs.'); return 'ended'; }
+                        if (!support.supported) { this.onState('error', t('qcast.player.noOpus')); return 'ended'; }
                         this.config = config;
                     }
                     this.preSkip = r.header.preSkip;
@@ -95,11 +96,11 @@ export class QCastAudio {
                 else if (r.type === TYPE.META) {
                     this.onMeta(r.meta);
                     if (r.meta.webOff) {
-                        this.onState('withdrawn', 'The station has stopped offering this broadcast to browsers. It may still be on air through Tor.');
+                        this.onState('withdrawn', t('qcast.player.withdrawn'));
                         return 'withdrawn';
                     }
                 } else if (r.type === TYPE.END) {
-                    this.onState('ended', 'The station has ended the broadcast.');
+                    this.onState('ended', t('qcast.player.ended'));
                     return 'ended';
                 }
             }
@@ -149,7 +150,7 @@ export class QCastAudio {
             let resumed = false;
             if (this.next < now + 0.02) {
                 // First audio, or the queue ran dry: start again a little ahead.
-                if (this.playing) this.onState('buffering', 'Waiting for audio from the relay…');
+                if (this.playing) this.onState('buffering', t('qcast.player.waiting'));
                 this.next = now + (this.playing ? REBUFFER_S : START_DELAY_S);
                 resumed = true;
             }
@@ -160,7 +161,7 @@ export class QCastAudio {
             source.start(this.next);
             if (resumed) {
                 // Said when the sound actually starts, not when it is queued.
-                setTimeout(() => { if (!this.stopped) this.onState('playing', 'Every second checked against the station\'s signature.'); },
+                setTimeout(() => { if (!this.stopped) this.onState('playing', t('qcast.player.checked')); },
                     Math.max(0, (this.next - now) * 1000));
             }
             this.next += buffer.duration;

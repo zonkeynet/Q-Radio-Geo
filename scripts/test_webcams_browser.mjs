@@ -26,7 +26,7 @@ const server = createServer(async (req, res) => {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const origin = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined) });
-const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' }); // English labels, whatever this computer's language
 const requests = [], errors = [];
 page.on('pageerror', e => errors.push(e.message));
 await page.route('https://camera.example.com/**', async route => {
@@ -45,7 +45,7 @@ try {
     });
     assert.equal(requests.length, 0, 'opening the card must not load media');
     assert.equal(await page.locator('video,img').count(), 0);
-    await page.getByRole('button', { name: 'LOAD SNAPSHOT', exact: true }).click();
+    await page.getByRole('button', { name: 'Load snapshot', exact: true }).click();
     await page.getByRole('status').filter({ hasText: 'Snapshot loaded' }).waitFor();
     assert.equal(requests.length, 1, 'load one image only after consent');
     assert.equal(await page.locator('video').count(), 0, 'snapshot is not a video');
@@ -70,14 +70,14 @@ try {
         mod.openWebcam({ ...camera, format: 'hls' });
     });
     assert.equal(requests.length, 1);
-    await page.getByRole('button', { name: 'PLAY VIDEO', exact: true }).click();
+    await page.getByRole('button', { name: 'Play video', exact: true }).click();
     await page.waitForFunction(() => instances.length === 1);
     assert.equal(await page.locator('video').getAttribute('autoplay'), null, 'no autoplay attribute');
     assert.equal(await page.evaluate(() => instances[0].config.maxBufferSize), 8 * 1024 * 1024);
-    await page.getByRole('button', { name: 'STOP', exact: true }).click();
+    await page.getByRole('button', { name: 'Stop', exact: true }).click();
     assert.equal(await page.evaluate(() => instances[0].destroyed), true);
     assert.equal(await page.locator('video').count(), 0);
-    await page.getByRole('button', { name: 'PLAY VIDEO', exact: true }).click();
+    await page.getByRole('button', { name: 'Play video', exact: true }).click();
     await page.waitForFunction(() => instances.length === 2);
     await page.evaluate(() => {
         Object.defineProperty(document, 'hidden', { configurable: true, value: true });

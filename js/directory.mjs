@@ -174,6 +174,9 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
         const body = node('div', 'card-scroll');
         const image = def.imageOf?.(it);
         if (image) body.append(Object.assign(node('img', 'dir-card-image'), { src: image, alt: t('dir.imageOf', { name: def.nameOf(it) }), decoding: 'async' }));
+        // A mode may preview the item (live streams in the app: the official live thumbnail, only while the card is open).
+        const preview = def.preview?.(it);
+        if (preview) body.append(preview);
         const h = node('h3', 'dir-card-title', def.nameOf(it));
         h.id = 'cardTitle'; h.tabIndex = -1;
         body.append(h);
@@ -191,6 +194,7 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
         const actions = def.actions(it), main = actions.find(a => !a.secondary), rest = actions.filter(a => a !== main);
         const bar = node('div', 'card-actions');
         if (main) bar.append(action(main, true));
+        if (main?.note) bar.append(node('p', 'action-note', main.note));
         if (rest.length) { const row = node('div', 'row'); for (const a of rest) row.append(action(a, false)); bar.append(row); }
         const box = node('section', 'dir-card');
         box.setAttribute('aria-labelledby', 'cardTitle');
@@ -255,10 +259,12 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
     function render() {
         sheet.hidden = false;
         heading();
+        for (const p of cardBox.querySelectorAll('.stream-preview')) p.stop?.(); // a card's preview ends with it
         if (selected) {
             cardBox.replaceChildren(card(selected));
             cardBox.hidden = false;
             sheet.dataset.view = 'card';
+            for (const p of cardBox.querySelectorAll('.stream-preview')) p.start?.();
         } else {
             cardBox.hidden = true; cardBox.replaceChildren();
             sheet.dataset.view = 'list';

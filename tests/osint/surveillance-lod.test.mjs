@@ -43,7 +43,7 @@ test('zoomed out: one bubble per tile and kind, sized by its count, that zooms i
     assert.ok(SECURITY.sizeOf(items[0]) > SECURITY.sizeOf(items[1]), 'bigger counts, bigger bubbles');
     const tab = SECURITY.filters[0];
     assert.deepEqual(items.filter(it => tab.test(it, 'CAMERA')).map(it => it.count), [1200]);
-    assert.equal(SECURITY.stats(items), '0 PRISONS, MILITARY & BORDER SITES');
+    assert.equal(SECURITY.stats(items), '0 prisons, military and border sites');
 });
 
 test('zoomed in: at most SURV_CAP points of each kind, the nearest to the view centre', () => {

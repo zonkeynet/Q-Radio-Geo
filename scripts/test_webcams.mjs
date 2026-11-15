@@ -61,7 +61,7 @@ test('schema 2 keeps web references separate from media and derives country filt
         assert.deepEqual(filter.options, [{ id: 'all', name: 'All countries' }, { id: 'FI', name: 'Finland' },
             { id: 'IS', name: 'Iceland' }, { id: 'GB', name: 'United Kingdom' }]);
         assert.match(WEBCAMS.searchText(ref), /Finland/);
-        assert.equal(WEBCAMS.badgeOf(ref), 'WEB LINK');
+        assert.equal(WEBCAMS.badgeOf(ref), 'Web link');
         assert.ok(WEBCAMS.actions(ref).every(a => !/OFFICIAL/.test(a.label)));
         const facts = Object.fromEntries(WEBCAMS.facts(ref));
         assert.equal(facts.Coordinates, 'mapped camera location'); assert.equal(facts['Metadata license'], 'ODbL 1.0');
@@ -150,7 +150,7 @@ test('snapshot and incomplete checks never receive a live-video label', () => {
     const checked = '2025-01-02T03:04:05Z';
     assert.equal(webcamStatus(item()), 'HLS · Not checked');
     assert.equal(webcamStatus(item({ format: 'snapshot', health: { status: 'live_confirmed' } })), 'Snapshot · Periodic image');
-    assert.equal(webcamStatus(item({ format: 'official_page', health: { status: 'live_confirmed' } })), 'WEB LINK · External page; availability not checked');
+    assert.equal(webcamStatus(item({ format: 'official_page', health: { status: 'live_confirmed' } })), 'Web link · external page; availability not checked');
     const health = { status: 'live_confirmed', checked_at: checked, manifest_ok: true, segment_ok: true, advancing: true };
     assert.equal(webcamStatus(item({ health })), 'HLS · Live checked 2025-01-02 03:04 UTC');
     for (const missing of ['manifest_ok', 'segment_ok', 'advancing', 'checked_at']) {
@@ -293,12 +293,12 @@ test('viewer consent, stop, background and asynchronous close release media with
                 { url: clip }, { url: page }, { url: 'https://camera.local/view' }, { url: 'https://127.0.0.1/view' }] })), true);
         assert.deepEqual(loads, []); assert.equal(instances.length, 0);
         assert.equal(last('IMG'), undefined); assert.equal(last('VIDEO'), undefined);
-        assert.equal(last('A', 'OPEN WEB LINK ↗').href, page);
-        assert.equal(last('A', 'OPEN WEB LINK ↗').rel, 'noopener noreferrer');
+        assert.equal(last('A', 'Open web link').href, page);
+        assert.equal(last('A', 'Open web link').rel, 'noopener noreferrer');
         const references = elements.filter(e => e.tagName === 'A' && /reference · Availability unverified/.test(e.textContent || ''));
         assert.deepEqual(references.map(e => e.href), [clip, external], 'direct open sanitizes and deduplicates unprepared references');
-        assert.equal(references[0].textContent, 'Clip reference · Availability unverified ↗');
-        assert.equal(references[1].textContent, 'External reference · Availability unverified ↗');
+        assert.equal(references[0].textContent, 'Clip reference · Availability unverified');
+        assert.equal(references[1].textContent, 'External reference · Availability unverified');
         assert.ok(references.every(e => e.target === '_blank' && e.rel === 'noopener noreferrer'));
         assert.equal(last('IFRAME'), undefined);
         assert.equal(last('TEXTAREA').readOnly, true);
@@ -308,7 +308,7 @@ test('viewer consent, stop, background and asynchronous close release media with
         openWebcam(item({ format: 'snapshot' }));
         assert.deepEqual(loads, [], 'opening a consent card must make zero media requests');
         assert.equal(last('VIDEO'), undefined);
-        await last('BUTTON', 'LOAD SNAPSHOT').onclick();
+        await last('BUTTON', 'Load snapshot').onclick();
         assert.deepEqual(loads, [item().snapshot_url]);
         const image = last('IMG'); image.onload();
         assert.match(elements.find(e => e.attrs.role === 'status').textContent, /single image, not live video/);
@@ -330,33 +330,33 @@ test('viewer consent, stop, background and asynchronous close release media with
             assert.ok(elements.some(e => /Image URL check: Image URL not found.*2026-11-14 02:30 UTC.*HTTP 404/.test(e.textContent || '')));
             assert.equal(last('A', 'License: https://camera.example.com/license').href, timed.license_url);
             const before = loads.length;
-            await last('BUTTON', 'LOAD SNAPSHOT').onclick(); last('IMG').onload();
+            await last('BUTTON', 'Load snapshot').onclick(); last('IMG').onload();
             assert.equal(loads.length, before + 1);
             const currentStatus = () => elements.filter(e => e.attrs.role === 'status').at(-1).textContent;
             assert.match(currentStatus(), /Dated image loaded.*01:45 UTC/);
             assert.doesNotMatch(currentStatus(), /periodic|live/i);
-            await last('BUTTON', 'LOAD SNAPSHOT').onclick();
+            await last('BUTTON', 'Load snapshot').onclick();
             assert.equal(loads.length, before + 1, 'a repeated load must not create another request');
             assert.match(currentStatus(), /wait 60 seconds.*not reload automatically/);
             closeWebcamPlayer(); openWebcam(timed);
             now += 59000;
-            await last('BUTTON', 'LOAD SNAPSHOT').onclick();
+            await last('BUTTON', 'Load snapshot').onclick();
             assert.equal(loads.length, before + 1, 'closing and reopening must preserve the URL cooldown');
             assert.match(currentStatus(), /wait 1 second/);
             now += 1000;
             assert.equal(loads.length, before + 1, 'expiry must not trigger an automatic refresh');
-            await last('BUTTON', 'LOAD SNAPSHOT').onclick(); last('IMG').onload();
+            await last('BUTTON', 'Load snapshot').onclick(); last('IMG').onload();
             assert.equal(loads.length, before + 2, 'a new manual request is allowed after the deadline');
             closeWebcamPlayer();
         } finally { Date.now = originalNow; }
 
         openWebcam(item()); assert.equal(instances.length, 0);
-        await last('BUTTON', 'PLAY VIDEO').onclick();
+        await last('BUTTON', 'Play video').onclick();
         assert.equal(instances.length, 1); assert.equal(instances[0].config.maxBufferSize, 8 * 1024 * 1024);
         assert.equal(last('VIDEO').autoplay, false);
-        last('BUTTON', 'STOP').onclick();
+        last('BUTTON', 'Stop').onclick();
         assert.equal(instances[0].destroyed, true); assert.equal(last('VIDEO'), undefined);
-        await last('BUTTON', 'PLAY VIDEO').onclick();
+        await last('BUTTON', 'Play video').onclick();
         doc.hidden = true; doc.dispatchEvent(new Event('visibilitychange'));
         assert.equal(instances[1].destroyed, true);
         doc.hidden = false; doc.dispatchEvent(new Event('visibilitychange'));
@@ -364,7 +364,7 @@ test('viewer consent, stop, background and asynchronous close release media with
         closeWebcamPlayer();
 
         openWebcam(item());
-        const pending = last('BUTTON', 'PLAY VIDEO').onclick();
+        const pending = last('BUTTON', 'Play video').onclick();
         closeWebcamPlayer(); await pending;
         assert.equal(instances.length, 2, 'closing while the library loads must not create a player afterward');
         assert.equal(last('DIALOG'), undefined);
@@ -481,8 +481,8 @@ test('WEB LINKS asks for the full catalogue once, from this site, keeping the ca
         assert.deepEqual(requested, ['https://globe.qp1ng.com/data/webcams.json']);
         assert.equal(items.length, 2); assert.strictEqual(items[0], base[0], 'an open card keeps its object');
         assert.match(note, /2 catalogue records/);
-        assert.match(WEBCAMS.stats(base), /1 VIEWABLE WEBCAMS · 1 HLS · 0 IMAGES/);
-        assert.match(WEBCAMS.stats(items), /2 WEBCAM RECORDS · 1 HLS · 1 WEB LINKS/);
+        assert.match(WEBCAMS.stats(base), /1 viewable webcams · 1 HLS · 0 images/);
+        assert.match(WEBCAMS.stats(items), /2 webcam records · 1 HLS · 1 web links/);
         assert.equal(WEBCAMS.live.forId('osm_webcams:node-9'), true);
     } finally { globalThis.fetch = priorFetch; if (priorDocument === undefined) delete globalThis.document; else globalThis.document = priorDocument; }
 });
@@ -490,10 +490,10 @@ test('WEB LINKS asks for the full catalogue once, from this site, keeping the ca
 test('cards say when a link is unencrypted HTTP', () => {
     const [camera] = prepareWebcams(liveDoc());
     const actions = WEBCAMS.actions(camera);
-    assert.deepEqual(actions.slice(1).map(a => a.label), ['OFFICIAL SOURCE ↗ · UNENCRYPTED', 'USAGE TERMS ↗ · UNENCRYPTED']);
+    assert.deepEqual(actions.slice(1).map(a => a.label), ['Official source · unencrypted', 'Usage terms · unencrypted']);
     assert.match(Object.fromEntries(WEBCAMS.facts(camera))['Usage terms'], /http:\/\/roads\.example\.com\/terms \(unencrypted HTTP\)/);
     const [secure] = prepareWebcams({ schema_version: 2, items: [item({ terms_url: 'https://roads.example.com/terms' })] });
-    assert.deepEqual(WEBCAMS.actions(secure).slice(1).map(a => a.label), ['OFFICIAL SOURCE ↗', 'USAGE TERMS ↗']);
+    assert.deepEqual(WEBCAMS.actions(secure).slice(1).map(a => a.label), ['Official source', 'Usage terms']);
 });
 
 test('HLS playlists, segments and keys load only from the manifest host', () => {

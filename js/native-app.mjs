@@ -1,4 +1,5 @@
 import { icon } from './icons.mjs';
+import { t } from './i18n.mjs';
 
 // Versioned, one-way links. The Android viewer validates origin, gesture and every parameter.
 export const APP_MODE = new URLSearchParams(globalThis.location?.search || '').get('app') === '1';
@@ -155,21 +156,21 @@ export function createNativeTv({ toggle, defaults = [] }) {
     const el = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = text; return e; };
 
     const dock = el('section', 'hud-overlay native-tv'); dock.hidden = true;
-    dock.setAttribute('aria-label', 'Live TV channels');
+    dock.setAttribute('aria-label', t('ntv.label'));
     const header = el('header');
-    const layout = el('div', 'tv-layout'); layout.setAttribute('role', 'group'); layout.ariaLabel = 'Layout';
+    const layout = el('div', 'tv-layout'); layout.setAttribute('role', 'group'); layout.setAttribute('aria-label', t('ntv.layout'));
     const one = el('button'), four = el('button');
     one.type = four.type = 'button';
     one.append(icon('single'), '1'); four.append(icon('wall'), '4');
-    one.title = one.ariaLabel = 'One channel'; four.title = four.ariaLabel = 'Four channels at once';
+    one.title = t('ntv.one'); four.title = t('ntv.four'); one.setAttribute('aria-label', one.title); four.setAttribute('aria-label', four.title);
     layout.append(one, four);
-    const close = el('button', 'tv-close'); close.type = 'button'; close.ariaLabel = close.title = 'Close channel list'; close.append(icon('close'));
-    header.append(el('b', '', 'LIVE TV'), layout, close);
-    const filter = el('input'); filter.type = 'search'; filter.placeholder = 'Channel, language or country…'; filter.ariaLabel = 'Filter channels';
+    const close = el('button', 'tv-close'); close.type = 'button'; close.title = t('ntv.close'); close.setAttribute('aria-label', close.title); close.append(icon('close'));
+    header.append(el('b', '', t('ntv.title')), layout, close);
+    const filter = el('input'); filter.type = 'search'; filter.placeholder = t('ntv.filter'); filter.setAttribute('aria-label', t('ntv.filterLabel'));
     const hint = el('p', 'tv-hint');
     const list = el('div', 'tv-channels');
     const go = el('button', 'tv-wall-go'); go.type = 'button';
-    const note = el('p', '', 'Playback, sound and the connection choice (Tor or direct) open in Q‑P1NG.');
+    const note = el('p', '', t('ntv.note'));
     dock.append(header, filter, hint, list, go, note); document.body.append(dock);
 
     let channels = [], pending;
@@ -182,9 +183,9 @@ export function createNativeTv({ toggle, defaults = [] }) {
     const render = () => {
         const wall = st.layout === 4 ? wallIds() : [];
         one.setAttribute('aria-pressed', String(st.layout === 1)); four.setAttribute('aria-pressed', String(st.layout === 4));
-        hint.textContent = st.layout === 4 ? 'Choose 2 to 4 channels: number 1 starts with sound, tap a screen in the app to move it.' : 'Tap a channel to watch it.';
+        hint.textContent = st.layout === 4 ? t('ntv.hintWall') : t('ntv.hintOne');
         go.hidden = st.layout !== 4;
-        go.replaceChildren(icon('play'), `OPEN THE WALL · ${wall.length}/4`);
+        go.replaceChildren(icon('play'), t('ntv.openWall', { n: wall.length }));
         go.disabled = wall.length < 2;
         list.replaceChildren();
         const term = filter.value.trim().toLocaleLowerCase();
@@ -201,7 +202,7 @@ export function createNativeTv({ toggle, defaults = [] }) {
                 const i = st.wall.indexOf(ch.id);
                 if (i >= 0) st.wall.splice(i, 1);
                 else if (st.wall.length < 4) st.wall.push(ch.id);
-                else { hint.textContent = 'Four channels already chosen: tap one of them to free a screen.'; return; }
+                else { hint.textContent = t('ntv.full'); return; }
                 keep(); render();
             };
             list.append(b);
@@ -226,7 +227,7 @@ export function createNativeTv({ toggle, defaults = [] }) {
                 .then(r => { if (!r.ok) throw new Error('Catalog unavailable'); return r.json(); });
             channels = (await pending).channels || [];
             render();
-        } catch { pending = null; hint.textContent = 'Channel list unavailable. Close and try again.'; }
+        } catch { pending = null; hint.textContent = t('ntv.unavailable'); }
     };
     return { mute() {}, close: hide, get open() { return !dock.hidden; } };
 }
