@@ -108,7 +108,7 @@ export const NEWS = {
     loadingText: t('news.loading'), errorText: t('news.failed'),
     /** The header: how many stories, and when the headlines were built ("Updated 05:24 (12 minutes ago)"), as a
      * warning past STALE_MS; or that no headlines arrived. */
-    metaOf: n => feed.items ? { text: `${tn('news.count', n)} · ${t(today(feed.at) ? 'news.updated' : 'news.updatedDay', { time: clock(feed.at), ago: relativeTime(Math.min(feed.at, Date.now())) })}`,
+    headerOf: n => feed.items ? { text: `${tn('news.count', n)} · ${t(today(feed.at) ? 'news.updated' : 'news.updatedDay', { time: clock(feed.at), ago: relativeTime(Math.min(feed.at, Date.now())) })}`,
         stale: Date.now() > feed.staleAt }
         : { text: `${tn('news.count', n)} · ${t('news.noHeadlines')}`, stale: true },
     /** Shown in the sheet with Retry while there are no headlines at all (the other sources answered). */

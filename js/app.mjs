@@ -569,7 +569,7 @@ function watchLive() {
         const d = dir();
         // Only the layer shown, only while the page is visible: a hidden tab or another layer asks nothing.
         if (d?.live?.every && !document.hidden && liveRun?.def !== d && Date.now() - (state().liveAt || 0) > d.live.every) loadLive(d);
-        if (d?.metaOf && !document.hidden && ++minute % 60 === 0) explorer.retitle();
+        if (d?.headerOf && !document.hidden && ++minute % 60 === 0) explorer.retitle();
         if (!liveTabOn(d) || document.hidden) { lastView = null; return; }
         const b = globe?.viewBounds(), prev = lastView;
         lastView = b;

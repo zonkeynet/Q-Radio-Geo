@@ -69,7 +69,7 @@ export function ago(value, now = Date.now()) {
     if (!Number.isFinite(ms)) return '';
     const units = [['year', 31536e6], ['month', 2592e6], ['week', 6048e5], ['day', 864e5], ['hour', 36e5], ['minute', 6e4]];
     for (const [unit, size] of units) if (Math.abs(ms) >= size) return relative.format(Math.round(ms / size), unit);
-    return relative.format(0, 'minute');
+    return relative.format(ms > 0 ? 0 : -0, 'minute'); // under a minute ago: "0 minutes ago", never "in 0 minutes"
 }
 let regions = null;
 /** A country or region name from its ISO code, in the UI language; fallback (the data's own name, else the code)

@@ -244,7 +244,7 @@ export const FIRES = {
     countOf: n => tn('osint.fires.count', n),
     sidebarTitle: t('osint.fires.title'), placeholder: t('osint.fires.placeholder'), randomTitle: t('osint.fires.random'),
     prepare: json => spanOf(json.items || []),
-    metaOf: n => fireSpan && { text: `${tn('osint.fires.count', n)} · ${t('osint.fires.window', { from: fireTime({ t: fireSpan[0] }), to: fireTime({ t: fireSpan[1] }) })}`,
+    headerOf: n => fireSpan && { text: `${tn('osint.fires.count', n)} · ${t('osint.fires.window', { from: fireTime({ t: fireSpan[0] }), to: fireTime({ t: fireSpan[1] }) })}`,
         stale: Date.now() - Date.parse(`${fireSpan[1].replace(' ', 'T')}:00Z`) > 48 * 36e5 },
     searchText: it => `${it.host || ''} ${it.t}`,
     searchOrder: (a, b) => b.frp - a.frp, // strongest first

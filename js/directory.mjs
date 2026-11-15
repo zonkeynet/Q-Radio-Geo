@@ -215,8 +215,9 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
     }
     function heading() {
         title.replaceChildren(icon(def.id, 'icon title-icon'), node('span', '', def.titleOf(values)));
-        // A mode may say how fresh its data is instead of the order (news: when the headlines were built), as a warning when old.
-        const own = def.metaOf?.(shown().length);
+        // A mode may say how fresh its data is instead of the order (news: when the headlines were built), as a warning
+        // when old. (def.metaOf is something else: a list row's trailing text.)
+        const own = def.headerOf?.(shown().length);
         meta.textContent = own?.text ?? `${countText(def, shown().length)} · ${def.listOrder ? t('dir.newestFirst') : t('dir.nearestFirst')}`;
         meta.classList.toggle('stale', Boolean(own?.stale));
     }
