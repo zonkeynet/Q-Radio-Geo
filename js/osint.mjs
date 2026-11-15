@@ -3,7 +3,7 @@
 // loads (hospitals via Overpass, outages via IODA) only run when the user asks, because those servers see the
 // user's IP address and the area or country requested.
 import { loadJSON } from './catalog.mjs';
-import { t, tn, num, date, region } from './i18n.mjs';
+import { t, tn, num, date, region, countryName } from './i18n.mjs';
 // Country names in the UI language from their codes; the data's (English) name when there is no code.
 const country = cc => cc ? region(cc) : '';
 const hostName = it => it.hostCc ? region(it.hostCc) : it.host;
@@ -247,14 +247,14 @@ export const FIRES = {
     colorOf: it => FIRE_COLORS[fireBand(it)],
     sizeOf: it => it.frp >= 100 ? 6.5 : it.frp >= 10 ? 4.5 : 3.5,
     nameOf: it => t('osint.fires.name', { mw: it.frp }),
-    placeOf: it => it.host,
-    subOf: it => [fireTime(it), firePower(it), it.host].filter(Boolean).join(' · '),
+    placeOf: it => countryName(it.host),
+    subOf: it => [fireTime(it), firePower(it), countryName(it.host)].filter(Boolean).join(' · '),
     badgeOf: it => firePower(it), shortBadge: it => ({ big: 'BIG', mid: 'MID', small: 'LOW' })[fireBand(it)],
-    describe: it => `${t('osint.fires.describe', { mw: it.frp })}\n${fireTime(it)}${it.host ? ` · ${it.host}` : ''}`,
+    describe: it => `${t('osint.fires.describe', { mw: it.frp })}\n${fireTime(it)}${it.host ? ` · ${countryName(it.host)}` : ''}`,
     facts: it => [[t('osint.fires.fact.detected'), t(it.dn === 'D' ? 'osint.fires.dayPass' : 'osint.fires.nightPass', { time: fireTime(it) })],
         [t('osint.fires.power'), firePower(it)], [t('osint.fires.confidence'), t(it.c === 'h' ? 'osint.fires.high' : 'osint.fires.nominal')],
         [t('osint.fires.fact.satellite'), it.s === 'J' ? 'NOAA-20 VIIRS' : 'Suomi NPP VIIRS'], [t('osint.fires.fact.brightness'), t('osint.fires.brightness', { k: it.bt })],
-        [t('osint.fires.fact.position'), t('osint.fires.position', { lat: it.lat.toFixed(4), lng: it.lng.toFixed(4) })], [t('osint.country'), it.host]],
+        [t('osint.fires.fact.position'), t('osint.fires.position', { lat: it.lat.toFixed(4), lng: it.lng.toFixed(4) })], [t('osint.country'), countryName(it.host)]],
     actions: it => [{ label: t('osint.fires.open'), href: `https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@${it.lng.toFixed(3)},${it.lat.toFixed(3)},12.0z` }],
     note: t('osint.fires.note'),
     titleOf: v => `${t('osint.fires.titleAll')}${v.power !== 'all' ? ` · ${({ big: '≥ 100 MW', mid: '10–100 MW', small: '< 10 MW' })[v.power]}` : ''}`,
@@ -291,13 +291,13 @@ export const CONFLICT = {
     colorOf: it => WAR_COLORS[it.kind] || '--text-dim',
     sizeOf: it => it.best >= 10 ? 6.5 : it.best >= 1 ? 4.5 : 3.5,
     nameOf: it => it.conflict,
-    placeOf: it => [it.place, it.adm, it.cc].filter(Boolean).join(', '),
-    subOf: it => [day(it.d), tn('osint.conflict.deaths', it.best), it.place || it.cc].filter(Boolean).join(' · '),
+    placeOf: it => [it.place, it.adm, countryName(it.cc)].filter(Boolean).join(', '),
+    subOf: it => [day(it.d), tn('osint.conflict.deaths', it.best), it.place || countryName(it.cc)].filter(Boolean).join(' · '),
     badgeOf: it => warKind(it), shortBadge: it => ({ 'State-based': 'STATE', 'Non-state': 'NONST', 'One-sided': '1-SIDE' })[it.kind],
-    describe: it => `${it.conflict}\n${day(it.d)} · ${tn('osint.conflict.deaths', it.best)} · ${it.place || it.cc}`,
+    describe: it => `${it.conflict}\n${day(it.d)} · ${tn('osint.conflict.deaths', it.best)} · ${it.place || countryName(it.cc)}`,
     facts: it => [[t('osint.conflict.fact.date'), it.d2 ? `${day(it.d)} – ${day(it.d2)}` : day(it.d)], [t('osint.conflict.fact.deaths'), num(it.best)],
         [t('osint.conflict.fact.sideA'), it.a], [t('osint.conflict.fact.sideB'), it.b], [t('osint.conflict.fact.civilians'), it.civ && num(it.civ)],
-        [t('osint.type'), warKind(it)], [t('osint.conflict.fact.location'), PRECISION[it.prec] || null], [t('osint.country'), it.cc]],
+        [t('osint.type'), warKind(it)], [t('osint.conflict.fact.location'), PRECISION[it.prec] || null], [t('osint.country'), countryName(it.cc)]],
     actions: () => [{ label: t('osint.conflict.data'), href: 'https://ucdp.uu.se/', secondary: true }],
     note: t('osint.conflict.note'),
     titleOf: v => `${v.kind === 'all' ? t('osint.conflict.titleAll') : WAR_KEY[v.kind] ? t(`osint.conflict.kindTitle.${WAR_KEY[v.kind]}`) : v.kind}${v.year !== 'all' ? ` · ${v.year}` : ''}`,

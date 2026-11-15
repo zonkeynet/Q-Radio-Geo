@@ -72,11 +72,33 @@ export function ago(value, now = Date.now()) {
     return relative.format(0, 'minute');
 }
 let regions = null;
-/** A country or region name from its ISO code, in the UI language; the code when unknown. */
-export function region(code) {
-    if (!code) return '';
-    try { regions ??= new Intl.DisplayNames([LANG], { type: 'region' }); return regions.of(String(code).toUpperCase()) || code; }
-    catch { return code; }
+/** A country or region name from its ISO code, in the UI language; fallback (the data's own name, else the code)
+ * when the code is unknown or the browser has no Intl.DisplayNames. */
+export function region(code, fallback = code) {
+    if (!code) return fallback || '';
+    try {
+        regions ??= new Intl.DisplayNames([LANG], { type: 'region' });
+        const upper = String(code).toUpperCase(), name = regions.of(upper);
+        return name && name !== upper ? name : fallback || code;
+    } catch { return fallback || code; }
+}
+let englishCodes = null;
+/** A country named in English by the data (no code), in the UI language: its code is found through the English names
+ * of Intl.DisplayNames; a name it does not know ("Iran (Islamic Republic of)") stays as the data has it. */
+export function countryName(name) {
+    if (!name || LANG === 'en') return name || '';
+    if (!englishCodes) {
+        englishCodes = new Map();
+        try {
+            const en = new Intl.DisplayNames(['en'], { type: 'region' });
+            for (let a = 65; a < 91; a++) for (let b = 65; b < 91; b++) {
+                const code = String.fromCharCode(a, b), n = en.of(code);
+                if (n && n !== code) englishCodes.set(n.toLowerCase(), code);
+            }
+        } catch { /* no Intl.DisplayNames: the data's names */ }
+    }
+    const code = englishCodes.get(String(name).trim().toLowerCase());
+    return code ? region(code, name) : name;
 }
 let languages = null;
 /** A language name from its code, in the UI language. */

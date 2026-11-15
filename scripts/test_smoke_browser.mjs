@@ -227,6 +227,15 @@ try {
             assert.equal(await fresh.evaluate(() => document.documentElement.lang), 'it');
             assert.match(await fresh.locator('#sheetMeta').innerText(), /ricevitori/);
             assert.match(await fresh.evaluate(() => document.getElementById('searchInput').placeholder), /Cerca/);
+            // Names from the data in Italian too: countries from their codes, the placeholder place, the city chips.
+            await fresh.goto(`${server.origin}/?hl=it#layer=radio&view=41.900,12.500,0.50`);
+            await fresh.waitForFunction(() => /stazioni/.test(document.getElementById('sheetMeta').textContent), null, { timeout: 30000 });
+            const radioIt = await fresh.evaluate(() => ({ chips: document.getElementById('chipsTrack').innerText, list: document.getElementById('sheetList').innerText }));
+            assert.match(radioIt.chips, /Roma[\s\S]*Parigi[\s\S]*Londra/);
+            assert.match(radioIt.list, /Italia/);
+            assert.doesNotMatch(radioIt.list, /Italy|Location not specified/);
+            await fresh.goto(`${server.origin}/?hl=it#layer=sdr`);
+            await ready(fresh);
             // Right to left: the page lays out without horizontal overflow (logical properties).
             await fresh.evaluate(() => { document.documentElement.dir = 'rtl'; });
             await fresh.waitForTimeout(300);

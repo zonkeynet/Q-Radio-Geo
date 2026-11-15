@@ -21,7 +21,7 @@ import { WEBCAMS, WEBCAM_DB, closeWebcamPlayer } from './webcams.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
 import { hasNative, post, postState, postLoading, postError, onApp, shareNative, openExternal, haptic } from './app-bridge.mjs';
 import { node, iconButton, showAddress } from './ui.mjs';
-import { t, tn, num } from './i18n.mjs';
+import { t, tn, num, region, countryName } from './i18n.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
 // the app only while it asks for a point for a station (its viewer then reads the Q-Cast relays, nothing else).
 const DIRECTORIES = { news: NEWS, webcams: WEBCAMS, ...(APP_MODE && !PICK_MODE && !QCAST_IN_APP ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
@@ -40,11 +40,21 @@ const dirShown = () => applyFilters(dir(), state().items, state().values);
 let theme = themeById(savedThemeId());
 applyThemeCss(theme);
 const approxLabel = p => t(p.loc === 'n' ? 'radio.approxCountry' : 'radio.approxRegion');
+/** Data names in the UI language: a country from its ISO code (catalogue countries.json), the data's name otherwise;
+ * the catalogue's placeholder for stations without a place. Search still matches the data's (English) names. */
+let countryCodes = null;
+function countryLabel(name) {
+    if (!name) return '';
+    if (!countryCodes && catalog) countryCodes = new Map(catalog.countries.filter(c => c.code).map(c => [c.country, c.code]));
+    const code = countryCodes?.get(name);
+    return code ? region(code, name) : countryName(name);
+}
+const placeLabel = city => city === 'Location not specified' ? t('radio.unknownPlace') : city;
 const radioLayer = () => ({
     items: catalog.places,
     groupOf: p => p.loc ? 'approx' : 'city',
     sizeOf: p => DOT_SIZES[p.count >= 50 ? 3 : p.count >= 10 ? 2 : p.count >= 2 ? 1 : 0],
-    describe: p => `${p.city}, ${p.country}\n${tn('radio.stations', p.count)}${p.loc ? ` · ${approxLabel(p)}` : ''}`,
+    describe: p => `${placeLabel(p.city)}, ${countryLabel(p.country)}\n${tn('radio.stations', p.count)}${p.loc ? ` · ${approxLabel(p)}` : ''}`,
     colors: { city: '--accent', approx: '--approx' }
 });
 const placed = it => Number.isFinite(it.lat) && Number.isFinite(it.lng);
@@ -71,10 +81,10 @@ const RADIO_MODE = { id: 'radio', label: t('radio.label'), group: 'listen', side
 const RADIO_DIR = {
     id: 'radio', filters: [], palette: ['--accent', '--approx'],
     colorOf: p => p.loc ? '--approx' : '--accent',
-    nameOf: p => p.city, placeOf: p => p.country,
-    subOf: p => [radioCountry ? null : p.country, tn('radio.stations', p.count), p.loc ? approxLabel(p) : null].filter(Boolean).join(' · '),
+    nameOf: p => placeLabel(p.city), placeOf: p => countryLabel(p.country),
+    subOf: p => [radioCountry ? null : countryLabel(p.country), tn('radio.stations', p.count), p.loc ? approxLabel(p) : null].filter(Boolean).join(' · '),
     countOf: n => tn('radio.places', n), badgeOf: () => t('radio.place'), facts: () => [], actions: () => [],
-    titleOf: () => radioCountry || t('radio.title'),
+    titleOf: () => radioCountry ? countryLabel(radioCountry) : t('radio.title'),
     get listOrder() { return radioCountry ? (a, b) => Boolean(a.loc) - Boolean(b.loc) || b.count - a.count : null; },
     links: [], note: t('radio.legend'), credit: t('radio.credit')
 };
@@ -139,7 +149,7 @@ function tune(station) {
     $('playerTech').textContent = tech;
     $('btnPlayPause').disabled = false;
     $('bottomPlayer').dataset.station = '1'; // the player shows only once a station is chosen
-    const where = currentPlace ? [currentPlace.city, currentPlace.country].filter(Boolean).join(', ') : '';
+    const where = currentPlace ? [placeLabel(currentPlace.city), countryLabel(currentPlace.country)].filter(Boolean).join(', ') : '';
     player.select(station, config, [where, tech].filter(Boolean).join(' · '), linkUrl(new URLSearchParams({ layer: 'radio', station: station.id })));
     markActiveChip();
     updatePlayer();
@@ -197,10 +207,10 @@ async function selectPlace(place, stationId = null, { fly = true } = {}) {
     if (fly) globe?.navigation.flyTo({ lat: currentPlace.lat, lng: currentPlace.lng, altitude }, 600);
     // Ring size in degrees, proportional to the view so it stays a marker, not a huge circle.
     globe?.select(currentPlace.lat, currentPlace.lng, Math.max(.15, (fly ? altitude : globe.world.pointOfView().altitude) * 1.6));
-    $('playerCity').textContent = currentPlace.city;
+    $('playerCity').textContent = placeLabel(currentPlace.city);
     $('playerCity').classList.toggle('approx', Boolean(currentPlace.loc));
     $('playerCity').title = currentPlace.loc ? approxLabel(currentPlace) : '';
-    $('playerCountry').textContent = `· ${currentPlace.country}`;
+    $('playerCountry').textContent = `· ${countryLabel(currentPlace.country)}`;
     const stations = catalog.byPlace.get(currentPlace.id) || [];
     cityStations = [...stations].sort((a, b) => popularity(b) - popularity(a)); // stable: the catalogue's order otherwise
     currentIndex = Math.max(0, cityStations.findIndex(s => s.id === stationId));
@@ -266,9 +276,9 @@ function renderSearch(result) {
         const entries = result[kind] || []; if (!entries.length) continue; total += entries.length;
         target.appendChild(node('div', 'search-cat-header', `${t(`search.${kind}`)} · ${num(entries.length)}`));
         for (const value of entries) {
-            const title = kind === 'countries' ? value.country : kind === 'cities' ? value.city : value.title;
+            const title = kind === 'countries' ? countryLabel(value.country) : kind === 'cities' ? placeLabel(value.city) : value.title;
             const sub = kind === 'countries' ? tn('radio.cities', value.cities_count)
-                : kind === 'cities' ? `${value.country}${value.loc ? ` · ${approxLabel(value)}` : ''}` : `${value.city}, ${value.country}`;
+                : kind === 'cities' ? `${countryLabel(value.country)}${value.loc ? ` · ${approxLabel(value)}` : ''}` : `${placeLabel(value.city)}, ${countryLabel(value.country)}`;
             const trailing = kind === 'stations' ? '' : num(value.stations_count || value.count);
             target.appendChild(resultItem(n++, title, sub, trailing, kind === 'stations' ? '--accent-2' : value.loc ? '--approx' : '--accent', () => {
                 if (kind === 'countries') selectCountry(value);
@@ -325,7 +335,9 @@ function setTheme(id) {
 }
 
 /* ---------- Chips row and filters ---------- */
-const SHORTCUTS = [['Rome', 'Italy'], ['Paris', 'France'], ['London', 'United Kingdom'], ['New York City', 'United States'], ['Tokyo', 'Japan'], ['Berlin', 'Germany'], ['Buenos Aires', 'Argentina']];
+// Big cities as chips: matched on the data's names, shown in the UI language (radio.city.*).
+const SHORTCUTS = [['Rome', 'Italy', 'rome'], ['Paris', 'France', 'paris'], ['London', 'United Kingdom', 'london'], ['New York City', 'United States', 'newYork'],
+    ['Tokyo', 'Japan', 'tokyo'], ['Berlin', 'Germany', 'berlin'], ['Buenos Aires', 'Argentina', 'buenosAires']];
 let shortcutPlaces = null;
 function chip(label, { pressed = null, color = null, iconName = null, onClick, className = '' }) {
     const c = node('button', `chip ${className}`);
@@ -344,13 +356,14 @@ function renderChips() {
     const track = $('chipsTrack'); track.replaceChildren();
     if (mode === 'radio') {
         if (!catalog) return;
-        if (radioCountry) track.append(chip(radioCountry, { pressed: true, iconName: 'close', onClick: () => { radioCountry = null; showRadioList(); renderChips(); } }));
-        shortcutPlaces ??= SHORTCUTS.map(([name, country]) => {
+        if (radioCountry) track.append(chip(countryLabel(radioCountry), { pressed: true, iconName: 'close', onClick: () => { radioCountry = null; showRadioList(); renderChips(); } }));
+        shortcutPlaces ??= SHORTCUTS.map(([name, country, key]) => {
             const candidates = catalog.places.filter(p => p.country === country && !p.loc);
-            return candidates.find(p => normalize(p.city) === normalize(name))
+            const place = candidates.find(p => normalize(p.city) === normalize(name))
                 || candidates.filter(p => normalize(p.city).startsWith(normalize(name))).sort((a, b) => b.count - a.count)[0];
+            return place && { place, label: t(`radio.city.${key}`) };
         }).filter(Boolean);
-        for (const place of shortcutPlaces) track.append(chip(place.city.replace(' City', ''), { onClick: () => selectPlace(place) }));
+        for (const { place, label } of shortcutPlaces) track.append(chip(label, { onClick: () => selectPlace(place) }));
     } else {
         const d = dir(), { values } = state(), first = d.filters[0];
         if (first) for (const o of first.options) {

@@ -1,7 +1,7 @@
 // 🧭 Migration routes: deaths and disappearances recorded by IOM's Missing Migrants Project, grouped in corridors,
 // with the emergency numbers and sources that people on the move, rescuers and journalists use.
 // Official SAR regions are not published as open data (IMO GISIS needs an account), so they are linked, not drawn.
-import { t, tn, num, date, has } from './i18n.mjs';
+import { t, tn, num, date, has, countryName } from './i18n.mjs';
 
 // Per corridor: its colour, the short code shortBadge reads, the filter chip and the full name.
 const corridorOf = (id, color, code) => ({ color, code, chip: t(`migration.corridor.${id}.chip`), name: t(`migration.corridor.${id}.name`) });
@@ -55,15 +55,15 @@ export const MIGRATION = {
     colorOf: it => corridor(it).color,
     sizeOf: it => total(it) >= 50 ? 11 : total(it) >= 10 ? 8 : 5.5,
     nameOf: it => tn('migration.name', total(it)),
-    placeOf: it => it.place && it.cc && it.place.includes(it.cc) ? it.place : [it.place, it.cc].filter(Boolean).join(' · '),
-    subOf: it => [day(it.d), route(it), it.cc].filter(Boolean).join(' · '),
+    placeOf: it => it.place && it.cc && it.place.includes(it.cc) ? it.place : [it.place, countryName(it.cc)].filter(Boolean).join(' · '),
+    subOf: it => [day(it.d), route(it), countryName(it.cc)].filter(Boolean).join(' · '),
     badgeOf: it => route(it), shortBadge: it => corridor(it).code.split(' ')[0].slice(0, 5),
     describe: it => `${tn('migration.name', total(it))} · ${day(it.d)}\n${route(it)}`,
     // The first three facts with a value are the card's key facts; the rest fold under Details.
     facts: it => [[t('migration.fact.date'), day(it.d)], [t('migration.fact.dead'), num(it.dead)], [t('migration.fact.missing'), num(it.miss)],
         [t('migration.fact.cause'), cause(it)], [t('migration.fact.route'), route(it)], [t('migration.fact.survivors'), it.surv && num(it.surv)],
         [t('migration.fact.people'), [it.f, it.m, it.ch].some(Boolean) ? [it.f, it.m, it.ch].map(n => num(n || 0)).join(', ') : null],
-        [t('migration.fact.origin'), it.origin], [t('migration.fact.country'), it.cc], [t('migration.fact.source'), it.src],
+        [t('migration.fact.origin'), it.origin], [t('migration.fact.country'), countryName(it.cc)], [t('migration.fact.source'), it.src],
         [t('migration.fact.quality'), it.q ? t('migration.fact.qualityValue', { q: it.q }) : null],
         [t('migration.fact.record'), it.type ? `${it.id} (${it.type.split(',').map(type => vocab('migration.record', type)).join(', ')})` : it.id]],
     actions: it => [...(it.url ? [{ label: t('migration.action.source'), href: it.url }] : []),
