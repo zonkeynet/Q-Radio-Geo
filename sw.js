@@ -26,6 +26,8 @@ const PREFIX = 'qglobe-';
 const SHELL = `${PREFIX}shell-${MANIFEST_HASH}`, DATA = `${PREFIX}data`, TILES = `${PREFIX}tiles`, META = `${PREFIX}meta`;
 // Kept data. Cache Storage holds bodies uncompressed: stations and places are about 10 MB, a large layer up to 25 MB.
 const LIMITS = { [DATA]: { bytes: 80e6, entries: 60, entry: 24e6 }, [TILES]: { bytes: 16e6, entries: 200, entry: 2e6 } };
+// What an install keeps besides the shell, from the browser's cache only: start-up data, not every layer ever opened.
+const INSTALL_KEEP_BYTES = 30e6;
 // Files the worker may keep (the same rule as scripts/build_sw.mjs): not db/, tests, docs or scripts.
 const IN_SCOPE = /^(index\.html|manifest\.webmanifest|app-config\.json|(assets|js|vendor|data)\/.+)$/;
 const SCOPE = new URL(self.registration.scope);
@@ -87,15 +89,22 @@ async function install() {
     // kept with this version, from the browser's cache only, never the network, so the next start reads them from
     // here instead of checking and storing them while it starts. Stored in this version's cache, so a page of an
     // older version never sees them.
+    // At most INSTALL_KEEP_BYTES in all, smallest files first (start-up data before large layers).
     const inShell = new Set(m.shell);
-    await pool(Object.keys(m.files).filter(p => !inShell.has(p) && !p.startsWith('data/surveillance/') && fits(DATA, m.files[p][1])), 4, async path => {
+    let budget = INSTALL_KEEP_BYTES;
+    const others = Object.keys(m.files).filter(p => !inShell.has(p) && !p.startsWith('data/surveillance/') && fits(DATA, m.files[p][1]))
+        .sort((a, b) => m.files[a][1] - m.files[b][1]);
+    await pool(others, 4, async path => {
         const entry = m.files[path], url = at(path);
-        if (keptHash(await cache.match(url)) === entry[0]) return;
+        if (keptHash(await cache.match(url)) === entry[0] || entry[1] > budget) return;
         try {
             const response = await fetch(url, { cache: 'only-if-cached', mode: 'same-origin', credentials: 'same-origin' });
             if (response.status !== 200) return;
             const body = await response.arrayBuffer();
-            if (body.byteLength === entry[1] && await digest(body) === entry[0] && await room(entry[1])) await cache.put(url, kept(body, response.headers.get('content-type'), entry[0]));
+            if (body.byteLength === entry[1] && entry[1] <= budget && await digest(body) === entry[0] && await room(entry[1])) {
+                budget -= entry[1];
+                await cache.put(url, kept(body, response.headers.get('content-type'), entry[0]));
+            }
         } catch { /* not in the browser's cache */ }
     });
     await cache.put(at('sw-manifest.json'), new Response(text, { headers: { 'content-type': 'application/json' } }));

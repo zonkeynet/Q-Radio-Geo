@@ -77,21 +77,23 @@ const watch = page => { page.on('pageerror', e => errors.push(e.message)); retur
 let page = watch(await context.newPage());
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ready = (p = page) => p.waitForFunction(() => performance.getEntriesByName('qglobe:layer-ready').length > 0, null, { timeout: 60000 });
-const state = (p = page) => p.evaluate(async () => {
+// ask: whether to ask the controlling worker its version (a message to it). Waits poll without asking: messages every
+// quarter of a second would keep an old worker busy, and a new one takes over only once the old one is idle.
+const state = (p = page, ask = true) => p.evaluate(async ask => {
     const reg = await navigator.serviceWorker.getRegistration();
-    const version = navigator.serviceWorker.controller ? await new Promise(resolve => {
+    const version = ask && navigator.serviceWorker.controller ? await new Promise(resolve => {
         navigator.serviceWorker.addEventListener('message', e => { if (e.data?.kind === 'qglobe:version') resolve(e.data.version); }, { once: true });
         navigator.serviceWorker.controller.postMessage('qglobe:version');
         setTimeout(() => resolve(null), 2000);
     }) : null;
     return { controlled: Boolean(navigator.serviceWorker.controller), version, active: reg?.active?.state || null, waiting: Boolean(reg?.waiting),
         caches: (await caches.keys()).filter(k => k.startsWith('qglobe-')).sort(), html: document.querySelector('meta[name="sw-test"]')?.content, morse: globalThis.__swTest?.morse };
-});
+}, ask);
 async function until(test, what, ms = 30000) {
     const t0 = Date.now();
     for (;;) {
-        const s = await state().catch(() => null);
-        if (s && test(s)) return s;
+        const s = await state(page, false).catch(() => null);
+        if (s && test(s)) return await state().catch(() => s); // the version too, once the wait is over
         if (Date.now() - t0 > ms) throw new Error(`timed out waiting for ${what}: ${JSON.stringify(s)}`);
         await sleep(250);
     }
@@ -173,7 +175,8 @@ try {
     page = watch(await context.newPage());
     await page.goto(`${server.origin}/`);
     await ready();
-    s = await until(x => x.version === versions.v2 && x.morse === 2, 'v2 page');
+    s = await until(x => x.morse === 2, 'v2 page');
+    assert.equal(s.version, versions.v2);
     assert.deepEqual(s.caches.filter(k => k.startsWith('qglobe-shell-')), [`qglobe-shell-${versions.v2}`]);
     assert.deepEqual(JSON.parse((await get('data/sw-test.json')).text), { v: 2 });
     assert.equal((await get('data/sw-removed.json', { cache: 'no-store' })).status, 404, 'not in v2: the worker passes it to the server');
@@ -190,7 +193,8 @@ try {
     // The tab may already have used its swaps for this minute (js/sw-register.js, against reload loops) in the v2 step.
     await page.evaluate(() => sessionStorage.clear());
     await page.reload();
-    s = await until(x => x.version === versions.v3 && x.html === '3' && x.morse === 3 && !x.waiting, 'v3 page after the swap', 45000);
+    s = await until(x => x.html === '3' && x.morse === 3 && !x.waiting, 'v3 page after the swap', 45000);
+    assert.equal(s.version, versions.v3);
     await ready();
     assert.deepEqual(JSON.parse((await get('data/sw-test.json')).text), { v: 3 });
     ok('v2 -> v3 on reload: one consistent version per page, swap at start');
