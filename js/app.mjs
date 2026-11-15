@@ -688,7 +688,7 @@ const layerName = id => (DIRECTORIES[id] || RADIO_MODE).label;
 function layerError(id, retry) {
     const network = offline();
     showStatus({ kind: 'error', text: t(network ? 'error.offline' : 'error.layer', { layer: layerName(id) }), detail: t(network ? 'error.offlineHint' : 'error.layerHint'),
-        onRetry: retry, onDismiss: clearStatus });
+        onRetry: retry, onDismiss: () => { clearStatus(); markMode(); restoreSheet(mode); renderChips(); } }); // ✕: back to the layer shown
     postError(network ? 'network' : 'data', true);
 }
 
@@ -709,6 +709,7 @@ async function setMode(next, { remember = true } = {}) {
         $('sheet').hidden = false;
         $('sheetTitle').replaceChildren(icon(next, 'icon title-icon'), node('span', '', layerName(next)));
         $('sheetMeta').textContent = '';
+        $('chipsTrack').replaceChildren(); $('chipsRow').hidden = true; // the chips come with the layer
         loadingSkeleton();
         let lastText = '';
         const onProgress = ({ loaded, total }) => {
@@ -733,7 +734,7 @@ async function setMode(next, { remember = true } = {}) {
         } catch (e) {
             if (switching !== run) return false; // a newer switch took over
             switching = null;
-            if (!run.signal.aborted) { run.abort(); } else if (cancelledByUser(run)) { clearStatus(); markMode(); restoreSheet(previous); return false; }
+            if (!run.signal.aborted) { run.abort(); } else if (cancelledByUser(run)) { clearStatus(); markMode(); restoreSheet(previous); renderChips(); return false; }
             loadingSkeleton(); $('sheetList').replaceChildren();
             layerError(next, () => setMode(next, { remember }));
             return false;
