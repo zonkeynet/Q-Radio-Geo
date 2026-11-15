@@ -1,12 +1,12 @@
 import { stationURL } from './core.mjs';
 import { APP_MODE, requestNativeMedia } from './native-app.mjs';
 import { QCastAudio, canVerify } from './qcast-player.mjs';
-const ERRORS = {
-    1: 'Playback aborted.',
-    2: 'Stream unreachable or blocked by the browser / station server.',
-    3: 'The browser cannot decode this stream.',
-    4: 'Unsupported format, or the station server refused the connection.'
-};
+import { t } from './i18n.mjs';
+// MediaError codes: aborted, network, decode, source not supported.
+const ERRORS = { 1: 'player.error.aborted', 2: 'player.error.network', 3: 'player.error.decode', 4: 'player.error.format' };
+const STATES = ['idle', 'ready', 'buffering', 'playing', 'paused', 'ended', 'error'];
+/** The short label of a player state, as the app shows it: "Ready", "Tuning", "On air"… */
+export const stateLabel = state => t(`player.state.${STATES.includes(state) ? state : 'error'}`);
 // HLS (.m3u8) needs hls.js where the browser has no native support (Chrome, Firefox desktop).
 // Loaded on demand from the site's own copy (vendor/, Apache 2.0), integrity-checked.
 const HLS_SRC = new URL('../vendor/hls.light-1.5.17.min.js', import.meta.url).href;
@@ -48,14 +48,14 @@ export class RadioPlayer {
     }
     setConsent(value) {
         this.allowed = Boolean(value);
-        if (!this.allowed) { this.release(); this.emit('ready', 'Audio disabled: no connection is made to station servers.'); }
+        if (!this.allowed) { this.release(); this.emit('ready', t('player.disabled')); }
     }
     /** info: place and format, shown by the app's player ("Rome, Italy · MP3 · 128 kbps"); share: its globe link. */
     select(station, config, info = '', share = '') {
         this.release(); this.station = station; this.config = config; this.info = info; this.share = share;
         if (!this.allowed) {
             // The app has no consent bar: its own dialog asks before connecting.
-            this.emit('ready', APP_MODE ? 'Press ▶ to play this station in Q‑P1NG.' : 'Press ENABLE AUDIO to listen to this station.');
+            this.emit('ready', t(APP_MODE ? 'player.pressPlayApp' : 'player.allowAudio'));
             return Promise.resolve();
         }
         return this.start();
@@ -71,7 +71,7 @@ export class RadioPlayer {
         catch (e) { this.emit('error', e.message); return; }
         if (APP_MODE) {
             requestNativeMedia({ url, name: this.station.title, kind: 'radio', hls: this.station.hls === 1, info: this.info, share: this.share });
-            this.emit('ready', 'Playback and connection controls are in Q-P1NG.');
+            this.emit('ready', t('player.inApp'));
             return;
         }
         const audio = this.makeAudio(); this.audio = audio;
@@ -86,37 +86,37 @@ export class RadioPlayer {
         // Ordinary cross-origin media playback must NOT be routed through Web Audio.
         // A different-origin controlled proxy uses CORS to send its allowlisted Origin.
         if (this.config.streamMode === 'proxy' && new URL(url).origin !== new URL(this.base).origin) audio.crossOrigin = 'anonymous';
-        listen('playing', () => { clearTimeout(this.timer); this.timer = null; this.emit('playing', 'Playback started by the browser.'); });
+        listen('playing', () => { clearTimeout(this.timer); this.timer = null; this.emit('playing', t('player.started')); });
         const armTimeout = () => {
             clearTimeout(this.timer);
-            this.timer = setTimeout(() => failed('No audio before the timeout: the station may be offline. Try the next one.'), this.timeoutMs);
+            this.timer = setTimeout(() => failed(t('player.timeout')), this.timeoutMs);
         };
-        listen('waiting', () => { this.emit('buffering', 'Waiting for audio data…'); armTimeout(); });
-        listen('stalled', () => { this.emit('buffering', 'The audio stream has temporarily stalled.'); armTimeout(); });
-        listen('pause', () => { clearTimeout(this.timer); this.emit('paused', 'Paused.'); });
-        listen('ended', () => { this.release(); this.emit('ended', 'The stream has ended. Press Play to reconnect.'); });
-        listen('error', () => failed(ERRORS[audio.error?.code] || 'Unidentified audio error.'));
+        listen('waiting', () => { this.emit('buffering', t('player.waiting')); armTimeout(); });
+        listen('stalled', () => { this.emit('buffering', t('player.stalled')); armTimeout(); });
+        listen('pause', () => { clearTimeout(this.timer); this.emit('paused', t('player.paused')); });
+        listen('ended', () => { this.release(); this.emit('ended', t('player.ended')); });
+        listen('error', () => failed(t(ERRORS[audio.error?.code] || 'player.error.unknown')));
         this.holder?.appendChild(audio);
-        this.emit('buffering', this.config.streamMode === 'proxy' ? 'Connecting via the configured backend…' : 'Connecting directly to the station server…');
+        this.emit('buffering', t(this.config.streamMode === 'proxy' ? 'player.connectingProxy' : 'player.connectingDirect'));
         armTimeout();
         const isHls = this.station.hls === 1 || /\.m3u8$/i.test(new URL(url).pathname);
         if (isHls && useHlsJs(audio)) {
             let Hls;
-            try { Hls = await loadHls(); } catch { failed('The HLS player could not be loaded. Check the connection and try again.'); return; }
+            try { Hls = await loadHls(); } catch { failed(t('player.hlsLoad')); return; }
             if (!active()) return;
-            if (!Hls.isSupported()) { failed('This browser cannot play HLS streams.'); return; }
+            if (!Hls.isSupported()) { failed(t('player.hlsUnsupported')); return; }
             // No worker: the page CSP does not allow blob: workers.
             const hls = new Hls({ enableWorker: false, lowLatencyMode: false });
             this.hls = hls;
-            hls.on(Hls.Events.ERROR, (_, data) => { if (data?.fatal && this.hls === hls) failed('HLS stream unreachable, or the station server blocks web players (CORS).'); });
+            hls.on(Hls.Events.ERROR, (_, data) => { if (data?.fatal && this.hls === hls) failed(t('player.hlsError')); });
             hls.loadSource(url); hls.attachMedia(audio);
         } else audio.src = url;
         try { await audio.play(); /* Only the actual `playing` event declares playback. */ }
         catch (e) {
             if (!active()) return;
             if (e.name === 'NotAllowedError') {
-                this.release(); this.emit('ready', 'The browser requires an explicit gesture: press Play.');
-            } else if (e.name !== 'AbortError') failed('Playback failed: incompatible stream, format or network.');
+                this.release(); this.emit('ready', t('player.gesture'));
+            } else if (e.name !== 'AbortError') failed(t('player.failed'));
         }
     }
     startQCast(generation) {
@@ -131,15 +131,15 @@ export class RadioPlayer {
             },
             onMeta: meta => {
                 if (this.generation !== generation) return;
-                nowPlaying = meta.nowPlaying ? `Now playing: ${meta.nowPlaying}` : '';
-                if (this.state === 'playing') this.emit('playing', [nowPlaying, 'Every second checked against the station\'s signature.'].filter(Boolean).join(' · '));
+                nowPlaying = meta.nowPlaying ? t('player.nowPlaying', { title: meta.nowPlaying }) : '';
+                if (this.state === 'playing') this.emit('playing', [nowPlaying, t('qcast.player.checked')].filter(Boolean).join(' · '));
             }
         });
         this.qcast = engine;
-        this.emit('buffering', 'Connecting to the station\'s relay…');
+        this.emit('buffering', t('qcast.player.connecting'));
         engine.start();
     }
-    pause() { this.release(); this.emit('paused', 'Paused; audio connection closed.'); }
+    pause() { this.release(); this.emit('paused', t('player.pausedClosed')); }
     toggle() { return ['playing', 'buffering'].includes(this.state) ? this.pause() : this.start(); }
     destroy() { this.release(); this.station = null; this.allowed = false; }
 }

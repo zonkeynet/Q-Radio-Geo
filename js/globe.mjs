@@ -92,7 +92,31 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
     renderer.setPixelRatio(pixelRatio);
     const small = smallTextures({ maxTexture: renderer.capabilities?.maxTextureSize || 16384 });
     const texture = path => path && textureFile(path, { small });
-    const resize = () => { world.width(container.clientWidth).height(container.clientHeight); renderer.setPixelRatio(pixelRatio); wake?.(); };
+    // The globe is drawn behind the header and the sheet: the camera's view is offset so the globe's centre (and a
+    // selection flown to) sits in the middle of the area left visible, not under the sheet.
+    let viewOffset = { x: 0, y: 0 }, offsetTarget = { x: 0, y: 0 }, offsetFrame = 0;
+    function applyOffset() {
+        const camera = world.camera(), w = container.clientWidth, h = container.clientHeight;
+        if (!w || !h) return;
+        if (Math.abs(viewOffset.x) < .5 && Math.abs(viewOffset.y) < .5) camera.clearViewOffset();
+        else camera.setViewOffset(w, h, viewOffset.x, viewOffset.y, w, h);
+        wake?.();
+    }
+    /** top, bottom, left: CSS px of the screen covered by the header, the sheet and a side panel. */
+    function setViewInsets({ top = 0, bottom = 0, left = 0 } = {}) {
+        offsetTarget = { x: Math.round(-left / 2), y: Math.round((bottom - top) / 2) };
+        cancelAnimationFrame(offsetFrame);
+        const from = { ...viewOffset }, start = performance.now();
+        const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const step = now => {
+            const k = still ? 1 : Math.min(1, (now - start) / 200), e = 1 - (1 - k) ** 3;
+            viewOffset = { x: from.x + (offsetTarget.x - from.x) * e, y: from.y + (offsetTarget.y - from.y) * e };
+            applyOffset();
+            if (k < 1) offsetFrame = requestAnimationFrame(step);
+        };
+        offsetFrame = requestAnimationFrame(step);
+    }
+    const resize = () => { world.width(container.clientWidth).height(container.clientHeight); renderer.setPixelRatio(pixelRatio); applyOffset(); wake?.(); };
     const resizeObserver = new ResizeObserver(resize); resizeObserver.observe(container); resize();
 
     // Square GL points become round dots with a dark rim, readable on bright city lights and on
@@ -244,7 +268,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
     container.addEventListener('wheel', wake, { signal, passive: true, capture: true });
     renderer.domElement.addEventListener('webglcontextlost', e => {
         e.preventDefault(); navigation.cancel(); world.pauseAnimation();
-        const notice = document.getElementById('globeNotice'); notice.textContent = 'Graphics context lost. The catalog is still available; reload to restore the globe.'; notice.hidden = false;
+        document.dispatchEvent(new CustomEvent('qglobe:context-lost')); // the page shows its notice with Reload
     }, { signal });
 
     // ---------- Themes ----------
@@ -374,7 +398,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         return e - w > 180 ? null : { s: Math.min(...lats), n: Math.max(...lats), w, e };
     }
     return {
-        world, navigation, setTheme, setLayer, viewBounds, select, markPick,
+        world, navigation, setTheme, setLayer, viewBounds, select, markPick, setViewInsets,
         /** The globe.gl way of viewBounds, for checking that both agree (scripts/test_smoke_browser.mjs). */
         viewBoundsByRaycast() {
             const rect = renderer.domElement.getBoundingClientRect(), points = [];

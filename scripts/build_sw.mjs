@@ -28,7 +28,7 @@ export const IN_SCOPE = /^(index\.html|manifest\.webmanifest|app-config\.json|(a
 export const SHELL = [
     /^index\.html$/, /^manifest\.webmanifest$/, /^app-config\.json$/,
     /^assets\/(app|native-app)\.css$/, /^assets\/icons\/(icon\.svg|icon-192\.png|apple-touch-icon\.png)$/,
-    /^js\/[a-z0-9.-]+\.m?js$/, /^vendor\/globe\.gl-[0-9.]+\.min\.js$/,
+    /^js\/[a-z0-9.-]+\.m?js$/, /^js\/i18n\/[a-z-]+\.mjs$/, /^vendor\/globe\.gl-[0-9.]+\.min\.js$/,
     /^assets\/textures\/earth-night(-2k)?\.webp$/,
     /^data\/(countries|summary)\.json$/
 ];

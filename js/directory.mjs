@@ -1,10 +1,11 @@
-// Directory modes (SDR receivers, repeaters, …): loading, filters, search and the explorer drawer.
+// Directory modes (SDR receivers, repeaters, …): loading, filters, search and the sheet's list and card views.
 // A mode is a plain definition object (see sdr.mjs, repeaters.mjs); everything here is shared.
 import { loadJSON } from './catalog.mjs';
 import { icon } from './icons.mjs';
 import { normalize } from './core.mjs';
 import { COUNTRY_ALIASES } from './aliases.mjs';
 import { externalLink } from './ui.mjs';
+import { t, num } from './i18n.mjs';
 
 export const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
 /** A link to another site: a new tab on the website, the app's confirmation inside Q-P1NG (js/ui.mjs). */
@@ -22,8 +23,8 @@ export function indexItems(def, items) {
     return items;
 }
 /** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. */
-export function loadDirectory(def) {
-    def.loading ??= loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout }).then(json => def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)))
+export function loadDirectory(def, { onProgress = null, signal = null } = {}) {
+    def.loading ??= loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout, onProgress, signal }).then(json => def.prepare(json).filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)))
         .catch(e => { def.loading = null; throw e; });
     return def.loading;
 }
@@ -81,83 +82,149 @@ export function listOrder(def, items, center) {
 export { km as distanceKm };
 
 // Sections of a list sorted by distance from the view (a mode can define its own with def.sectionOf).
-const DISTANCE_SECTIONS = [[50, 'Within 50 km'], [300, 'Within 300 km'], [1000, 'Within 1,000 km'], [Infinity, 'Further away']];
+const DISTANCE_SECTIONS = [50, 300, 1000, Infinity];
+const sectionName = limit => limit === Infinity ? t('dir.further') : t('dir.within', { km: limit });
+/** "12 km", "1,240 km" in the UI language. */
+export const distanceText = d => !Number.isFinite(d) ? '' : d < 1 ? t('common.m', { n: Math.round(d * 1000) }) : t('common.km', { n: d < 10 ? Math.round(d * 10) / 10 : Math.round(d) });
+/** The count line of a layer: "1,234 receivers". */
+export const countText = (def, n) => def.countOf ? def.countOf(n) : `${num(n)} ${def.noun}`;
 
-/** The left drawer: the selected item's card, then every filtered item (featured, then nearest to the view), in sections. */
-export function createExplorer({ drawer, title, meta, list, getCenter, onPick, onShare }) {
-    let def = null, items = [], values = {}, selected = null, more = null;
+/**
+ * The sheet's two views. List: every filtered item (featured, then nearest to the view; news newest first), in
+ * sections, with a footer for sources. Card: one item, the main action pinned at the bottom, three key facts, the rest
+ * folded under "Details" and "Source & licence"; its back button returns to the list.
+ */
+export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, onPick, onShare, onView }) {
+    let def = null, items = [], values = {}, selected = null, more = null, center = null, distance = new Map();
     // "Show more" loads itself when it scrolls into view; the button stays for keyboards.
     const autoMore = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) more?.click(); }, { root: list, rootMargin: '400px' });
     const shown = () => applyFilters(def, items, values);
     function item(it) {
-        const b = node('button', `dir-item${it === selected ? ' active' : ''}${def.fresh?.(it) ? ' fresh' : ''}`);
+        const b = node('button', `dir-item${it === selected ? ' active' : ''}${def.twoLines ? ' two-lines' : ''}`);
+        b.type = 'button';
         b.style.setProperty('--type-color', `var(${def.colorOf(it)})`);
-        const text = node('span', 'dir-item-text'), snippet = def.snippetOf?.(it);
-        text.append(node('span', 'dir-item-name', `${def.featured?.(it) ? '★ ' : ''}${def.nameOf(it)}`), node('span', 'dir-item-sub', def.subOf(it)));
+        const text = node('span', 'dir-item-text'), snippet = def.snippetOf?.(it), name = node('span', 'dir-item-name');
+        if (def.featured?.(it)) { const star = icon('star'); star.setAttribute('aria-label', t('dir.featured')); star.setAttribute('role', 'img'); star.removeAttribute('aria-hidden'); name.append(star); }
+        name.append(node('span', '', def.nameOf(it)));
+        text.append(name, node('span', 'dir-item-sub', def.subOf(it)));
         if (snippet) text.append(node('span', 'dir-item-snippet', snippet));
         // A mode may give its items an image (user radio: the station's own); otherwise the coloured dot.
         const image = def.imageOf?.(it);
         const lead = image ? Object.assign(node('img', 'dir-thumb'), { src: image, alt: '', decoding: 'async', loading: 'lazy' }) : node('i', 'dir-dot');
-        b.append(lead, text, node('span', 'dir-badge', def.shortBadge?.(it) || ''));
+        // Trailing meta: the mode's own (a time), else the distance from the view; none for lists ordered otherwise (news).
+        const trailing = def.metaOf?.(it) ?? (def.listOrder ? '' : distanceText(distance.get(it) ?? (center && Number.isFinite(it.lat) ? km(center, it) : NaN)));
+        b.append(lead, text, node('span', 'dir-meta', trailing || ''));
         b.onclick = () => onPick(it);
         return b;
     }
-    function card(it) {
-        const box = node('section', 'dir-card');
-        box.style.setProperty('--type-color', `var(${def.colorOf(it)})`);
-        const head = node('div', 'dir-card-head');
-        head.append(typeBadge(def.badgeOf(it), def.colorOf(it)));
-        if (def.featured?.(it)) head.append(node('span', 'dir-star', '★ featured'));
-        box.append(head);
-        const image = def.imageOf?.(it);
-        if (image) box.append(Object.assign(node('img', 'dir-card-image'), { src: image, alt: `Image of ${def.nameOf(it)}`, decoding: 'async' }));
-        box.append(node('h3', 'dir-card-title', def.nameOf(it)));
-        if (def.placeOf(it)) box.append(node('p', 'dir-card-place', `📍 ${def.placeOf(it)}`));
-        const facts = node('dl', 'dir-facts');
-        for (const [k, v] of def.facts(it)) if (v) facts.append(node('dt', '', k), node('dd', '', v));
-        if (facts.children.length) box.append(facts);
-        for (const a of def.actions(it)) {
-            const className = a.secondary ? 'dir-open secondary' : 'dir-open';
-            if (a.onClick) { // an action on this page (user radio: play in the bottom player)
-                const b = Object.assign(node('button', className, a.label), { type: 'button' });
-                b.onclick = a.onClick;
-                box.append(b);
-            } else box.append(link(a.label, a.href, className));
+    function action(a, primary) {
+        const className = `btn ${primary ? 'btn-filled btn-block' : 'btn-tonal'}`;
+        if (a.onClick) {
+            const b = node('button', className);
+            b.type = 'button';
+            if (primary) b.append(icon(a.icon || 'play'));
+            b.append(node('span', '', a.label));
+            b.onclick = a.onClick;
+            return b;
         }
-        if (onShare) {
-            const share = Object.assign(node('button', 'dir-open secondary dir-share', '🔗 SHARE LINK'), { type: 'button', title: 'Copy a link that opens this card' });
-            share.onclick = () => onShare(it);
-            box.append(share);
-        }
-        const here = shown().filter(x => x !== it && Math.abs(x.lat - it.lat) < 1e-3 && Math.abs(x.lng - it.lng) < 1e-3);
-        if (here.length) {
-            box.append(node('p', 'dir-sub', `Also at this site · ${here.length}`));
-            for (const x of here.slice(0, 12)) box.append(item(x));
-        }
-        return box;
+        return externalLink(a.label, a.href, className);
     }
-    function footer() {
-        const f = node('div', 'dir-footer');
-        for (const [heading, links] of def.links) {
+    function fold(label, open = false) {
+        const d = node('details', 'fold'); d.open = open;
+        d.append(node('summary', '', label));
+        return d;
+    }
+    function facts(rows) {
+        const dl = node('dl', 'dir-facts');
+        for (const [k, v] of rows) dl.append(node('dt', '', k), node('dd', '', v));
+        return dl;
+    }
+    function sourceFold() {
+        const f = fold(t('dir.source'));
+        for (const [heading, links] of def.links || []) {
             f.append(node('p', 'dir-sub', heading));
             for (const [text, href] of links) f.append(link(text, href, 'dir-link'));
         }
         if (def.note) f.append(node('p', 'dir-note', def.note));
-        f.append(node('p', 'dir-note', def.credit));
+        if (def.credit) f.append(node('p', 'dir-note', def.credit));
         return f;
     }
-    function render() {
-        const center = getCenter(), list_ = shown();
+    function card(it) {
+        const head = node('div', 'card-head');
+        head.style.setProperty('--type-color', `var(${def.colorOf(it)})`);
+        const back = node('button', 'icon-btn');
+        Object.assign(back, { type: 'button', title: t('dir.backToList') });
+        back.setAttribute('aria-label', t('dir.backToList'));
+        back.append(icon('back'));
+        back.onclick = () => api.deselect();
+        const type = node('span', 'card-type');
+        type.append(node('i'), def.badgeOf(it));
+        head.append(back, type);
+        if (def.featured?.(it)) { const star = node('span', 'dir-star'); star.append(icon('star'), t('dir.featured')); head.append(star); }
+        const spacer = node('span'); spacer.style.flex = '1';
+        head.append(spacer);
+        if (onShare) {
+            const share = node('button', 'icon-btn');
+            Object.assign(share, { type: 'button', title: t('dir.share') });
+            share.setAttribute('aria-label', t('dir.share'));
+            share.append(icon('share'));
+            share.onclick = () => onShare(it);
+            head.append(share);
+        }
+        const body = node('div', 'card-scroll');
+        const image = def.imageOf?.(it);
+        if (image) body.append(Object.assign(node('img', 'dir-card-image'), { src: image, alt: t('dir.imageOf', { name: def.nameOf(it) }), decoding: 'async' }));
+        const h = node('h3', 'dir-card-title', def.nameOf(it));
+        h.id = 'cardTitle'; h.tabIndex = -1;
+        body.append(h);
+        if (def.placeOf(it)) { const place = node('p', 'dir-card-place'); place.append(icon('pin'), def.placeOf(it)); body.append(place); }
+        const rows = def.facts(it).filter(([, v]) => v !== null && v !== undefined && v !== '' && v !== false);
+        if (rows.length) body.append(facts(rows.slice(0, 3)));
+        if (rows.length > 3) { const d = fold(t('dir.details')); d.append(facts(rows.slice(3))); body.append(d); }
+        const here = shown().filter(x => x !== it && Math.abs(x.lat - it.lat) < 1e-3 && Math.abs(x.lng - it.lng) < 1e-3);
+        if (here.length) {
+            const d = fold(t('dir.alsoHere', { n: here.length }));
+            for (const x of here.slice(0, 12)) d.append(item(x));
+            body.append(d);
+        }
+        body.append(sourceFold());
+        const actions = def.actions(it), main = actions.find(a => !a.secondary), rest = actions.filter(a => a !== main);
+        const bar = node('div', 'card-actions');
+        if (main) bar.append(action(main, true));
+        if (rest.length) { const row = node('div', 'row'); for (const a of rest) row.append(action(a, false)); bar.append(row); }
+        const box = node('section', 'dir-card');
+        box.setAttribute('aria-labelledby', 'cardTitle');
+        box.style.cssText = 'display:flex;flex-direction:column;flex:1;min-height:0';
+        box.style.setProperty('--type-color', `var(${def.colorOf(it)})`);
+        box.append(head, body);
+        if (bar.children.length) box.append(bar);
+        return box;
+    }
+    function footer() {
+        const f = node('div', 'dir-footer');
+        f.append(sourceFold());
+        return f;
+    }
+    function heading() {
+        title.replaceChildren(icon(def.id, 'icon title-icon'), node('span', '', def.titleOf(values)));
+        meta.textContent = `${countText(def, shown().length)} · ${def.listOrder ? t('dir.newestFirst') : t('dir.nearestFirst')}`;
+    }
+    function renderList() {
+        center = getCenter();
+        const list_ = shown();
         // Nearest to the view first, unless the mode orders its list itself (news: newest first). Each item's distance
         // is computed once, not in every comparison: the same order, a fraction of the time for 24,000 webcams.
-        const { sorted, distance } = listOrder(def, list_, center);
-        title.replaceChildren(icon(def.id, 'icon title-icon'), def.titleOf(values));
-        meta.textContent = `${list_.length.toLocaleString('en')} ${def.noun} · ${def.listOrder ? 'newest first' : 'nearest to the view first'}`;
-        drawer.hidden = false;
+        const order = listOrder(def, list_, center);
+        const sorted = order.sorted; distance = order.distance;
         list.replaceChildren(); list.scrollTop = 0;
-        if (selected) list.append(card(selected));
+        if (!sorted.length) {
+            const empty = node('div', 'empty-state');
+            empty.append(icon('search'), node('p', '', def.emptyText || t('dir.empty')));
+            list.append(empty, footer());
+            return;
+        }
         const sectionOf = def.sectionOf || (def.listOrder ? null
-            : it => def.featured?.(it) ? '★ Featured' : DISTANCE_SECTIONS.find(([limit]) => (distance.get(it) ?? km(center, it)) < limit)[1]);
+            : it => def.featured?.(it) ? t('dir.featuredSection') : sectionName(DISTANCE_SECTIONS.find(limit => (distance.get(it) ?? km(center, it)) < limit)));
         const sections = new Map();
         if (sectionOf) for (const it of sorted) { const s = sectionOf(it); sections.set(s, (sections.get(s) || 0) + 1); }
         let offset = 0, current = null;
@@ -169,22 +236,37 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
                 const s = sectionOf?.(it);
                 if (s && s !== current) {
                     current = s;
-                    const head = node('p', 'dir-section', s);
-                    head.append(node('small', '', sections.get(s).toLocaleString('en')));
+                    const head = node('h3', 'dir-section', s);
+                    head.append(node('small', '', num(sections.get(s))));
                     fragment.append(head);
                 }
                 fragment.append(item(it));
             }
             offset += 60; list.append(fragment);
             if (offset < sorted.length) {
-                more = node('button', 'hud-btn load-more', `Show more (${sorted.length - offset})`);
+                more = node('button', 'btn btn-text load-more', t('dir.showMore', { n: sorted.length - offset }));
+                more.type = 'button';
                 more.onclick = page; list.append(more); autoMore.observe(more);
             }
             list.append(footer());
         };
         page();
     }
-    return {
+    function render() {
+        sheet.hidden = false;
+        heading();
+        if (selected) {
+            cardBox.replaceChildren(card(selected));
+            cardBox.hidden = false;
+            sheet.dataset.view = 'card';
+        } else {
+            cardBox.hidden = true; cardBox.replaceChildren();
+            sheet.dataset.view = 'list';
+            renderList();
+        }
+        onView?.(selected ? 'card' : 'list');
+    }
+    const api = {
         /** Switches the mode or its filters; a selection that no longer matches is dropped. */
         use(nextDef, nextItems, nextValues) {
             if (nextDef !== def) selected = null;
@@ -192,10 +274,16 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
             if (selected && !shown().includes(selected)) selected = null;
         },
         open: render,
-        select(it) { selected = it; render(); },
+        select(it) {
+            const fromList = !selected;
+            selected = it; render();
+            if (fromList) requestAnimationFrame(() => cardBox.querySelector('#cardTitle')?.focus({ preventScroll: true }));
+        },
+        get selected() { return selected; },
+        get def() { return def; },
         /** Back to the list from a card. */
         deselect() { selected = null; render(); },
-        get selected() { return selected; },
-        close() { drawer.hidden = true; }
+        close() { sheet.hidden = true; }
     };
+    return api;
 }

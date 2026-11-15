@@ -4,7 +4,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="Global spectrum &amp; tactical awareness on a live 3D globe: news, radio, SDR, Wi-Fi, surveillance and infrastructure. No account, no ads, no trackers.">
 <meta name="theme-color" content="#05070b">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="dark light">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: wss://relay.damus.io wss://relay.primal.net wss://relay.snort.social; media-src 'self' https: blob:; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Q-P1NG Globe · Global Spectrum &amp; Tactical Awareness</title>
 <meta name="application-name" content="Q-P1NG Globe">
@@ -70,14 +70,14 @@
 <link rel="modulepreload" href="./js/qcast-player.mjs">
 <link rel="modulepreload" href="./js/qcast-protocol.mjs">
 <link rel="modulepreload" href="./js/qcast-crypto.mjs">
+<link rel="modulepreload" href="./js/i18n.mjs">
+<link rel="modulepreload" href="./js/i18n/en.mjs">
+<link rel="modulepreload" href="./js/i18n/it.mjs">
 <link rel="modulepreload" href="./js/globe.mjs">
 <link rel="modulepreload" href="./js/themes.mjs">
 <link rel="modulepreload" href="./js/directory.mjs">
 <link rel="modulepreload" href="./js/ui.mjs">
 <link rel="modulepreload" href="./js/app-bridge.mjs">
-<link rel="modulepreload" href="./js/i18n.mjs">
-<link rel="modulepreload" href="./js/i18n/en.mjs">
-<link rel="modulepreload" href="./js/i18n/it.mjs">
 <link rel="modulepreload" href="./js/sdr.mjs">
 <link rel="modulepreload" href="./js/repeaters.mjs">
 <link rel="modulepreload" href="./js/aviation.mjs">
@@ -95,162 +95,115 @@
 <!-- /modulepreload -->
 </head><body>
 
-    <!-- Splash Loader -->
-    <div id="loaderSplash" class="loader-splash">
-        <div class="loader-radar"></div>
-        <div class="loader-text">Loading catalog and globe…</div>
+    <!-- Loading: one state from the first paint until the first layer is drawn (the app hides its own on "ready"). -->
+    <div id="loaderSplash" class="splash" role="status" aria-live="polite">
+        <div class="splash-globe" aria-hidden="true"></div>
+        <p class="splash-text" id="splashText" data-i18n="app.loadingGlobe">Loading the globe…</p>
+        <div class="progress" aria-hidden="true"><i></i></div>
     </div>
 
-    <!-- 3D Globe WebGL Container -->
-    <main id="globeViz" aria-label="Interactive globe"></main><div id="pointTooltip" class="point-tooltip" hidden></div>
+    <!-- The globe is the canvas; everything else floats on it. -->
+    <main id="globeViz" aria-label="Interactive globe" data-i18n-label="app.globe"></main><div id="pointTooltip" class="point-tooltip" hidden></div>
+    <div class="reticle" aria-hidden="true"><i></i></div>
 
-    <p id="globeNotice" class="globe-notice" hidden></p>
-    <!-- Targeting Reticle (Center Screen) -->
-    <div class="reticle-container" aria-hidden="true">
-        <div class="reticle-crosshair h"></div>
-        <div class="reticle-crosshair v"></div>
-        <div class="reticle-ring"></div>
-        <div class="reticle-dot"></div>
-    </div>
+    <!-- A message about the whole page (no 3D, lost graphics, blocked mirror): plain words and an action. -->
+    <div id="globeNotice" class="notice" role="alert" hidden></div>
 
-    <!-- HUD Overlay: Top Bar -->
-    <header class="hud-overlay top-header">
-        <div class="brand-pill">
-            <div class="brand-dot"></div>
-            <div>
-                <div class="brand-title">Q-P1NG <span>GLOBE</span></div>
-                <div class="brand-stats" id="statsDisplay">Loading catalog…</div>
-            </div>
-            <div class="mode-picker">
-                <button class="mode-current" id="btnMode" aria-haspopup="menu" aria-expanded="false" aria-controls="modeMenu" title="Choose what the globe shows">
-                    <span id="modeIcon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="11.5" rx="2.5"/><path d="M6.5 9 17 3.5"/><circle cx="8.6" cy="14.75" r="2.6"/><path d="M14 13h3.5"/><path d="M14 16.5h3.5"/></svg></span><span id="modeName">RADIO</span><span class="mode-caret" aria-hidden="true">▾</span>
-                </button>
-                <div class="theme-menu mode-menu" id="modeMenu" role="menu" aria-label="Layers" hidden></div>
-            </div>
+    <!-- One header row: the layer button, the search, and (website) the globe tools. -->
+    <header class="topbar" id="topbar">
+        <a class="brand" href="./" aria-label="Q-P1NG Globe"><i class="brand-dot"></i><span>Q-P1NG <b>Globe</b></span></a>
+        <div class="mode-picker">
+            <button class="layer-btn" id="btnMode" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="modeMenu">
+                <span id="modeIcon" class="layer-icon" aria-hidden="true"></span><span id="modeName" class="layer-name">Radio</span>
+                <svg class="icon caret" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="menu layer-menu" id="modeMenu" role="menu" aria-labelledby="btnMode" hidden></div>
         </div>
-
-        <!-- Search Bar with Category Filters -->
-        <div class="search-wrapper">
-            <div class="search-tabs">
-                <button class="search-tab active" data-type="all" aria-pressed="true">ALL</button>
-                <button class="search-tab" data-type="country" aria-pressed="false">COUNTRIES</button>
-                <button class="search-tab" data-type="city" aria-pressed="false">CITIES</button>
-                <button class="search-tab" data-type="station" aria-pressed="false">STATIONS</button>
-            </div>
-            <div class="search-input-container">
-                <svg class="search-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
-                <input type="text" id="searchInput" aria-label="Search the catalog" aria-controls="searchResults" class="search-input" placeholder="Search country, city or station…" autocomplete="off">
-            </div>
-            <div id="searchResults" class="search-results" aria-label="Search results"></div>
+        <div class="search" role="search">
+            <svg class="icon search-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+            <input type="search" id="searchInput" class="search-input" enterkeyhint="search" autocomplete="off" spellcheck="false"
+                role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="searchResults" aria-label="Search" placeholder="Search">
+            <div id="searchResults" class="search-results" role="listbox" aria-label="Search results" hidden></div>
+            <p id="searchCount" class="visually-hidden" role="status" aria-live="polite"></p>
         </div>
-
-        <!-- Actions -->
-        <div class="action-btns">
-            <button class="hud-btn" id="btnRandom" title="Listen to a random station somewhere in the world">RANDOM</button>
-            <button class="hud-btn" id="btnAutoRotate" title="Toggle automatic globe rotation" aria-pressed="false">ROTATE</button>
-            <button class="hud-btn tv-btn" id="btnTv" title="Watch live news channels" aria-pressed="false">TV</button>
-            <div class="theme-picker">
-                <button class="hud-btn" id="btnTheme" title="Change the look of the globe" aria-haspopup="menu" aria-expanded="false" aria-controls="themeMenu">THEME</button>
-                <div class="theme-menu" id="themeMenu" role="menu" aria-label="Themes" hidden></div>
-            </div>
-            <button class="hud-btn guide-btn" id="btnGuide" title="How to use the globe (?)" aria-label="How to use the globe" aria-haspopup="dialog">i</button>
+        <button class="tool tool-more" id="btnMore" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="tools"></button>
+        <div class="tools" id="tools">
+            <button class="tool" id="btnTv" type="button" aria-pressed="false"></button>
+            <button class="tool" id="btnAutoRotate" type="button" aria-pressed="false"></button>
+            <button class="tool" id="btnTheme" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="themeMenu"></button>
+            <button class="tool" id="btnGuide" type="button" aria-haspopup="dialog"></button>
         </div>
+        <div class="menu theme-menu" id="themeMenu" role="menu" aria-labelledby="btnTheme" hidden></div>
     </header>
 
-    <!-- Sidebar: Shortcuts + legend -->
-    <aside class="hud-overlay sidebar-panel" id="sidebarShortcuts">
-        <div class="sidebar-title">
-            <span id="sidebarTitle">Shortcuts</span>
-            <button class="panel-toggle" id="btnToggleShortcuts" aria-expanded="true" aria-controls="sidebarBody" aria-label="Minimize shortcuts" title="Minimize">
-                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
-            </button>
-        </div>
-        <div class="sidebar-body" id="sidebarBody">
-            <div class="sidebar-inner" id="sidebarRadio">
-                <div class="capitals-grid" id="capitalsGrid"></div>
-                <div class="legend">
-                    <span><i class="legend-dot"></i>City</span>
-                    <span><i class="legend-dot approx"></i>Approximate (region / country)</span>
-                    <small class="legend-sources">Data: <a href="https://www.radio-browser.info" target="_blank" rel="noopener noreferrer">Radio Browser</a>, <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> (CC BY 4.0), <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></small>
-                </div>
-            </div>
-            <div class="sidebar-inner" id="sidebarDir" hidden>
-                <div class="capitals-grid" id="dirFilters"></div>
-                <div class="legend">
-                    <span>Click a dot or a list item for its details.</span>
-                    <small class="legend-sources" id="dirCredit"></small>
-                </div>
-            </div>
-        </div>
-    </aside>
+    <!-- The layer's main filter as chips, and "Filters (n)" for the others. -->
+    <nav class="chips" id="chipsRow" aria-label="Filters"><div class="chips-track" id="chipsTrack"></div></nav>
 
-    <!-- Zoom Widget -->
-    <div class="hud-overlay zoom-widget">
-        <button class="zoom-btn" id="btnZoomIn" aria-label="Zoom in on the globe" title="Zoom in">+</button>
-        <button class="zoom-btn" id="btnZoomOut" aria-label="Zoom out of the globe" title="Zoom out">−</button>
-        <button class="zoom-btn" id="btnResetView" aria-label="Reset global view" title="Reset global view">◎</button>
+    <!-- Map controls: recentre on phones; zoom too on large screens. -->
+    <div class="map-tools" id="mapTools">
+        <button class="fab" id="btnZoomIn" type="button"></button>
+        <button class="fab" id="btnZoomOut" type="button"></button>
+        <button class="fab" id="btnResetView" type="button"></button>
     </div>
 
-    <!-- Country Explorer Drawer -->
-    <aside class="hud-overlay country-drawer" id="countryDrawer" data-sheet="half" hidden>
-        <button class="sheet-handle" id="drawerHandle" aria-label="Resize the list: drag, or tap to switch size" title="Drag or tap to resize"></button>
-        <div class="country-drawer-header" id="drawerHeader">
-            <div class="drawer-heading">
-                <span class="country-drawer-title" id="countryDrawerTitle"></span>
-                <div class="country-drawer-sub" id="countryDrawerMeta"></div>
+    <!-- The one sheet: peek, half and full on phones, a side panel in landscape and on large screens. Its list view
+         shows what is around the view; its card view shows one item with the main action pinned at the bottom. -->
+    <section class="sheet" id="sheet" data-sheet="half" data-view="list" aria-labelledby="sheetTitle" hidden>
+        <div class="sheet-grip" id="sheetHandle" role="button" tabindex="0"><span></span></div>
+        <header class="sheet-head" id="sheetHead">
+            <div class="sheet-heading">
+                <h2 class="sheet-title" id="sheetTitle"></h2>
+                <p class="sheet-meta" id="sheetMeta"></p>
             </div>
-            <div class="drawer-tools">
-                <button class="drawer-tool" id="drawerWide" aria-pressed="false" aria-label="Wider list" title="Wider list">⇔</button>
-                <button class="drawer-tool" id="drawerFold" aria-expanded="true" aria-label="Minimize the list" title="Minimize">–</button>
-                <button class="country-drawer-close" id="countryDrawerClose" aria-label="Close the list" title="Close">✕</button>
-            </div>
-        </div>
-        <div class="dir-chips" id="dirChips" hidden></div>
+            <button class="icon-btn" id="btnRandom" type="button"></button>
+            <button class="icon-btn" id="sheetToggle" type="button" aria-expanded="true"></button>
+        </header>
+        <div class="sheet-status" id="sheetStatus" hidden></div>
         <div class="dir-live" id="dirLive" hidden></div>
-        <div class="country-cities-list" id="countryCitiesList"></div>
-    </aside>
+        <div class="sheet-body" id="sheetBody">
+            <div class="sheet-list" id="sheetList"></div>
+            <div class="sheet-card" id="sheetCard" hidden></div>
+        </div>
+    </section>
 
-    <!-- News ticker (layers with a ticker, such as NEWS) -->
-    <div class="hud-overlay news-ticker" id="newsTicker" hidden aria-label="Latest stories">
-        <span class="ticker-label"><i class="tv-live-dot"></i>LIVE</span>
-        <div class="ticker-track"><div class="ticker-move" id="tickerMove"></div></div>
-    </div>
+    <!-- Latest stories (news), a static row on large screens. -->
+    <div class="latest" id="newsTicker" hidden><span class="latest-label" id="latestLabel">Latest</span><div class="latest-track" id="tickerMove"></div></div>
 
-    <!-- Bottom Radio Player -->
-    <footer class="hud-overlay bottom-player" id="bottomPlayer">
+    <!-- The player: only once a station is chosen. A mini-player above the sheet; expands for the stations of the place. -->
+    <footer class="player" id="bottomPlayer" hidden>
         <div class="player-row">
-            <div class="controls-group">
-                <button class="btn-icon" id="btnPrevStation" aria-label="Previous station in this place" title="Previous station">⏮</button>
-                <button class="btn-play" id="btnPlayPause" aria-label="Play station" title="Play / Stop">▶</button>
-                <button class="btn-icon" id="btnNextStation" aria-label="Next station in this place" title="Next station">⏭</button>
-            </div>
+            <button class="play-btn" id="btnPlayPause" type="button"></button>
             <div class="station-meta">
-                <div class="station-header">
-                    <span class="station-title" id="playerTitle">Select a point on the map</span>
-                    <span class="status-badge" id="playerStatus"><span class="status-dot"></span><span id="playerStatusText" role="status" aria-live="polite">READY</span></span>
-                </div>
-                <div class="station-location">
-                    <span class="station-location-city" id="playerCity">Explore the planet</span>
-                    <span id="playerCountry">· click a dot</span>
-                    <span class="station-tech" id="playerTech"></span>
-                </div>
+                <p class="station-title" id="playerTitle"></p>
+                <p class="station-line"><span id="playerCity"></span><span id="playerCountry"></span><span class="station-tech" id="playerTech"></span></p>
             </div>
-            <div class="right-tools">
-                <span id="playbackIndicator" class="playback-indicator" title="Playback status" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-                <label class="volume-control" title="Volume"><span aria-hidden="true">🔊</span><input type="range" id="volumeSlider" aria-label="Volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8"></label>
-                <a id="btnExternal" class="btn-mini" hidden target="_blank" rel="noopener noreferrer" title="Open the station website" aria-label="Open the station website">↗</a>
-                <button id="btnShareStation" class="btn-mini" hidden title="Copy a link to this station" aria-label="Copy a link to this station">🔗</button>
-                <button id="btnRevokeAudio" class="btn-mini" hidden title="Disable audio" aria-label="Disable audio">⏻</button>
-                <button id="btnPlayerSize" class="btn-mini player-size" aria-expanded="true" title="Shrink the player" aria-label="Shrink the player">▾</button>
+            <span class="status-badge" id="playerStatus"><i class="status-dot"></i><span id="playerStatusText" role="status" aria-live="polite"></span></span>
+            <span id="playbackIndicator" class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+            <button class="icon-btn" id="btnPlayerSize" type="button" aria-expanded="false"></button>
+        </div>
+        <div class="player-more" id="playerMore">
+            <div class="player-controls">
+                <button class="icon-btn" id="btnPrevStation" type="button"></button>
+                <button class="icon-btn" id="btnNextStation" type="button"></button>
+                <label class="volume"><span class="visually-hidden" id="volumeLabel">Volume</span><input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.8"></label>
+                <a class="icon-btn" id="btnExternal" hidden target="_blank" rel="noopener noreferrer"></a>
+                <button class="icon-btn" id="btnShareStation" type="button" hidden></button>
+                <button class="icon-btn" id="btnRevokeAudio" type="button" hidden></button>
             </div>
+            <p id="playerDetail" class="player-detail"></p>
+            <div class="stations-drawer" id="cityStationsDrawer" hidden></div>
         </div>
-        <p id="playerDetail" class="player-detail">Pick a city or search for a station.</p>
-        <div class="audio-consent" id="audioConsent">
-            <span>🔒 Audio is off. When enabled, your browser connects directly to the station's server, which sees your IP.</span>
-            <button id="btnAcceptAudio" class="consent-btn">ENABLE AUDIO</button>
-        </div>
-        <div class="stations-drawer" id="cityStationsDrawer" hidden></div>
     </footer>
+
+    <!-- One consent for media from third-party servers (website): asked once, before the first connection. -->
+    <dialog class="sheet-dialog consent" id="audioConsent" aria-labelledby="consentTitle">
+        <h2 id="consentTitle">Play from the station's server?</h2>
+        <p id="consentText"></p>
+        <div class="dialog-actions">
+            <button class="btn btn-tonal" id="btnDeclineAudio" type="button">Not now</button>
+            <button class="btn btn-filled" id="btnAcceptAudio" type="button">Allow and play</button>
+        </div>
+    </dialog>
 
     <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
 

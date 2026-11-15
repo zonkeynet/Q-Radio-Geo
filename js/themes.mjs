@@ -1,24 +1,27 @@
-// Globe settings per theme. UI and dot colours live in assets/app.css under [data-theme].
-// Imagery: NASA GIBS map tiles (public domain, no API key), loaded with more detail as you zoom
-// (up to level 8, about 600 m per pixel). The bundled NASA textures are the fallback when GIBS is unreachable.
+// Themes: accent and scenery presets. UI colour roles and dot colours live in assets/app.css under [data-theme].
+// Imagery: NASA GIBS map tiles (public domain, no API key), loaded with more detail as you zoom (up to level 8,
+// about 600 m per pixel). The bundled NASA textures are the fallback when GIBS is unreachable.
+// In the app, "app" (the app's own colours, light or dark: window.qglobeApp.setTheme) is the default; the other
+// themes keep their own accent. "daylight" is the light theme of the website.
+import { t } from './i18n.mjs';
+import { APP_MODE } from './native-app.mjs';
+
 const GIBS = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best';
 const NIGHT_TILES = { url: `${GIBS}/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg`, maxLevel: 8 };
 const DAY_TILES = { url: `${GIBS}/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg`, maxLevel: 8 };
 const NIGHT = 'assets/textures/earth-night.jpg', DAY = 'assets/textures/earth-blue-marble.jpg';
+const NIGHT_GLOBE = { tiles: NIGHT_TILES, image: NIGHT, atmosphere: '#00ff88', atmosphereAltitude: .13 };
+const DAY_GLOBE = { tiles: DAY_TILES, image: DAY, bump: 'assets/textures/earth-topology.png', atmosphere: '#8cc8ff', atmosphereAltitude: .16 };
 export const THEMES = Object.freeze([
-    { id: 'tactical', label: 'Tactical', note: 'Night lights · green HUD',
-      globe: { tiles: NIGHT_TILES, image: NIGHT, atmosphere: '#00ff88', atmosphereAltitude: .13 } },
-    { id: 'satellite', label: 'Satellite', note: 'NASA Blue Marble',
-      globe: { tiles: DAY_TILES, image: DAY, bump: 'assets/textures/earth-topology.png', atmosphere: '#8cc8ff', atmosphereAltitude: .16 } },
-    { id: 'neon', label: 'Neon City', note: 'Cyberpunk · magenta lights',
-      globe: { tiles: NIGHT_TILES, image: NIGHT, tint: '#ff5ce1', atmosphere: '#ff2bd6', atmosphereAltitude: .18 } },
-    { id: 'synthwave', label: 'Synthwave', note: 'Cyberpunk · LED continents',
-      globe: { base: '#1b0638', land: '#b967ff', landDots: true, atmosphere: '#ff6ec7', atmosphereAltitude: .22 } },
-    { id: 'netrunner', label: 'Netrunner', note: 'Cyberpunk · hex grid',
-      globe: { base: '#020d0c', land: '#0f8578', atmosphere: '#00ffd5', atmosphereAltitude: .14 } },
-    { id: 'replicant', label: 'Replicant', note: 'Cyberpunk · amber desert',
-      globe: { tiles: DAY_TILES, image: DAY, tint: '#ff9a3c', atmosphere: '#ff7b00', atmosphereAltitude: .17 } }
-]);
+    ...(APP_MODE ? [{ id: 'app', globe: NIGHT_GLOBE, light: DAY_GLOBE }] : []),
+    { id: 'tactical', globe: NIGHT_GLOBE },
+    { id: 'satellite', globe: DAY_GLOBE },
+    { id: 'daylight', globe: { ...DAY_GLOBE, atmosphere: '#9cc7ff' }, isLight: true },
+    { id: 'neon', globe: { tiles: NIGHT_TILES, image: NIGHT, tint: '#ff5ce1', atmosphere: '#ff2bd6', atmosphereAltitude: .18 } },
+    { id: 'synthwave', globe: { base: '#1b0638', land: '#b967ff', landDots: true, atmosphere: '#ff6ec7', atmosphereAltitude: .22 } },
+    { id: 'netrunner', globe: { base: '#020d0c', land: '#0f8578', atmosphere: '#00ffd5', atmosphereAltitude: .14 } },
+    { id: 'replicant', globe: { tiles: DAY_TILES, image: DAY, tint: '#ff9a3c', atmosphere: '#ff7b00', atmosphereAltitude: .17 } }
+].map(theme => Object.freeze({ ...theme, label: t(`theme.${theme.id}`), note: t(`theme.${theme.id}.note`) })));
 const KEY = 'qradio.theme';
 export const themeById = id => THEMES.find(t => t.id === id) || THEMES[0];
 export function savedThemeId() { try { return localStorage.getItem(KEY); } catch { return null; } }
@@ -30,4 +33,12 @@ export function applyThemeCss(theme) {
     const css = getComputedStyle(root);
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', css.getPropertyValue('--bg').trim());
     return { city: css.getPropertyValue('--accent').trim(), approx: css.getPropertyValue('--approx').trim() };
+}
+/** Whether the page is light now (the light theme, or the app's colours in light mode). */
+export const isLight = theme => Boolean(theme.isLight) || (theme.id === 'app' && document.documentElement.dataset.appScheme === 'light');
+/** The globe settings for a theme now: the app theme follows the app's light/dark mode and accent. */
+export function globeSettings(theme) {
+    if (theme.id !== 'app') return theme.globe;
+    const light = isLight(theme), accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    return { ...(light ? theme.light : theme.globe), ...(accent ? { atmosphere: accent } : {}) };
 }

@@ -62,7 +62,7 @@ export function date(value, options = { dateStyle: 'medium', timeStyle: 'short' 
     if (!dateFormats.has(key)) dateFormats.set(key, new Intl.DateTimeFormat(LANG, options));
     return dateFormats.get(key).format(d);
 }
-const relative = new Intl.RelativeTimeFormat(LANG, { numeric: 'auto' });
+const relative = new Intl.RelativeTimeFormat(LANG, { numeric: 'always' }); // "1 month ago", never a bare "last month"
 /** "5 minutes ago", "in 2 hours", "yesterday": the nearest unit. */
 export function ago(value, now = Date.now()) {
     const ms = (value instanceof Date ? value.getTime() : new Date(value).getTime()) - now;

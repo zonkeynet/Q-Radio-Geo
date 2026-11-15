@@ -1,15 +1,35 @@
 import { createIndex, searchIndex } from './core.mjs';
-export async function loadJSON(path, base = document.baseURI, { timeout = 0 } = {}) {
+export async function loadJSON(path, base = document.baseURI, { timeout = 0, onProgress = null, signal = null } = {}) {
     // IPFS gateways can take a minute for a file they have not served yet: mirrors wait longer than the main site.
     // A layer with big files (webcams, police and cameras) can ask to wait longer, for Tor; never shorter.
+    // onProgress({ loaded, total }): bytes received, and the size when the server says it (uncompressed responses only);
+    // signal: a caller's cancel (the layer switch's Cancel).
     const controller = new AbortController(), main = globalThis.location?.hostname === 'globe.qp1ng.com';
     const timer = setTimeout(() => controller.abort(), Math.max(main ? 20000 : 120000, Number(timeout) || 0));
+    const cancel = () => controller.abort();
+    signal?.addEventListener('abort', cancel, { once: true });
     try {
+        if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError');
         const response = await fetch(new URL(path, base), { signal: controller.signal, credentials: 'same-origin' });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${path}`);
-        const data = await response.json();
-        return data;
-    } finally { clearTimeout(timer); }
+        if (!onProgress || !response.body?.getReader) return await response.json();
+        // Streamed, to report progress: the size is known only when the body is not compressed on the way.
+        const length = Number(response.headers.get('content-length')) || 0;
+        const total = length && !response.headers.get('content-encoding') ? length : 0;
+        const reader = response.body.getReader(), chunks = [];
+        let loaded = 0, last = 0;
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value); loaded += value.length;
+            if (loaded - last > 262144) { last = loaded; onProgress({ loaded, total }); }
+        }
+        onProgress({ loaded, total });
+        const bytes = new Uint8Array(loaded);
+        let offset = 0;
+        for (const c of chunks) { bytes.set(c, offset); offset += c.length; }
+        return JSON.parse(new TextDecoder().decode(bytes));
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel); }
 }
 /** data/stations.json (schema 2: one array per field, value tables for repeated values; scripts/stations_format.mjs)
  *  back to one object per station, exactly as the earlier one-object-per-station file: fields in the same order,

@@ -2,10 +2,10 @@ import { Catalog, loadJSON, expandStations } from './catalog.mjs';
 import { APP_MODE, LITE_MODE, PICK_MODE, QCAST_IN_APP, pickStart, requestNativePick, requestNativeShare } from './native-app.mjs';
 import { icon } from './icons.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
-import { RadioPlayer } from './player.mjs';
+import { RadioPlayer, stateLabel } from './player.mjs';
 import { createGlobe } from './globe.mjs';
-import { THEMES, themeById, savedThemeId, applyThemeCss } from './themes.mjs';
-import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory } from './directory.mjs';
+import { THEMES, themeById, savedThemeId, applyThemeCss, globeSettings } from './themes.mjs';
+import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory, countText } from './directory.mjs';
 import { SDR } from './sdr.mjs';
 import { REPEATERS } from './repeaters.mjs';
 import { AVIATION } from './aviation.mjs';
@@ -19,32 +19,32 @@ import { createGuide } from './guide.mjs';
 import { QCAST } from './qcast.mjs';
 import { WEBCAMS, WEBCAM_DB, closeWebcamPlayer } from './webcams.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
-import { hasNative, post, postState, postLoading, postError, onApp, shareNative, openExternal } from './app-bridge.mjs';
-import { showAddress } from './ui.mjs';
+import { hasNative, post, postState, postLoading, postError, onApp, shareNative, openExternal, haptic } from './app-bridge.mjs';
+import { node, iconButton, showAddress } from './ui.mjs';
+import { t, tn, num } from './i18n.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
 // the app only while it asks for a point for a station (its viewer then reads the Q-Cast relays, nothing else).
 const DIRECTORIES = { news: NEWS, webcams: WEBCAMS, ...(APP_MODE && !PICK_MODE && !QCAST_IN_APP ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
     embassies: EMBASSIES, security: SECURITY, migration: MIGRATION, fires: FIRES, conflict: CONFLICT, internet: INTERNET, tor: TOR, wifi: WIFI };
 const $ = id => document.getElementById(id);
-const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
-const LOC_LABEL = { r: 'region', n: 'country-wide' };
 const CHIP_PAGE = 120;
-const RADIO_TABS = [{ id: 'all', label: 'ALL' }, { id: 'country', label: 'COUNTRIES' }, { id: 'city', label: 'CITIES' }, { id: 'station', label: 'STATIONS' }];
+const SEARCH_SCOPES = ['all', 'country', 'city', 'station'];
 // Radio dot diameter (CSS px) by the number of stations in the place.
 const DOT_SIZES = [5, 6, 7.5, 9];
 let catalog, globe, config, player, currentPlace, cityStations = [], currentIndex = 0;
 let searchSequence = 0, searchTimer, searchType = 'all', ready = false;
-let mode = 'radio', explorer = null, tv = null, guide = null;
+let mode = 'radio', explorer = null, tv = null, guide = null, radioCountry = null;
 const dirState = {}; // mode -> { items, values } once loaded
 const dir = () => DIRECTORIES[mode], state = () => dirState[mode];
 const dirShown = () => applyFilters(dir(), state().items, state().values);
 let theme = themeById(savedThemeId());
 applyThemeCss(theme);
+const approxLabel = p => t(p.loc === 'n' ? 'radio.approxCountry' : 'radio.approxRegion');
 const radioLayer = () => ({
     items: catalog.places,
     groupOf: p => p.loc ? 'approx' : 'city',
     sizeOf: p => DOT_SIZES[p.count >= 50 ? 3 : p.count >= 10 ? 2 : p.count >= 2 ? 1 : 0],
-    describe: p => `${p.city}, ${p.country}\n${p.count} station${p.count === 1 ? '' : 's'}${p.loc ? ' · approximate location' : ''}`,
+    describe: p => `${p.city}, ${p.country}\n${tn('radio.stations', p.count)}${p.loc ? ` · ${approxLabel(p)}` : ''}`,
     colors: { city: '--accent', approx: '--approx' }
 });
 const placed = it => Number.isFinite(it.lat) && Number.isFinite(it.lng);
@@ -65,47 +65,87 @@ function markReady(name) {
     marked.add(name);
     requestAnimationFrame(() => requestAnimationFrame(() => { try { performance.mark(name); } catch { /* no timing API */ } }));
 }
-const buttons = ['btnRandom','btnPrevStation','btnNextStation','btnPlayPause'];
+
+/* ---------- Radio as a list: the places around the view (or of a country picked in the search) ---------- */
+const RADIO_MODE = { id: 'radio', label: t('radio.label'), group: 'listen', sidebarTitle: t('radio.about') };
+const RADIO_DIR = {
+    id: 'radio', filters: [], palette: ['--accent', '--approx'],
+    colorOf: p => p.loc ? '--approx' : '--accent',
+    nameOf: p => p.city, placeOf: p => p.country,
+    subOf: p => [radioCountry ? null : p.country, tn('radio.stations', p.count), p.loc ? approxLabel(p) : null].filter(Boolean).join(' · '),
+    countOf: n => tn('radio.places', n), badgeOf: () => t('radio.place'), facts: () => [], actions: () => [],
+    titleOf: () => radioCountry || t('radio.title'),
+    get listOrder() { return radioCountry ? (a, b) => Boolean(a.loc) - Boolean(b.loc) || b.count - a.count : null; },
+    links: [], note: t('radio.legend'), credit: t('radio.credit')
+};
+const radioItems = () => radioCountry ? catalog.countryPlaces(radioCountry) : catalog.places;
+function showRadioList() {
+    if (!catalog) return;
+    explorer.use(RADIO_DIR, radioItems(), {});
+    explorer.open();
+    $('sheetMeta').textContent = radioCountry ? `${tn('radio.places', radioItems().length)} · ${t('radio.biggestFirst')}`
+        : `${tn('radio.stations', catalog.stations.length)} · ${tn('radio.places', catalog.places.length)}`;
+}
+
+/* ---------- Player ---------- */
+const PLAY_CONTROLS = ['btnPrevStation', 'btnNextStation', 'btnPlayPause'];
+let playerExpanded = null; // null: automatic (open while choosing among a place's stations)
 function markState({ state, detail, station }) {
-    const labels = { idle: 'READY', ready: 'PRESS PLAY', buffering: 'TUNING', playing: 'ON AIR', paused: 'PAUSED', ended: 'ENDED', error: 'ERROR' };
     $('playerStatus').className = `status-badge ${state === 'playing' ? 'live' : state}`;
     if (state === 'playing' || state === 'buffering') tv?.mute(); // one sound at a time
-    $('playerStatusText').textContent = labels[state] || state;
+    $('playerStatusText').textContent = stateLabel(state);
     $('playerDetail').textContent = detail; $('playerDetail').title = detail;
-    const active = ['playing','buffering'].includes(state);
-    $('btnPlayPause').textContent = active ? '■' : '▶';
-    $('btnPlayPause').setAttribute('aria-label', active ? 'Stop playback' : 'Play station');
+    const active = ['playing', 'buffering'].includes(state);
+    $('btnPlayPause').replaceChildren(icon(active ? 'stop' : 'play'));
+    $('btnPlayPause').setAttribute('aria-label', active ? t('player.stop') : t('player.play'));
     $('playbackIndicator').classList.toggle('active', state === 'playing');
     $('bottomPlayer').classList.toggle('is-live', state === 'playing');
     const homepage = safeLinkURL(station?.homepage);
     $('btnExternal').hidden = !homepage;
     if (homepage) $('btnExternal').href = homepage;
     $('btnShareStation').hidden = !station || station.layer === 'qcast'; // its link is for catalog stations
+    updatePlayer();
+    syncAppState();
+}
+/** The player shows once a station is chosen (in other layers only while it plays); it docks above the sheet. */
+function updatePlayer() {
+    const p = $('bottomPlayer'), chosen = p.dataset.station === '1';
+    const playing = ['playing', 'buffering'].includes(player?.state);
+    p.hidden = !chosen || (mode !== 'radio' && (APP_MODE || !playing));
+    const expanded = playerExpanded ?? (mode === 'radio' && cityStations.length > 1);
+    p.classList.toggle('expanded', expanded);
+    const b = $('btnPlayerSize');
+    b.replaceChildren(icon(expanded ? 'down' : 'up'));
+    b.setAttribute('aria-label', expanded ? t('player.less') : t('player.more'));
+    b.title = b.getAttribute('aria-label');
+    b.setAttribute('aria-expanded', String(expanded));
+    syncLayout();
 }
 function updateRotate(enabled) {
     $('btnAutoRotate').setAttribute('aria-pressed', String(enabled));
-    $('btnAutoRotate').classList.toggle('active', enabled);
 }
 function markActiveChip() {
     for (const tag of $('cityStationsDrawer').querySelectorAll('.station-tag[data-index]')) {
         const on = Number(tag.dataset.index) === currentIndex;
         tag.classList.toggle('active', on);
+        tag.setAttribute('aria-pressed', String(on));
         if (on) tag.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
 }
 function tune(station) {
     if (!station) return;
     $('playerTitle').textContent = station.title; $('playerTitle').title = station.title;
-    const tech = [station.codec, station.bitrate && `${station.bitrate} kbps`, station.hls && 'HLS'].filter(Boolean).join(' · ');
+    const tech = [station.codec, station.bitrate && `${num(station.bitrate)} kbps`, station.hls && 'HLS'].filter(Boolean).join(' · ');
     $('playerTech').textContent = tech;
     $('btnPlayPause').disabled = false;
-    $('bottomPlayer').dataset.station = '1'; // the app shows the player only once a station is chosen
+    $('bottomPlayer').dataset.station = '1'; // the player shows only once a station is chosen
     const where = currentPlace ? [currentPlace.city, currentPlace.country].filter(Boolean).join(', ') : '';
     player.select(station, config, [where, tech].filter(Boolean).join(' · '), linkUrl(new URLSearchParams({ layer: 'radio', station: station.id })));
     markActiveChip();
+    updatePlayer();
 }
 /** Station chips for the selected place; large places get a filter and are rendered in pages. */
-function renderChips() {
+function renderStationChips() {
     const drawer = $('cityStationsDrawer');
     drawer.replaceChildren();
     drawer.hidden = cityStations.length < 2;
@@ -113,6 +153,8 @@ function renderChips() {
     if (drawer.hidden) return;
     let filter = null;
     const chips = node('div', 'station-chips');
+    chips.setAttribute('role', 'group');
+    chips.setAttribute('aria-label', t('player.stationsHere'));
     const draw = (max = CHIP_PAGE) => {
         const q = normalize(filter?.value || '');
         const matches = [];
@@ -120,27 +162,32 @@ function renderChips() {
         chips.replaceChildren();
         for (const { s, index } of matches.slice(0, max)) {
             const tag = node('button', 'station-tag', s.title);
+            tag.type = 'button';
             tag.dataset.index = index;
             tag.classList.toggle('active', index === currentIndex);
-            tag.onclick = () => { currentIndex = index; tune(s); };
+            tag.setAttribute('aria-pressed', String(index === currentIndex));
+            tag.onclick = () => { currentIndex = index; tune(s); haptic('tick'); };
             chips.appendChild(tag);
         }
         if (matches.length > max) {
-            const more = node('button', 'station-tag more', `+${matches.length - max} more`);
+            const more = node('button', 'station-tag', t('player.moreStations', { n: matches.length - max }));
+            more.type = 'button';
             more.onclick = () => draw(max + CHIP_PAGE); chips.appendChild(more);
         }
-        if (!matches.length) chips.appendChild(node('span', 'station-empty', 'No station matches'));
+        if (!matches.length) chips.appendChild(node('span', 'station-empty', t('player.noMatch')));
     };
     if (cityStations.length > 12) {
         filter = node('input', 'station-filter');
-        Object.assign(filter, { type: 'search', placeholder: `Filter ${cityStations.length.toLocaleString('en')}…`, autocomplete: 'off' });
-        filter.setAttribute('aria-label', 'Filter the stations of this place');
+        Object.assign(filter, { type: 'search', placeholder: t('player.filterStations', { n: cityStations.length }), autocomplete: 'off' });
+        filter.setAttribute('aria-label', t('player.filterLabel'));
         filter.oninput = () => draw();
         drawer.appendChild(filter);
     }
     drawer.appendChild(chips);
     draw();
 }
+/** The most listened stations first: the catalogue's clicks or votes when it has them, else its order. */
+const popularity = s => Number(s.clickcount ?? s.clicks ?? s.votes ?? 0) || 0;
 async function selectPlace(place, stationId = null, { fly = true } = {}) {
     if (!ready || !place) return;
     if (mode !== 'radio') return;
@@ -152,188 +199,221 @@ async function selectPlace(place, stationId = null, { fly = true } = {}) {
     globe?.select(currentPlace.lat, currentPlace.lng, Math.max(.15, (fly ? altitude : globe.world.pointOfView().altitude) * 1.6));
     $('playerCity').textContent = currentPlace.city;
     $('playerCity').classList.toggle('approx', Boolean(currentPlace.loc));
-    $('playerCity').title = currentPlace.loc ? `Approximate location (${LOC_LABEL[currentPlace.loc]})` : '';
+    $('playerCity').title = currentPlace.loc ? approxLabel(currentPlace) : '';
     $('playerCountry').textContent = `· ${currentPlace.country}`;
-    cityStations = catalog.byPlace.get(currentPlace.id) || [];
+    const stations = catalog.byPlace.get(currentPlace.id) || [];
+    cityStations = [...stations].sort((a, b) => popularity(b) - popularity(a)); // stable: the catalogue's order otherwise
     currentIndex = Math.max(0, cityStations.findIndex(s => s.id === stationId));
-    renderChips();
+    renderStationChips();
     $('btnPrevStation').disabled = $('btnNextStation').disabled = cityStations.length < 2;
+    playerExpanded = null;
     tune(cityStations[currentIndex]);
-}
-function placeLabel(place) {
-    const wrap = node('span', `country-city-name${place.loc ? ' approx' : ''}`, place.city);
-    if (place.loc) wrap.appendChild(node('small', '', LOC_LABEL[place.loc]));
-    return wrap;
+    if (fly && sheetState() !== 'peek') setSheet('peek'); // the globe and the player in view
 }
 function selectCountry(country) {
     globe?.navigation.flyTo({ lat: country.lat, lng: country.lng, altitude: 1.2 }, 650);
-    $('countryDrawerTitle').textContent = country.country;
-    $('countryDrawerMeta').textContent = `${country.cities_count.toLocaleString('en')} cities · ${country.stations_count.toLocaleString('en')} stations`;
-    $('countryDrawer').hidden = false; unfoldDrawer();
-    const list = $('countryCitiesList'); list.replaceChildren(); list.scrollTop = 0;
-    const places = catalog.countryPlaces(country.country);
-    let offset = 0;
-    function addPage() {
-        list.querySelector('.load-more')?.remove();
-        const fragment = document.createDocumentFragment();
-        for (const place of places.slice(offset, offset + 80)) {
-            const button = node('button','country-city-item');
-            button.append(placeLabel(place), node('span','country-city-badge', place.count));
-            button.onclick = () => selectPlace(place); fragment.appendChild(button);
-        }
-        offset += 80; list.appendChild(fragment);
-        if (offset < places.length) {
-            const more = node('button','hud-btn load-more', `Show more (${places.length-offset})`);
-            more.onclick = addPage; list.appendChild(more);
-        }
-    }
-    addPage();
+    radioCountry = country.country;
+    showRadioList(); renderChips();
+    if (sheetState() === 'peek') setSheet('half');
 }
-function hideSearch() { searchSequence++; clearTimeout(searchTimer); $('searchResults').style.display = 'none'; }
+
+/* ---------- Search ---------- */
+const searchOpen = () => !$('searchResults').hidden;
+function hideSearch() {
+    searchSequence++; clearTimeout(searchTimer);
+    $('searchResults').hidden = true;
+    $('searchInput').setAttribute('aria-expanded', 'false');
+    $('searchInput').removeAttribute('aria-activedescendant');
+}
+function showResults(total) {
+    $('searchResults').hidden = false;
+    $('searchInput').setAttribute('aria-expanded', 'true');
+    $('searchCount').textContent = total ? tn('search.results', total) : t('search.none');
+}
+function resultItem(id, title, sub, trailing, color, onPick) {
+    const item = node('button', 'search-item');
+    Object.assign(item, { type: 'button', id: `result-${id}` });
+    item.setAttribute('role', 'option');
+    const dot = node('i', 'dir-dot');
+    if (color) item.style.setProperty('--type-color', `var(${color})`);
+    const info = node('span', 'search-item-info');
+    info.append(node('span', 'search-item-city', title), node('span', 'search-item-country', sub));
+    item.append(dot, info);
+    if (trailing) item.append(node('span', 'search-item-badge', trailing));
+    item.onclick = () => { closeSearch(); onPick(); };
+    return item;
+}
+/** After a pick: the field empties and loses focus, so the phone's keyboard leaves the result in view. */
+function closeSearch() { hideSearch(); $('searchInput').value = ''; $('searchInput').blur(); }
+function scopeChips() {
+    const row = node('div', 'search-scopes');
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', t('search.scope'));
+    for (const id of SEARCH_SCOPES) {
+        const chip = node('button', 'chip');
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', String(id === searchType));
+        chip.append(node('span', '', t(`search.scope.${id}`)));
+        chip.onclick = e => { e.stopPropagation(); searchType = id; triggerSearch(); $('searchInput').focus(); };
+        row.append(chip);
+    }
+    return row;
+}
 function renderSearch(result) {
-    const target = $('searchResults'); target.replaceChildren();
-    const categories = [['countries','COUNTRIES'],['cities','CITIES'],['stations','STATIONS']];
-    let total = 0;
-    for (const [kind, label] of categories) {
+    const target = $('searchResults'); target.replaceChildren(scopeChips());
+    let total = 0, n = 0;
+    for (const kind of ['countries', 'cities', 'stations']) {
         const entries = result[kind] || []; if (!entries.length) continue; total += entries.length;
-        target.appendChild(node('div','search-cat-header', `${label} · ${entries.length}`));
+        target.appendChild(node('div', 'search-cat-header', `${t(`search.${kind}`)} · ${num(entries.length)}`));
         for (const value of entries) {
-            const item = node('button', `search-item ${kind === 'stations' ? 'search-item-station' : ''}`);
-            const info = node('span','search-item-info');
             const title = kind === 'countries' ? value.country : kind === 'cities' ? value.city : value.title;
-            const sub = kind === 'countries' ? `${value.cities_count} cities`
-                : kind === 'cities' ? `${value.country}${value.loc ? ` · approximate (${LOC_LABEL[value.loc]})` : ''}`
-                : `${value.city}, ${value.country}`;
-            info.append(node('span','search-item-city',title),node('span','search-item-country',sub));
-            item.append(info,node('span','search-item-badge',kind === 'stations' ? '▶' : `${value.stations_count || value.count}`));
-            item.onclick = () => {
-                hideSearch(); $('searchInput').value = '';
+            const sub = kind === 'countries' ? tn('radio.cities', value.cities_count)
+                : kind === 'cities' ? `${value.country}${value.loc ? ` · ${approxLabel(value)}` : ''}` : `${value.city}, ${value.country}`;
+            const trailing = kind === 'stations' ? '' : num(value.stations_count || value.count);
+            target.appendChild(resultItem(n++, title, sub, trailing, kind === 'stations' ? '--accent-2' : value.loc ? '--approx' : '--accent', () => {
                 if (kind === 'countries') selectCountry(value);
                 else if (kind === 'cities') selectPlace(value);
                 else selectPlace(catalog.byId.get(value.place_id), value.id);
-            };
-            target.appendChild(item);
+            }));
         }
     }
-    if (!total) target.appendChild(node('p','player-detail search-empty','No results found.'));
-    target.style.display = 'block';
+    if (!total) target.appendChild(node('p', 'search-empty', t('search.none')));
+    showResults(total);
 }
 function renderDirSearch(results) {
     const d = dir(), target = $('searchResults'); target.replaceChildren();
-    if (results.length) target.appendChild(node('div', 'search-cat-header', `${d.noun.toUpperCase()} · ${results.length}`));
-    for (const it of results) {
-        const item = node('button', 'search-item');
-        const info = node('span', 'search-item-info');
-        info.append(node('span', 'search-item-city', `${d.featured?.(it) ? '★ ' : ''}${d.nameOf(it)}`), node('span', 'search-item-country', d.subOf(it)));
-        const badge = node('span', 'search-item-badge dir-badge', d.shortBadge(it));
-        badge.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
-        item.append(info, badge);
-        item.onclick = () => { hideSearch(); $('searchInput').value = ''; selectDir(it); };
-        target.appendChild(item);
-    }
-    if (!results.length) target.appendChild(node('p', 'player-detail search-empty', `No ${d.noun} found.`));
-    target.style.display = 'block';
+    if (results.length) target.appendChild(node('div', 'search-cat-header', countText(d, results.length)));
+    results.forEach((it, i) => target.appendChild(resultItem(i, d.nameOf(it), d.subOf(it), '', d.colorOf(it), () => selectDir(it))));
+    if (!results.length) target.appendChild(node('p', 'search-empty', t('search.none')));
+    showResults(results.length);
 }
 function triggerSearch() {
     const sequence = ++searchSequence; clearTimeout(searchTimer);
-    const query = $('searchInput').value.trim().slice(0,120);
-    if (!ready || query.length < 2) { $('searchResults').style.display = 'none'; return; }
+    const query = $('searchInput').value.trim().slice(0, 120);
+    if (!ready || query.length < 2) { hideSearch(); return; }
     if (mode !== 'radio') { renderDirSearch(searchDirectory(dir(), state().items, state().values, query)); return; }
+    if (!catalog) return;
     searchTimer = setTimeout(async () => {
         try { const result = await catalog.search(query, searchType); if (sequence === searchSequence) renderSearch(result); }
-        catch (e) { if (e.name !== 'AbortError' && sequence === searchSequence) { $('searchResults').replaceChildren(node('p','player-detail search-empty','Search unavailable. Please try again.')); $('searchResults').style.display = 'block'; } }
-    },120);
+        catch (e) { if (e.name !== 'AbortError' && sequence === searchSequence) { $('searchResults').replaceChildren(node('p', 'search-empty', t('search.failed'))); showResults(0); } }
+    }, 120);
 }
-function initShortcuts() {
-    const shortcuts = [ ['Rome','Italy'],['Paris','France'],['London','United Kingdom'],['New York City','United States'],['Tokyo','Japan'],['Berlin','Germany'],['Buenos Aires','Argentina'] ];
-    const container = $('capitalsGrid'); container.replaceChildren();
-    for (const [name, country] of shortcuts) {
-        const candidates = catalog.places.filter(p => p.country === country && !p.loc);
-        const place = candidates.find(p => normalize(p.city) === normalize(name)) ||
-            candidates.filter(p => normalize(p.city).startsWith(normalize(name))).sort((a,b)=>b.count-a.count)[0];
-        if (!place) continue;
-        const button = node('button','capital-pill');
-        button.append(node('span','capital-name',name.replace(' City', '')),node('span','capital-count',`${place.count}`));
-        button.onclick = () => selectPlace(place); container.appendChild(button);
-    }
+function initSearch() {
+    const input = $('searchInput');
+    input.oninput = triggerSearch;
+    input.addEventListener('keydown', e => {
+        const options = [...$('searchResults').querySelectorAll('[role="option"]')];
+        if (e.key === 'Escape') { closeSearch(); return; }
+        if (e.key === 'ArrowDown' && options.length) { e.preventDefault(); options[0].focus(); }
+        if (e.key === 'Enter' && options.length) { e.preventDefault(); options[0].click(); }
+    });
+    $('searchResults').addEventListener('keydown', e => {
+        const options = [...$('searchResults').querySelectorAll('[role="option"]')], i = options.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') { e.preventDefault(); options[Math.min(i + 1, options.length - 1)]?.focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); if (i <= 0) input.focus(); else options[i - 1].focus(); }
+        else if (e.key === 'Escape') { closeSearch(); }
+    });
+    document.addEventListener('pointerdown', e => { if (!e.target.closest?.('.search')) hideSearch(); });
 }
+
+/* ---------- Themes ---------- */
 function setTheme(id) {
     theme = themeById(id);
     applyThemeCss(theme);
-    for (const item of $('themeMenu').children) item.setAttribute('aria-checked', String(item.dataset.id === theme.id));
-    // The app sets its theme colour on the page (--accent); the default HUD theme then glows in that colour too.
-    const appAccent = APP_MODE && theme.id === 'tactical' && document.documentElement.style.getPropertyValue('--accent').trim();
-    globe?.setTheme(theme.id, appAccent ? { ...theme.globe, atmosphere: appAccent } : theme.globe);
+    for (const item of $('themeMenu').querySelectorAll('[data-id]')) item.setAttribute('aria-checked', String(item.dataset.id === theme.id));
+    globe?.setTheme(theme.id, globeSettings(theme));
 }
 
-// ---------- Modes: radio, or a directory (SDR receivers, repeaters) ----------
-function renderTabs() {
-    const box = document.querySelector('.search-tabs'); box.replaceChildren();
-    // In a directory mode the tabs are its first filter (SDR network, repeater mode).
-    const filter = mode === 'radio' ? null : dir().filters[0];
-    const tabs = filter ? filter.options : RADIO_TABS, active = filter ? state().values[filter.key] : searchType;
-    for (const t of tabs) {
-        const tab = node('button', `search-tab${t.id === active ? ' active' : ''}`, t.label);
-        tab.dataset.type = t.id;
-        tab.setAttribute('aria-pressed', String(t.id === active));
-        if (t.color) tab.style.setProperty('--type-color', `var(${t.color})`);
-        tab.onclick = () => {
-            if (filter) setFilter(filter.key, t.id);
-            else { searchType = t.id; renderTabs(); triggerSearch(); }
-        };
-        box.appendChild(tab);
-    }
+/* ---------- Chips row and filters ---------- */
+const SHORTCUTS = [['Rome', 'Italy'], ['Paris', 'France'], ['London', 'United Kingdom'], ['New York City', 'United States'], ['Tokyo', 'Japan'], ['Berlin', 'Germany'], ['Buenos Aires', 'Argentina']];
+let shortcutPlaces = null;
+function chip(label, { pressed = null, color = null, iconName = null, onClick, className = '' }) {
+    const c = node('button', `chip ${className}`);
+    c.type = 'button';
+    if (pressed !== null) c.setAttribute('aria-pressed', String(pressed));
+    const face = node('span');
+    if (color) { const dot = node('i', 'dot'); dot.style.setProperty('--type-color', `var(${color})`); face.append(dot); }
+    if (iconName) face.append(icon(iconName));
+    face.append(label);
+    c.append(face);
+    c.onclick = () => { haptic('tick'); onClick(); };
+    return c;
 }
-function updateStats() {
-    $('statsDisplay').textContent = mode !== 'radio' ? dir().stats(state().items)
-        : `${catalog.places.length.toLocaleString('en')} PLACES · ${catalog.stations.length.toLocaleString('en')} STATIONS`;
-}
-/** Sidebar: every filter of the mode as a list of options with how many items each would show. */
-function renderDirSidebar() {
-    const d = dir(), { items, values } = state(), box = $('dirFilters'); box.replaceChildren();
-    for (const f of d.filters) {
-        if (d.filters.length > 1) box.appendChild(node('p', 'dir-sub', f.label));
-        for (const o of f.options) {
-            const button = node('button', `capital-pill${o.id === values[f.key] ? ' active' : ''}`);
-            const name = node('span', 'capital-name', o.name);
-            if (o.color) { const dot = node('i', 'legend-dot'); dot.style.background = `var(${o.color})`; name.prepend(dot); }
-            button.append(name, node('span', 'capital-count', optionCount(d, items, values, f.key, o.id).toLocaleString('en')));
-            button.setAttribute('aria-pressed', String(o.id === values[f.key]));
-            button.onclick = () => setFilter(f.key, o.id);
-            box.appendChild(button);
+/** The layer's first filter as chips, then "Filters (n)" for the others; radio: big cities, and the country picked. */
+function renderChips() {
+    const track = $('chipsTrack'); track.replaceChildren();
+    if (mode === 'radio') {
+        if (!catalog) return;
+        if (radioCountry) track.append(chip(radioCountry, { pressed: true, iconName: 'close', onClick: () => { radioCountry = null; showRadioList(); renderChips(); } }));
+        shortcutPlaces ??= SHORTCUTS.map(([name, country]) => {
+            const candidates = catalog.places.filter(p => p.country === country && !p.loc);
+            return candidates.find(p => normalize(p.city) === normalize(name))
+                || candidates.filter(p => normalize(p.city).startsWith(normalize(name))).sort((a, b) => b.count - a.count)[0];
+        }).filter(Boolean);
+        for (const place of shortcutPlaces) track.append(chip(place.city.replace(' City', ''), { onClick: () => selectPlace(place) }));
+    } else {
+        const d = dir(), { values } = state(), first = d.filters[0];
+        if (first) for (const o of first.options) {
+            track.append(chip(o.label || o.name, { pressed: o.id === values[first.key], color: o.color, onClick: () => setFilter(first.key, o.id) }));
+        }
+        if (d.filters.length > 1) {
+            const active = d.filters.slice(1).filter(f => values[f.key] !== 'all').length;
+            const c = chip(active ? t('filters.withCount', { n: active }) : t('filters.title'), { iconName: 'filter', onClick: openFilters, className: 'chip-filters' });
+            c.setAttribute('aria-haspopup', 'dialog');
+            if (active) c.dataset.active = '';
+            track.append(c);
         }
     }
-    $('dirCredit').textContent = d.credit;
-    renderDirChips();
+    $('chipsRow').hidden = !track.children.length;
+    syncLayout();
 }
-/** Phones and tablets have no right panel: the list panel shows its other filters (the first one is the tabs) as one
- * row of compact menus, so the list keeps the space; the phone opens its own picker. */
-const narrow = matchMedia('(max-width: 1050px)');
-function renderDirChips() {
-    const d = dir(), box = $('dirChips'), filters = d && narrow.matches ? d.filters.slice(1) : [];
-    box.hidden = !filters.length;
-    box.replaceChildren();
-    if (!filters.length) return;
-    const { items, values } = state();
-    for (const f of filters) {
-        const wrap = node('label', `chip-select${values[f.key] !== 'all' ? ' active' : ''}`), select = node('select');
-        for (const o of f.options) {
-            const count = optionCount(d, items, values, f.key, o.id), on = o.id === values[f.key];
-            if (!count && !on) continue;
-            const option = node('option', '', `${o.name} · ${count.toLocaleString('en')}`);
-            Object.assign(option, { value: o.id, selected: on });
-            select.appendChild(option);
+/** Every filter of the layer with how many items each option would show: a sheet dialog. */
+function openFilters() {
+    const d = dir(), st = state();
+    const dialog = node('dialog', 'sheet-dialog filters-dialog');
+    dialog.setAttribute('aria-labelledby', 'filtersTitle');
+    const head = node('div', 'sheet-dialog-head'), title = node('h2', '', t('filters.title'));
+    title.id = 'filtersTitle';
+    const close = iconButton('close', t('common.close'));
+    head.append(title, close);
+    const body = node('div');
+    const draw = () => {
+        body.replaceChildren();
+        for (const f of d.filters) {
+            const group = node('div', 'filter-group');
+            group.setAttribute('role', 'radiogroup');
+            const h = node('h3', '', f.label); h.id = `filter-${f.key}`;
+            group.setAttribute('aria-labelledby', h.id);
+            group.append(h);
+            for (const o of f.options) {
+                const count = optionCount(d, st.items, st.values, f.key, o.id), on = o.id === st.values[f.key];
+                if (!count && !on) continue;
+                const b = node('button', 'filter-option');
+                b.type = 'button';
+                b.setAttribute('role', 'radio');
+                b.setAttribute('aria-checked', String(on));
+                const dot = node('i', 'dot'); if (o.color) dot.style.setProperty('--type-color', `var(${o.color})`);
+                b.append(dot, node('span', '', o.name || o.label), node('small', '', num(count)));
+                b.onclick = () => { setFilter(f.key, o.id); haptic('tick'); draw(); };
+                group.append(b);
+            }
+            body.append(group);
         }
-        select.onchange = () => setFilter(f.key, select.value);
-        wrap.append(node('span', '', f.label), select);
-        box.appendChild(wrap);
-    }
-    if (filters.some(f => values[f.key] !== 'all')) {
-        const reset = node('button', 'chip-reset', 'Reset');
-        reset.onclick = () => { for (const f of filters.slice(1)) values[f.key] = 'all'; setFilter(filters[0].key, 'all'); };
-        box.appendChild(reset);
-    }
+    };
+    draw();
+    const actions = node('div', 'dialog-actions');
+    const reset = node('button', 'btn btn-text', t('filters.reset')), done = node('button', 'btn btn-filled', t('filters.done'));
+    reset.type = done.type = 'button';
+    reset.onclick = () => { for (const f of d.filters.slice(1)) st.values[f.key] = 'all'; setFilter(d.filters[0].key, 'all'); draw(); };
+    done.onclick = close.onclick = () => dialog.close();
+    actions.append(reset, done);
+    dialog.append(head, body, actions);
+    dialog.addEventListener('close', () => dialog.remove());
+    dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+    document.body.append(dialog);
+    dialog.showModal();
 }
+
 /* Per-area loads (police and cameras from this site's tiles, hospitals from Overpass, IODA outages) run only when
  * asked: with the button in the list panel, or while such a tab (police, cameras, hospitals, outages) is on, once
  * per area the view stops on. Third-party servers see the user's IP address, as each mode's note says. */
@@ -359,16 +439,17 @@ function liveArea(def) {
     const need = clip(0);
     return { need, query: clip(.25), cut: need.s > view.s || need.n < view.n || need.w > view.w || need.e < view.e };
 }
-/** One row: the button, the latest status, and ⓘ, which opens the note on who sees the request. */
+/** One row: the button, the latest status, and (i), which opens the note on who sees the request. */
 let liveNoteOpen = false;
 function renderLive() {
     const d = dir(), box = $('dirLive');
     box.hidden = !d?.live;
     if (!d?.live) return;
-    const button = Object.assign(node('button', 'hud-btn live-btn', `↻ ${d.live.label}`), { title: d.live.label, disabled: liveRun?.def === d });
+    const button = Object.assign(node('button', 'btn btn-tonal live-btn'), { type: 'button', title: d.live.label, disabled: liveRun?.def === d });
+    button.append(icon('refresh'), node('span', '', d.live.label));
     button.onclick = () => loadLive(d);
     const text = state().liveStatus || '', status = Object.assign(node('span', 'live-status', text), { title: text });
-    const info = Object.assign(node('button', 'live-info', 'i'), { title: 'Who sees this request', ariaLabel: 'Who sees this request' });
+    const info = iconButton('info', t('live.who'));
     info.setAttribute('aria-expanded', String(liveNoteOpen));
     info.onclick = () => { liveNoteOpen = !liveNoteOpen; renderLive(); };
     const row = node('div', 'live-row');
@@ -391,13 +472,14 @@ async function loadLive(def) {
     let area = null, overview = false;
     if (def.live.needsView !== false) {
         area = liveArea(def);
-        if (!area && !def.live.overview) { setLiveStatus(def, 'Zoom in to a country or a city to load them here.'); return; }
+        if (!area && !def.live.overview) { setLiveStatus(def, t('live.zoomIn')); return; }
         overview = !area;
     }
     stopLive();
     const run = liveRun = { def, ctrl: new AbortController(), area: overview ? OVERVIEW : area?.query || true };
     st.liveTried = run.area; // a failed area is not retried by itself: the button retries
-    setLiveStatus(def, def.live.slow ? 'Loading… public servers can take up to a minute.' : 'Loading…');
+    setLiveStatus(def, def.live.slow ? t('live.loadingSlow') : t('live.loading'));
+    postLoading('area');
     try {
         const { items: loaded, note, complete = true } = overview ? await def.live.overview(st.base, run.ctrl.signal)
             : await def.live.load(area?.query, st.base, run.ctrl.signal);
@@ -407,12 +489,13 @@ async function loadLive(def) {
         const kept = new Map(st.items.filter(it => it.live).map(it => [it.id, it])); // an open card stays open
         st.items = loaded.map(it => it.live && kept.has(it.id) ? kept.get(it.id) : it);
         st.liveAt = Date.now();
-        st.liveStatus = overview ? note : def.live.needsView === false ? `Updated ${new Date().toISOString().slice(11, 16)} UTC${note ? `; ${note}` : ''}.`
-            : `${(st.items.length - st.base.length).toLocaleString('en')} loaded ${note || (area.cut ? `within ${def.live.boxKm / 2} km of the view center` : 'for the area in view')}${liveTabOn(def) ? '; they follow the view' : ''}.`;
+        const time = new Date().toISOString().slice(11, 16);
+        st.liveStatus = overview ? note : def.live.needsView === false ? (note ? t('live.updatedNote', { time, note }) : t('live.updated', { time }))
+            : `${t('live.loaded', { n: st.items.length - st.base.length, where: note || (area.cut ? t('live.withinKm', { km: def.live.boxKm / 2 }) : t('live.forArea')) })}${liveTabOn(def) ? t('live.follow') : ''}`;
         if (dir() === def) {
-            renderDirSidebar(); explorer.use(def, st.items, st.values);
-            if (!$('countryDrawer').hidden) explorer.open();
-            globe?.setLayer(dirLayer()); renderTicker(); updateStats();
+            explorer.use(def, st.items, st.values);
+            if (!$('sheet').hidden) explorer.open();
+            globe?.setLayer(dirLayer()); renderTicker(); renderChips();
             const linked = pendingPick?.mode === def.id && st.items.find(it => String(it.id) === pendingPick.id);
             if (linked) selectDir(linked, { fly: false });
             markReady('qglobe:live-ready'); // timing of the first live load (police and cameras in view, catalogue links)
@@ -421,12 +504,12 @@ async function loadLive(def) {
         if (liveRun === run) {
             st.liveAt = Date.now(); // the next timed refresh tries again
             st.liveFails = (st.liveFails || 0) + 1; st.liveFailedAt = Date.now();
-            st.liveStatus = `Not loaded: ${e.message}${liveTabOn(def) ? ' Trying again shortly.' : ''}`;
+            st.liveStatus = t(liveTabOn(def) ? 'live.failedRetrying' : 'live.failed', { reason: String(e.message || '').replace(/\.$/, '') });
             // Items that carry their own end (user radio) go when it passes, even while no fresh data arrives.
             const kept = def.live.prune ? def.live.prune(st.items) : st.items;
             if (kept.length !== st.items.length) {
                 st.items = kept;
-                if (dir() === def) { renderDirSidebar(); explorer.use(def, st.items, st.values); globe?.setLayer(dirLayer()); renderTicker(); updateStats(); }
+                if (dir() === def) { explorer.use(def, st.items, st.values); explorer.open(); globe?.setLayer(dirLayer()); renderTicker(); }
             }
         }
     } finally {
@@ -462,66 +545,94 @@ function watchLive() {
         if (b && prev && Math.abs(b.s - prev.s) + Math.abs(b.n - prev.n) + Math.abs(b.w - prev.w) + Math.abs(b.e - prev.e) < 1e-3) liveIfWanted();
     }, 1000);
 }
-const MODE_GROUPS = ['Live', 'Listen', 'Navigate', 'Safety & OSINT', 'Connectivity'];
-const RADIO_MODE = { id: 'radio', label: 'RADIO', group: 'Listen', sidebarTitle: 'Radio stations' };
-/** The grouped layer menu next to the title. */
+
+/* ---------- Layer menu ---------- */
+const MODE_GROUPS = ['live', 'listen', 'navigate', 'safety', 'connectivity'];
+const GROUP_IDS = { 'Live': 'live', 'Listen': 'listen', 'Navigate': 'navigate', 'Safety & OSINT': 'safety', 'Connectivity': 'connectivity' };
+const groupOf = m => GROUP_IDS[m.group] || m.group;
+const menuOpen = () => !$('modeMenu').hidden || !$('themeMenu').hidden || $('tools').classList.contains('open');
+function closeMenus() {
+    $('modeMenu').hidden = true; $('btnMode').setAttribute('aria-expanded', 'false');
+    $('themeMenu').hidden = true; $('btnTheme').setAttribute('aria-expanded', 'false');
+    $('tools').classList.remove('open'); $('btnMore').setAttribute('aria-expanded', 'false');
+}
+function menuKeys(menu, button) {
+    menu.addEventListener('keydown', e => {
+        const items = [...menu.querySelectorAll('[role^="menuitem"]')], i = items.indexOf(document.activeElement);
+        if (e.key === 'Escape') { closeMenus(); button.focus(); }
+        else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus(); }
+    });
+}
+function menuItem(id, iconName, title, sub, onClick, checkable = true) {
+    const item = node('button', 'menu-item');
+    item.type = 'button';
+    item.setAttribute('role', checkable ? 'menuitemradio' : 'menuitem');
+    const glyph = node('span', 'menu-icon'); glyph.append(icon(iconName));
+    const text = node('span', 'menu-text');
+    text.append(node('b', '', title));
+    if (sub) text.append(node('small', '', sub));
+    item.append(glyph, text);
+    if (checkable) { const check = icon('check', 'icon check'); item.append(check); }
+    item.onclick = onClick;
+    return item;
+}
+/** The grouped layer menu; on phones it also holds Live TV. */
 function initModeMenu() {
     const menu = $('modeMenu'), button = $('btnMode');
-    const close = () => { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); };
     menu.replaceChildren();
     for (const group of MODE_GROUPS) {
-        menu.appendChild(node('p', 'dir-sub', group));
-        for (const m of [RADIO_MODE, ...Object.values(DIRECTORIES)].filter(m => m.group === group)) {
-            const item = node('button', 'theme-option mode-option');
+        menu.appendChild(node('p', 'menu-group', t(`group.${group}`)));
+        for (const m of [RADIO_MODE, ...Object.values(DIRECTORIES)].filter(m => groupOf(m) === group)) {
+            const item = menuItem(m.id, m.id, m.label, m.sidebarTitle, () => { closeMenus(); setMode(m.id); button.focus(); });
             item.dataset.mode = m.id;
-            item.setAttribute('role', 'menuitemradio');
-            const text = node('span', 'theme-text');
-            text.append(node('b', '', m.label), node('small', '', m.sidebarTitle));
-            const glyph = node('span', 'mode-icon'); glyph.append(icon(m.id));
-            item.append(glyph, text);
-            item.onclick = () => { close(); setMode(m.id); button.focus(); };
+            item.classList.add('mode-option');
             menu.appendChild(item);
+        }
+        if (group === 'live') {
+            const tvItem = menuItem('tv', 'tv', t('tv.menu'), t('tv.menuAbout'), () => { closeMenus(); $('btnTv').click(); }, false);
+            tvItem.classList.add('tv-entry');
+            menu.appendChild(tvItem);
         }
     }
     button.onclick = () => {
-        menu.hidden = !menu.hidden;
-        button.setAttribute('aria-expanded', String(!menu.hidden));
-        if (!menu.hidden) menu.querySelector('[aria-checked="true"]')?.focus();
+        const open = menu.hidden;
+        closeMenus();
+        menu.hidden = !open;
+        button.setAttribute('aria-expanded', String(open));
+        if (open) (menu.querySelector('[aria-checked="true"]') || menu.querySelector('[role^="menuitem"]'))?.focus();
     };
-    document.addEventListener('click', e => { if (!e.target.closest?.('.mode-picker')) close(); });
-    menu.addEventListener('keydown', e => {
-        const items = [...menu.querySelectorAll('.mode-option')], i = items.indexOf(document.activeElement);
-        if (e.key === 'Escape') { close(); button.focus(); }
-        else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
-    });
+    menuKeys(menu, button);
 }
 function markMode() {
     const m = DIRECTORIES[mode] || RADIO_MODE;
     $('modeIcon').replaceChildren(icon(m.id)); $('modeName').textContent = m.label;
+    $('btnMode').setAttribute('aria-label', t('app.layerButton', { layer: m.label }));
     for (const item of $('modeMenu').querySelectorAll('.mode-option')) item.setAttribute('aria-checked', String(item.dataset.mode === mode));
+    // The sheet's random pick and the search speak about the layer shown (TalkBack reads these).
+    const random = $('btnRandom'), label = DIRECTORIES[mode]?.randomTitle || t('radio.random');
+    random.setAttribute('aria-label', label); random.title = label;
+    const placeholder = DIRECTORIES[mode]?.placeholder || t('radio.placeholder');
+    $('searchInput').placeholder = placeholder; $('searchInput').setAttribute('aria-label', placeholder);
 }
-/** The news ticker: the latest stories of a mode that has one, scrolling above the player. */
+/** Latest stories (news, large screens): a static row of the newest items, no animation. */
 function renderTicker() {
     const d = dir(), box = $('newsTicker'), track = $('tickerMove');
-    const items = d?.ticker ? d.ticker(state().items) : [];
+    const items = d?.ticker ? d.ticker(state().items).slice(0, 20) : [];
     box.hidden = !items.length;
     if (!items.length) return;
     track.replaceChildren();
-    for (const copy of [0, 1]) { // two copies scroll as one seamless loop
-        for (const it of items) {
-            const b = node('button', 'ticker-item');
-            b.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
-            b.append(node('i', 'ticker-dot'), node('span', 'ticker-text', d.nameOf(it)), node('small', 'ticker-src', d.subOf(it)));
-            b.onclick = () => selectDir(it);
-            if (copy) { b.setAttribute('aria-hidden', 'true'); b.tabIndex = -1; }
-            track.appendChild(b);
-        }
+    for (const it of items) {
+        const b = node('button', 'ticker-item');
+        b.type = 'button';
+        b.style.setProperty('--type-color', `var(${d.colorOf(it)})`);
+        b.append(node('i', 'ticker-dot'), node('span', 'ticker-text', d.nameOf(it)), node('small', 'ticker-src', d.subOf(it)));
+        b.onclick = () => selectDir(it);
+        track.appendChild(b);
     }
-    track.style.setProperty('--ticker-s', `${Math.max(40, items.length * 7)}s`);
 }
 function setFilter(key, value) {
     state().values[key] = value;
-    renderTabs(); renderDirSidebar(); renderLive();
+    renderChips(); renderLive();
     explorer.use(dir(), state().items, state().values); explorer.open();
     globe?.setLayer(dirLayer());
     triggerSearch();
@@ -534,78 +645,146 @@ function selectDir(it, { fly = true } = {}) {
         globe.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, it.zoom) }, 800);
         return;
     }
-    unfoldDrawer();
     explorer.select(it);
+    if (sheetState() === 'peek') setSheet('half');
     // Closer, never further: items that load with their area (cameras) stay loaded, and a link keeps that zoom.
     if (!placed(it)) return; // listed without a place: nothing to show on the globe
     if (fly) globe?.navigation.flyTo({ lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, .5) }, 600);
     globe?.select(it.lat, it.lng, .8);
 }
-function unavailable(def) { $('globeNotice').textContent = `${def.sidebarTitle} list unavailable. Check ${def.dataUrl} and reload.`; $('globeNotice').hidden = false; }
-/** Shows a layer once its data is here; false (and a notice) when the data cannot be loaded. remember: false for the
- * first layer of the page, which is the one of the link or the last visit, or radio by default. */
+
+/* ---------- Loading and errors: one component in the sheet ---------- */
+const MB = bytes => num(Math.round(bytes / 1e5) / 10);
+function showStatus({ kind, text, detail = '', progress = null, onRetry = null, onCancel = null, onDismiss = null }) {
+    const box = $('sheetStatus');
+    box.className = `sheet-status ${kind}`;
+    box.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    const row = node('div', 'status-row'), words = node('p', 'status-text', text);
+    if (detail) words.append(node('small', '', detail));
+    row.append(icon(kind === 'error' ? 'alert' : 'refresh'), words);
+    if (onDismiss) { const x = iconButton('close', t('common.close')); x.onclick = onDismiss; row.append(x); }
+    box.replaceChildren(row);
+    if (kind === 'loading') {
+        const bar = node('div', 'progress'); bar.append(node('i'));
+        if (Number.isFinite(progress)) { bar.dataset.value = ''; bar.style.setProperty('--value', `${Math.round(progress * 100)}%`); }
+        box.append(bar);
+    }
+    const actions = node('div', 'status-actions');
+    if (onCancel) { const b = node('button', 'btn btn-text', t('common.cancel')); b.type = 'button'; b.onclick = onCancel; actions.append(b); }
+    if (onRetry) { const b = node('button', 'btn btn-tonal', t('common.retry')); b.type = 'button'; b.onclick = onRetry; actions.append(b); }
+    if (actions.children.length) box.append(actions);
+    box.hidden = false;
+    syncLayout();
+}
+function clearStatus() { $('sheetStatus').hidden = true; $('sheetStatus').replaceChildren(); syncLayout(); }
+function loadingSkeleton() {
+    const s = node('div', 'skeleton'); s.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 4; i++) s.append(node('i'));
+    $('sheetList').replaceChildren(s);
+    $('sheetCard').hidden = true; $('sheet').dataset.view = 'list';
+}
+const offline = () => navigator.onLine === false;
+const layerName = id => (DIRECTORIES[id] || RADIO_MODE).label;
+function layerError(id, retry) {
+    const network = offline();
+    showStatus({ kind: 'error', text: t(network ? 'error.offline' : 'error.layer', { layer: layerName(id) }), detail: t(network ? 'error.offlineHint' : 'error.layerHint'),
+        onRetry: retry, onDismiss: clearStatus });
+    postError(network ? 'network' : 'data', true);
+}
+
+/** Shows a layer: the header and the sheet switch at once, with a loading state (progress where known, Cancel) until
+ * its data is here; false (and an error with Retry) when the data cannot be loaded. remember: false for the first
+ * layer of the page, which is the one of the link or the last visit, or radio by default. */
+let switching = null, layerShown = false;
+const cancelledByUser = run => run.byUser === true;
 async function setMode(next, { remember = true } = {}) {
     if (next !== 'webcams') closeWebcamPlayer();
-    const def = DIRECTORIES[next];
-    if (def && !dirState[next]) {
-        postLoading('layer');
-        try { const items = await loadDirectory(def); dirState[next] = { base: items, items, values: initialValues(def) }; }
-        catch { unavailable(def); postError(navigator.onLine === false ? 'network' : 'data'); return false; }
+    const def = DIRECTORIES[next], previous = mode;
+    switching?.abort();
+    const run = switching = new AbortController();
+    clearStatus();
+    if ((def && !dirState[next]) || (!def && !catalog)) {
+        // The new layer at once: its name in the header, a skeleton list and the loading state in the sheet.
+        $('modeIcon').replaceChildren(icon(next)); $('modeName').textContent = layerName(next);
+        $('sheet').hidden = false;
+        $('sheetTitle').replaceChildren(icon(next, 'icon title-icon'), node('span', '', layerName(next)));
+        $('sheetMeta').textContent = '';
+        loadingSkeleton();
+        let lastText = '';
+        const onProgress = ({ loaded, total }) => {
+            if (run.signal.aborted || switching !== run) return; // done, failed or replaced: a late chunk changes nothing
+            const fraction = total ? loaded / total : null, text = total ? '' : t('app.loadedMb', { mb: MB(loaded) });
+            if (text === lastText && !fraction) return;
+            lastText = text;
+            onProgress.show?.({ detail: text, progress: fraction });
+            postLoading(def ? 'layer' : 'catalog', fraction);
+        };
+        // Cancel goes back to the layer shown before; the first layer of the page has none to go back to.
+        const cancellable = layerShown;
+        const status = p => showStatus({ kind: 'loading', text: t('app.loadingLayer', { layer: layerName(next) }), detail: p.detail || '',
+            progress: p.progress ?? null, onCancel: cancellable ? () => { run.byUser = true; run.abort(); } : null });
+        onProgress.show = status;
+        onProgress({ loaded: 0, total: 0 });
+        const cancelled = new Promise((_, reject) => run.signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true }));
+        cancelled.catch(() => { /* handled below */ });
+        try {
+            if (def) { const items = await Promise.race([loadDirectory(def, { onProgress, signal: run.signal }), cancelled]); dirState[next] ??= { base: items, items, values: initialValues(def) }; }
+            else await Promise.race([loadCatalog({ onProgress, signal: run.signal }), cancelled]);
+        } catch (e) {
+            if (switching !== run) return false; // a newer switch took over
+            switching = null;
+            if (!run.signal.aborted) { run.abort(); } else if (cancelledByUser(run)) { clearStatus(); markMode(); restoreSheet(previous); return false; }
+            loadingSkeleton(); $('sheetList').replaceChildren();
+            layerError(next, () => setMode(next, { remember }));
+            return false;
+        }
+        if (switching !== run) return false;
     }
-    if (!def && !catalog) {
-        postLoading('catalog');
-        try { await loadCatalog(); }
-        catch { $('globeNotice').textContent = 'Radio catalog unavailable. Check data/places.json and data/stations.json and reload.'; $('globeNotice').hidden = false; postError('data'); return false; }
-    }
+    switching = null;
+    const wasShown = layerShown;
+    layerShown = true;
+    clearStatus();
     if (liveRun && liveRun.def !== def) stopLive();
+    const changed = mode !== (def ? next : 'radio');
     mode = def ? next : 'radio';
     document.documentElement.dataset.mode = mode;
     // Picking a point is a moment: the layer used last time stays the one remembered.
     if (!PICK_MODE && remember) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
     markMode();
     pendingPick = null;
-    playerMini = null; applyPlayerSize();
-    if (!player?.station) $('playerTitle').textContent = def ? 'Radio · pick a station in the RADIO layer' : 'Select a point on the map';
     hideSearch(); $('searchInput').value = '';
-    $('searchInput').placeholder = def ? def.placeholder : 'Search country, city or station…';
-    $('btnRandom').title = def ? def.randomTitle : 'Listen to a random station somewhere in the world';
-    $('sidebarTitle').textContent = def ? def.sidebarTitle : 'Shortcuts';
-    $('sidebarRadio').hidden = Boolean(def); $('sidebarDir').hidden = !def;
-    if (!def) renderDirChips();
     liveNoteOpen = false;
-    renderTabs(); updateStats();
-    if (def) { renderDirSidebar(); explorer.use(def, state().items, state().values); if (!PICK_MODE) explorer.open(); }
-    else $('countryDrawer').hidden = true;
-    renderLive();
+    if (def) { explorer.use(def, state().items, state().values); explorer.open(); }
+    else showRadioList();
+    if (changed && sheetState() === 'peek' && !PICK_MODE) setSheet('half');
+    renderChips(); renderLive();
     globe?.setLayer(def ? dirLayer() : radioLayer());
-    renderTicker();
+    renderTicker(); updatePlayer();
+    if (changed && wasShown) haptic('confirm');
+    syncAppState();
     return true;
+}
+/** After a cancelled switch: the sheet of the layer still shown. */
+function restoreSheet(id) {
+    if (id !== mode) return;
+    if (DIRECTORIES[id] && dirState[id]) { explorer.use(DIRECTORIES[id], state().items, state().values); explorer.open(); }
+    else if (catalog) showRadioList();
 }
 let catalogLoading = null;
 /** The radio catalogue (places, stations, countries), loaded when the radio layer is first shown: a link to another
- * layer starts without it. The search index is built in its worker meanwhile. */
-function loadCatalog() {
-    catalogLoading ??= Promise.all(['data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json'].map(p => loadJSON(p)))
+ * layer starts without it. The search index is built in its worker meanwhile. Progress: the stations file. */
+function loadCatalog({ onProgress, signal } = {}) {
+    catalogLoading ??= Promise.all(['data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json']
+        .map(p => loadJSON(p, undefined, { onProgress: p === 'data/stations.json' ? onProgress : null, signal })))
         .then(([places, stationData, countries, summary]) => {
             const stations = expandStations(stationData);
             if (![places, stations, countries].every(Array.isArray)) throw new Error('Invalid catalog or configuration');
             catalog = new Catalog(places, stations, countries, summary);
-            initShortcuts();
             catalog.initializeSearch(); // early searches simply queue behind the index
             return catalog;
         })
         .catch(e => { catalogLoading = null; throw e; });
     return catalogLoading;
-}
-/* The player: full in RADIO, a one-line bar in the other layers, so the list and the globe keep the room. The user's
- * choice (▾ ▴) holds until the layer changes. */
-let playerMini = null;
-function applyPlayerSize() {
-    const mini = playerMini ?? mode !== 'radio', b = $('btnPlayerSize');
-    $('bottomPlayer').classList.toggle('mini', mini);
-    b.textContent = mini ? '▴' : '▾';
-    b.title = b.ariaLabel = mini ? 'Show the full player' : 'Shrink the player';
-    b.setAttribute('aria-expanded', String(!mini));
 }
 
 /* Links. The address always holds the layer, its filters, the view and the open card or station, without adding
@@ -660,23 +839,22 @@ async function applyLink(p, { justShown = false } = {}) {
     }
 }
 function toast(text) {
-    const t = $('toast');
-    t.textContent = text; t.hidden = false;
-    clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, 2600);
+    const el = $('toast');
+    el.textContent = text; el.hidden = false;
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => { el.hidden = true; }, 2600);
 }
-/** Phones open their share sheet; elsewhere the link goes to the clipboard. */
+/** Phones open their share sheet; elsewhere the link goes to the clipboard. In the app, the app's share flow. */
 async function shareLink(p, title) {
     const url = linkUrl(p);
-    // In Q-P1NG the app asks where to share: its encrypted chat or another app.
     if (APP_MODE) {
         if (hasNative() ? shareNative(url, title) : requestNativeShare({ url, title })) return;
-        toast('Sharing is available from the globe address only.'); return;
+        toast(t('share.onlyGlobe')); return;
     }
     try {
         if (phone.matches && navigator.share) await navigator.share({ title, url });
-        else { await navigator.clipboard.writeText(url); toast('Link copied'); }
+        else { await navigator.clipboard.writeText(url); toast(t('share.copied')); }
     } catch (e) {
-        if (e.name !== 'AbortError') prompt('Copy this link:', url);
+        if (e.name !== 'AbortError') showAddress(url, title);
     }
 }
 /** A card's link opens it close up, also for items that load with their area. */
@@ -686,6 +864,13 @@ function shareItem(it) {
     p.set('view', viewText(it.lat, it.lng, Math.min(globe?.world.pointOfView().altitude ?? .5, .5)));
     shareLink(p, `${dir().nameOf(it)} · Q-P1NG Globe`);
 }
+/** A message about the whole page under the header, with an action. */
+function pageNotice(text, actions = []) {
+    const box = $('globeNotice');
+    const words = node('p'); words.append(...[].concat(text));
+    box.replaceChildren(icon('alert'), words, ...actions);
+    box.hidden = false;
+}
 /** Mirrors. Some IPFS gateways add their own Content-Security-Policy, which blocks streams and data from other
  * servers: the first blocked request says so, with links to the same view on the main site and the full IPFS mirror. */
 const MAIN_SITE = 'https://globe.qp1ng.com/', IPFS_MIRROR = 'https://inbrowser.link/ipns/globe.qp1ng.com/';
@@ -694,19 +879,15 @@ function initMirrorNotice() {
     const warn = e => {
         if (!/^https?:/.test(e.blockedURI) || new URL(e.blockedURI).origin === location.origin) return;
         document.removeEventListener('securitypolicyviolation', warn);
-        const bar = node('div', 'mirror-notice'), close = Object.assign(node('button', 'mirror-close', '✕'), { type: 'button', title: 'Close', ariaLabel: 'Close' });
         const to = (text, url) => {
             const a = Object.assign(node('a', '', text), { href: url, target: '_blank', rel: 'noopener' });
             a.onclick = () => { a.href = url + location.hash; }; // the same view
             return a;
         };
-        close.onclick = () => bar.remove();
-        bar.setAttribute('role', 'status');
-        const text = node('span');
-        text.append('This IPFS gateway blocks radio, TV and live data. All of it works on ', to('globe.qp1ng.com', MAIN_SITE),
-            ' and on the ', to('inbrowser.link mirror', IPFS_MIRROR), '.');
-        bar.append(text, close);
-        document.body.appendChild(bar);
+        const close = iconButton('close', t('common.close'));
+        close.onclick = () => { $('globeNotice').hidden = true; };
+        const [before, middle, after] = t('mirror.blocked').split(/\{main\}|\{mirror\}/);
+        pageNotice([before, to('globe.qp1ng.com', MAIN_SITE), middle, to(t('mirror.ipfs'), IPFS_MIRROR), after], [close]);
     };
     document.addEventListener('securitypolicyviolation', warn);
 }
@@ -716,148 +897,172 @@ function initKeys() {
     const keys = { '?': () => guide.open(), '/': () => $('searchInput').focus(), l: click('btnMode'), t: click('btnTv'), r: click('btnRandom'),
         '+': click('btnZoomIn'), '=': click('btnZoomIn'), '-': click('btnZoomOut'), '0': click('btnResetView') };
     document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && menuOpen()) { closeMenus(); return; }
         const act = e.key.length === 1 && keys[e.key.toLowerCase()];
         if (!act || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]')
             || e.target.closest?.('input, select, textarea, [contenteditable]')) return;
         e.preventDefault(); act();
     });
+    document.addEventListener('pointerdown', e => { if (!e.target.closest?.('.mode-picker, .menu, .tools, #btnMore')) closeMenus(); });
 }
 
-/* The list panel. Desktop: a wider reading mode and a minimized state. Phones: a bottom sheet with three heights
- * (peek: the title only, half, full), dragged or tapped on its handle. */
+/* ---------- The sheet: peek, half, full on phones (portrait); a side panel otherwise ---------- */
 const phone = matchMedia('(max-width: 640px)');
-function setFolded(folded) {
-    const drawer = $('countryDrawer'), fold = $('drawerFold');
-    if (phone.matches) drawer.dataset.sheet = folded ? 'peek' : 'half';
-    else drawer.classList.toggle('folded', folded);
-    fold.textContent = folded ? '▢' : '–';
-    fold.title = fold.ariaLabel = folded ? 'Show the list' : 'Minimize the list';
-    fold.setAttribute('aria-expanded', String(!folded));
+const panelMode = matchMedia('(min-width: 1051px), (orientation: landscape) and (max-height: 560px)');
+const sheetState = () => $('sheet').dataset.sheet;
+/** The safe area at the bottom (the browser's or the app's), measured on a probe sized by the CSS variable. */
+let probe = null;
+const insetBottom = () => {
+    if (!probe) { probe = node('i'); probe.style.cssText = 'position:fixed;width:0;height:var(--inset-b);visibility:hidden;pointer-events:none'; document.body.append(probe); }
+    return probe.offsetHeight;
+};
+let chromeBottomNow = 120;
+function sheetHeights(top = chromeBottomNow) {
+    const full = Math.max(200, innerHeight - top - 8);
+    const head = $('sheetHandle').offsetHeight + $('sheetHead').offsetHeight + ($('sheetStatus').hidden ? 0 : $('sheetStatus').offsetHeight + 8);
+    const peek = Math.min(full, head + 4 + insetBottom());
+    return { peek, half: Math.min(full, Math.max(peek + 120, Math.round(innerHeight * .5))), full };
 }
-const isFolded = () => phone.matches ? $('countryDrawer').dataset.sheet === 'peek' : $('countryDrawer').classList.contains('folded');
-function unfoldDrawer() { if (isFolded()) setFolded(false); }
-function initDrawer() {
-    const drawer = $('countryDrawer'), handle = $('drawerHandle'), list = $('countryCitiesList'), wide = $('drawerWide');
-    let prefs = {};
-    try { prefs = JSON.parse(localStorage.getItem('qradio.drawer')) || {}; } catch { /* defaults */ }
-    const setWide = on => {
-        drawer.classList.toggle('wide', on); wide.setAttribute('aria-pressed', String(on));
-        wide.title = wide.ariaLabel = on ? 'Narrower list' : 'Wider list';
-        try { localStorage.setItem('qradio.drawer', JSON.stringify({ wide: on })); } catch { /* not remembered */ }
-    };
-    setWide(Boolean(prefs.wide));
-    wide.onclick = () => setWide(!drawer.classList.contains('wide'));
-    $('drawerFold').onclick = () => setFolded(!isFolded());
-    // A minimized sheet opens again from a tap on its title.
-    $('drawerHeader').addEventListener('click', e => { if (isFolded() && !e.target.closest('button')) setFolded(false); });
-    phone.addEventListener('change', () => { drawer.classList.remove('folded'); drawer.dataset.sheet = 'half'; setFolded(false); });
-    narrow.addEventListener('change', () => { if (dir()) renderDirChips(); });
-    // Drag the handle to resize; a tap steps half → full → peek → half.
+function setSheet(next) {
+    const sheet = $('sheet');
+    sheet.dataset.sheet = next;
+    const toggle = $('sheetToggle'), open = next !== 'peek';
+    toggle.replaceChildren(icon(panelMode.matches ? (open ? 'up' : 'down') : (open ? 'down' : 'up')));
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? t('sheet.collapse') : t('sheet.expand'));
+    toggle.title = toggle.getAttribute('aria-label');
+    $('sheetHandle').setAttribute('aria-label', t('sheet.resize', { state: t(`sheet.state.${next}`) }));
+    syncLayout();
+    syncAppState();
+}
+let layoutFrame = 0;
+/** Header, chips, sheet and player heights as CSS variables, and the globe's view offset from them. */
+function syncLayout() {
+    if (layoutFrame) return;
+    layoutFrame = requestAnimationFrame(() => {
+        layoutFrame = 0;
+        const root = document.documentElement.style, header = $('topbar').getBoundingClientRect();
+        const chips = $('chipsRow').hidden ? null : $('chipsRow').getBoundingClientRect();
+        const chromeBottom = chromeBottomNow = Math.round(chips ? chips.bottom : header.bottom + 8);
+        root.setProperty('--header-bottom', `${Math.round(header.bottom)}px`);
+        root.setProperty('--chrome-bottom', `${chromeBottom}px`);
+        const sheet = $('sheet'), portrait = !panelMode.matches, shown = !sheet.hidden;
+        let dock = 0, left = 0;
+        if (portrait && shown) {
+            const h = sheetHeights(), visible = h[sheet.dataset.sheet] || h.half;
+            root.setProperty('--sheet-full', `${h.full}px`);
+            root.setProperty('--sheet-h', `${visible}px`);
+            const used = $('sheetHandle').offsetHeight + $('sheetHead').offsetHeight + ($('sheetStatus').hidden ? 0 : $('sheetStatus').offsetHeight + 8) + ($('dirLive').hidden ? 0 : $('dirLive').offsetHeight);
+            sheet.style.setProperty('--body-h', `${Math.max(0, visible - used)}px`);
+            dock = visible;
+        } else {
+            sheet.style.removeProperty('--body-h');
+            if (shown && !portrait) left = sheet.getBoundingClientRect().right;
+        }
+        root.setProperty('--dock-h', `${dock}px`);
+        const p = $('bottomPlayer'), playerH = p.hidden ? 0 : p.offsetHeight + 8;
+        root.setProperty('--player-h', `${playerH}px`);
+        globe?.setViewInsets({ top: chromeBottom, bottom: dock + (portrait ? playerH : 0), left });
+    });
+}
+function initSheet() {
+    const sheet = $('sheet'), handle = $('sheetHandle'), list = $('sheetList');
+    const ORDER = ['peek', 'half', 'full'];
+    const step = dir => { const i = ORDER.indexOf(sheetState()); setSheet(ORDER[Math.max(0, Math.min(2, i + dir))]); haptic('tick'); };
+    $('sheetToggle').onclick = () => setSheet(sheetState() === 'peek' ? 'half' : 'peek');
+    // A collapsed sheet opens from a tap on its title.
+    $('sheetHead').addEventListener('click', e => { if (sheetState() === 'peek' && !e.target.closest('button')) setSheet('half'); });
+    handle.addEventListener('keydown', e => {
+        if (e.key === 'ArrowUp') { e.preventDefault(); step(1); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); step(-1); }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSheet(sheetState() === 'full' ? 'peek' : ORDER[ORDER.indexOf(sheetState()) + 1]); }
+    });
+    // Drag the handle or the header: the sheet follows the finger (transform only) and snaps to the nearest height.
     let drag = null;
-    const SIZES = ['half', 'full', 'peek'];
-    handle.addEventListener('pointerdown', e => {
-        drag = { y: e.clientY, h: drawer.offsetHeight, moved: false };
-        handle.setPointerCapture(e.pointerId); drawer.classList.add('dragging');
-    });
-    handle.addEventListener('pointermove', e => {
-        if (!drag) return;
+    const start = e => {
+        if (panelMode.matches || e.target.closest('button') && e.currentTarget !== handle) return;
+        const h = sheetHeights();
+        drag = { y: e.clientY, from: h[sheetState()], h, moved: false, id: e.pointerId };
+        e.currentTarget.setPointerCapture(e.pointerId);
+    };
+    const move = e => {
+        if (!drag || e.pointerId !== drag.id) return;
         const dy = drag.y - e.clientY;
-        if (Math.abs(dy) > 5) drag.moved = true;
-        if (drag.moved) drawer.style.height = `${Math.max(60, drag.h + dy)}px`;
-    });
-    const release = () => {
-        if (!drag) return;
-        const h = drawer.offsetHeight, moved = drag.moved;
-        drag = null; drawer.classList.remove('dragging'); drawer.style.height = '';
-        const next = moved ? (h < innerHeight * .22 ? 'peek' : h > innerHeight * .55 ? 'full' : 'half')
-            : SIZES[(SIZES.indexOf(drawer.dataset.sheet) + 1) % SIZES.length];
-        setFolded(next === 'peek');
-        drawer.dataset.sheet = next;
+        if (Math.abs(dy) > 6) { drag.moved = true; sheet.classList.add('dragging'); }
+        if (drag.moved) document.documentElement.style.setProperty('--sheet-h', `${Math.max(drag.h.peek - 20, Math.min(drag.h.full, drag.from + dy))}px`);
     };
-    handle.addEventListener('pointerup', release);
-    handle.addEventListener('pointercancel', release);
-    // Back to the top of a long list.
-    const top = node('button', 'list-top', '↑');
-    Object.assign(top, { title: 'Back to the top', ariaLabel: 'Back to the top', hidden: true });
-    top.onclick = () => list.scrollTo({ top: 0, behavior: 'smooth' });
-    drawer.appendChild(top);
-    list.addEventListener('scroll', () => { top.hidden = list.scrollTop < 500; }, { passive: true });
-    new ResizeObserver(() => document.documentElement.style.setProperty('--drawer-h', `${drawer.offsetHeight}px`)).observe(drawer);
-    // The full sheet stops under the header, whatever its height.
-    const header = document.querySelector('.top-header');
-    new ResizeObserver(() => document.documentElement.style.setProperty('--header-bottom', `${Math.round(header.getBoundingClientRect().bottom)}px`)).observe(header);
-}
-function initShortcutsPanel() {
-    const panel = $('sidebarShortcuts'), toggle = $('btnToggleShortcuts');
-    const apply = collapsed => {
-        panel.classList.toggle('collapsed', collapsed);
-        toggle.setAttribute('aria-expanded', String(!collapsed));
-        toggle.setAttribute('aria-label', collapsed ? 'Expand shortcuts' : 'Minimize shortcuts');
-        toggle.title = collapsed ? 'Expand' : 'Minimize';
-        $('sidebarBody').inert = collapsed; // nothing focusable inside while folded away
+    const end = e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        const { moved, h } = drag, now = parseFloat(document.documentElement.style.getPropertyValue('--sheet-h')) || h.half;
+        drag = null; sheet.classList.remove('dragging');
+        if (!moved) { if (e.currentTarget === handle) setSheet(ORDER[(ORDER.indexOf(sheetState()) + 1) % 3]); return; }
+        const nearest = ORDER.reduce((a, b) => Math.abs(h[b] - now) < Math.abs(h[a] - now) ? b : a);
+        setSheet(nearest); haptic('tick');
     };
-    let collapsed = false;
-    try { collapsed = localStorage.getItem('qradio.shortcuts') === 'collapsed'; } catch { /* not remembered */ }
-    apply(collapsed);
-    toggle.onclick = () => {
-        collapsed = !collapsed; apply(collapsed);
-        try { localStorage.setItem('qradio.shortcuts', collapsed ? 'collapsed' : 'open'); } catch { /* not remembered */ }
-    };
-}
-function initThemeMenu() {
-    const menu = $('themeMenu'), button = $('btnTheme'), panel = $('sidebarShortcuts');
-    let pushed = 0;
-    const setOpen = open => {
-        menu.hidden = !open;
-        button.setAttribute('aria-expanded', String(open));
-        // The shortcuts panel slides down under the open menu instead of being covered by it
-        // (nothing to move when the panel is hidden on small screens).
-        pushed = open && panel.offsetParent ? Math.max(0, Math.round(menu.getBoundingClientRect().bottom + 10 - (panel.getBoundingClientRect().top - pushed))) : 0;
-        document.documentElement.style.setProperty('--menu-push', `${pushed}px`);
-        if (open) menu.querySelector('[aria-checked="true"]')?.focus();
-    };
-    const close = () => { if (!menu.hidden) setOpen(false); };
-    for (const t of THEMES) {
-        // data-preview scopes the theme's colours to the item, so the swatch shows them.
-        const item = node('button', 'theme-option');
-        Object.assign(item.dataset, { id: t.id, preview: t.id });
-        item.setAttribute('role', 'menuitemradio');
-        item.setAttribute('aria-checked', String(t.id === theme.id));
-        const swatch = node('span', 'theme-swatch');
-        swatch.append(node('i'), node('i'), node('i'));
-        const text = node('span', 'theme-text');
-        text.append(node('b', '', t.label), node('small', '', t.note));
-        item.append(swatch, text);
-        item.onclick = () => { setTheme(t.id); close(); button.focus(); };
-        menu.appendChild(item);
+    for (const el of [handle, $('sheetHead')]) {
+        el.addEventListener('pointerdown', start);
+        el.addEventListener('pointermove', move);
+        el.addEventListener('pointerup', end);
+        el.addEventListener('pointercancel', end);
     }
-    button.onclick = () => setOpen(menu.hidden);
-    document.addEventListener('click', e => { if (!e.target.closest?.('.theme-picker')) close(); });
-    menu.addEventListener('keydown', e => {
-        const items = [...menu.children], i = items.indexOf(document.activeElement);
-        if (e.key === 'Escape') { close(); button.focus(); }
-        else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
-    });
+    // Back to the top of a long list.
+    const top = iconButton('up', t('sheet.top'), 'fab list-top');
+    top.hidden = true;
+    top.onclick = () => list.scrollTo({ top: 0, behavior: 'smooth' });
+    $('sheetBody').appendChild(top);
+    list.addEventListener('scroll', () => { top.hidden = list.scrollTop < 500; }, { passive: true });
+    for (const el of [$('topbar'), $('chipsRow'), $('sheetHead'), $('sheetStatus'), $('dirLive'), $('bottomPlayer')]) new ResizeObserver(syncLayout).observe(el);
+    addEventListener('resize', syncLayout);
+    panelMode.addEventListener('change', () => setSheet(sheetState()));
+    setSheet(PICK_MODE ? 'peek' : 'half');
 }
+
+/* ---------- Static text and icons of the page ---------- */
+function applyStatic() {
+    for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+    for (const el of document.querySelectorAll('[data-i18n-label]')) el.setAttribute('aria-label', t(el.dataset.i18nLabel));
+    document.title = t('app.title');
+    const tool = (id, name, label) => {
+        const b = $(id);
+        b.replaceChildren(icon(name), node('span', 'tool-label', label));
+        b.setAttribute('aria-label', label); b.title = label;
+    };
+    tool('btnTv', 'tv', t('tools.tv')); tool('btnAutoRotate', 'rotate', t('tools.rotate'));
+    tool('btnTheme', 'theme', t('tools.theme')); tool('btnGuide', 'info', t('tools.guide'));
+    tool('btnMore', 'more', t('tools.more'));
+    const plain = (id, name, label) => { const b = $(id); b.replaceChildren(icon(name)); b.setAttribute('aria-label', label); b.title = label; };
+    plain('btnZoomIn', 'plus', t('map.zoomIn')); plain('btnZoomOut', 'minus', t('map.zoomOut')); plain('btnResetView', 'locate', t('map.recentre'));
+    plain('btnRandom', 'shuffle', t('radio.random'));
+    plain('btnPrevStation', 'prev', t('player.prev')); plain('btnNextStation', 'next', t('player.next'));
+    plain('btnExternal', 'external', t('player.website')); plain('btnShareStation', 'share', t('player.share'));
+    plain('btnRevokeAudio', 'power', t('player.revoke'));
+    $('btnPlayPause').replaceChildren(icon('play')); $('btnPlayPause').setAttribute('aria-label', t('player.play'));
+    $('volumeSlider').setAttribute('aria-label', t('player.volume')); $('volumeLabel').textContent = t('player.volume');
+    $('consentTitle').textContent = t('consent.title'); $('consentText').textContent = t('consent.text');
+    $('btnAcceptAudio').textContent = t('consent.accept'); $('btnDeclineAudio').textContent = t('consent.decline');
+    $('chipsRow').setAttribute('aria-label', t('filters.title'));
+    $('latestLabel').textContent = t('news.latest');
+    $('searchResults').setAttribute('aria-label', t('search.results.label'));
+    $('btnMode').setAttribute('aria-label', t('app.layerButton', { layer: RADIO_MODE.label }));
+}
+
 /* ---------- Inside the Q-P1NG app (contract v1, js/app-bridge.mjs) ---------- */
 /** What Back closes, topmost first: each step's test says whether it is open, its close() closes it. */
 function backSteps() {
-    const search = $('searchResults'), menus = [$('modeMenu'), $('themeMenu')];
     return [
-        { open: () => search.style.display === 'block' || document.activeElement === $('searchInput'),
-          close: () => { hideSearch(); $('searchInput').value = ''; $('searchInput').blur(); } },
-        { open: () => menus.some(m => !m.hidden), close: () => { for (const m of menus) m.hidden = true; $('btnMode').setAttribute('aria-expanded', 'false'); $('btnTheme').setAttribute('aria-expanded', 'false'); } },
+        { open: () => searchOpen() || document.activeElement === $('searchInput'), close: closeSearch },
+        { open: menuOpen, close: closeMenus },
         { open: () => Boolean(document.querySelector('dialog[open]')), close: () => [...document.querySelectorAll('dialog[open]')].pop().close() },
         { open: () => Boolean(tv?.open), close: () => tv.close?.() },
         { open: () => Boolean(document.fullscreenElement), close: () => document.exitFullscreen?.() },
-        { open: () => Boolean(explorer?.selected) && !$('countryDrawer').hidden, close: () => explorer.deselect() },
-        { open: () => phone.matches && $('countryDrawer').dataset.sheet === 'full' && !$('countryDrawer').hidden, close: () => { $('countryDrawer').dataset.sheet = 'half'; setFolded(false); } }
+        { open: () => Boolean(explorer?.selected) && !$('sheet').hidden, close: () => explorer.deselect() },
+        { open: () => !panelMode.matches && sheetState() === 'full' && !$('sheet').hidden, close: () => setSheet('half') }
     ];
 }
 function pageBack() {
-    const step = backSteps().find(s => s.open());
-    if (!step) return false;
-    step.close();
+    const s = backSteps().find(x => x.open());
+    if (!s) return false;
+    s.close();
     syncAppState();
     return true;
 }
@@ -875,9 +1080,9 @@ function syncAppState() {
 /** The app's ⋮ menu: the page tools it hosts (themes, guide, rotate, lite), and the layer menu, search and random. */
 function appCommand(name) {
     if (name === 'layers') { $('btnMode').click(); return true; }
-    if (name === 'search') { $('searchInput').focus(); return true; }
-    if (name === 'themes') { $('btnTheme').click(); return true; }
-    if (name === 'guide') { guide.open(); return true; }
+    if (name === 'search') { closeMenus(); $('searchInput').focus(); return true; }
+    if (name === 'themes') { openThemes(); return true; }
+    if (name === 'guide') { closeMenus(); guide.open(); return true; }
     if (name === 'rotate') { if ($('btnAutoRotate').disabled) return false; $('btnAutoRotate').click(); return true; }
     if (name === 'random') { $('btnRandom').click(); return true; }
     if (name === 'lite') {
@@ -891,85 +1096,127 @@ function appCommand(name) {
 }
 function initAppContract() {
     if (!APP_MODE) return;
-    onApp({ back: pageBack, command: appCommand, theme: () => setTheme(theme.id) });
+    onApp({ back: pageBack, command: appCommand, theme: () => setTheme(theme.id), insets: syncLayout });
     // Any change of what is open (menus, dialogs, card, sheet, search) may change canGoBack.
-    new MutationObserver(syncAppState).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'open', 'data-sheet', 'aria-expanded'] });
+    new MutationObserver(syncAppState).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'open', 'data-sheet', 'data-view', 'aria-expanded', 'class'] });
     for (const type of ['focusin', 'focusout', 'play', 'pause', 'fullscreenchange']) document.addEventListener(type, syncAppState, true);
     // The station's own site: through the app, which asks first (window.open and other origins are blocked in the app).
-    if (hasNative()) $('btnExternal').addEventListener('click', e => {
+    $('btnExternal').addEventListener('click', e => {
         e.preventDefault();
         if (!openExternal($('btnExternal').href, player?.station?.title || '')) showAddress($('btnExternal').href, player?.station?.title || '');
     });
 }
+/** The theme menu: each theme's own colours in its swatch; in the app, the app's colours first. */
+function openThemes() {
+    const menu = $('themeMenu'), open = menu.hidden;
+    closeMenus();
+    menu.hidden = !open;
+    $('btnTheme').setAttribute('aria-expanded', String(open));
+    if (open) menu.querySelector('[aria-checked="true"]')?.focus();
+}
+function initThemeMenu() {
+    const menu = $('themeMenu');
+    menu.replaceChildren();
+    for (const th of THEMES) {
+        const item = node('button', 'menu-item');
+        item.type = 'button';
+        // data-preview scopes the theme's colours to the item, so the swatch shows them.
+        Object.assign(item.dataset, { id: th.id, preview: th.id });
+        item.setAttribute('role', 'menuitemradio');
+        item.setAttribute('aria-checked', String(th.id === theme.id));
+        const swatch = node('span', 'theme-swatch');
+        swatch.append(node('i'), node('i'), node('i'));
+        const text = node('span', 'menu-text');
+        text.append(node('b', '', th.label), node('small', '', th.note));
+        item.append(swatch, text, icon('check', 'icon check'));
+        item.onclick = () => { setTheme(th.id); closeMenus(); haptic('tick'); };
+        menu.appendChild(item);
+    }
+    $('btnTheme').onclick = openThemes;
+    menuKeys(menu, $('btnTheme'));
+    $('btnMore').onclick = () => {
+        const open = !$('tools').classList.contains('open');
+        closeMenus();
+        $('tools').classList.toggle('open', open);
+        $('btnMore').setAttribute('aria-expanded', String(open));
+        if (open) $('tools').querySelector('.tool:not([hidden])')?.focus();
+    };
+    for (const id of ['btnTv', 'btnAutoRotate', 'btnGuide']) $(id).addEventListener('click', () => $('tools').classList.remove('open'));
+}
 
 async function start() {
+    applyStatic();
     initAppContract();
-    guide = createGuide({ button: $('btnGuide'), layers: [RADIO_MODE, ...Object.values(DIRECTORIES)], groups: MODE_GROUPS,
+    guide = createGuide({ button: $('btnGuide'), layers: [RADIO_MODE, ...Object.values(DIRECTORIES)].map(m => ({ ...m, group: groupOf(m) })), groups: MODE_GROUPS,
         onLayer: id => { if (ready) setMode(id); },
         dbFiles: [['qp1ng.sqlite.gz', 'db/qp1ng.sqlite.gz'], ['qp1ng-surveillance.sqlite.gz', 'db/qp1ng-surveillance.sqlite.gz'],
             [WEBCAM_DB.name, WEBCAM_DB.href, WEBCAM_DB.notice]] });
     initKeys();
     initMirrorNotice();
     initThemeMenu();
-    initShortcutsPanel();
-    initDrawer();
-    for (const id of buttons) $(id).disabled = true;
+    initSearch();
+    for (const id of PLAY_CONTROLS) $(id).disabled = true;
     $('btnAutoRotate').disabled = true;
-    // Overlays above the player follow its real height (it grows with the consent bar and station chips).
-    new ResizeObserver(() => document.documentElement.style.setProperty('--player-h', `${$('bottomPlayer').offsetHeight}px`)).observe($('bottomPlayer'));
     player = new RadioPlayer({ holder: $('audioHolder'), onState: markState });
     // User radio: a station's card plays it in this player, behind the same audio consent.
     QCAST.listen = s => {
         const ogg = webEndpoints(s)[0]?.replace(/\/live\.qcs$/, '/live.opus');
         const station = { id: `qc-${s.session}`, layer: 'qcast', title: s.title, codec: 'OPUS', bitrate: Math.round(s.bitrate / 1000),
             stream_url: s.external ? s.listenUrl : ogg, qcast: s.external ? null : s };
-        currentPlace = null; cityStations = []; currentIndex = 0; renderChips();
+        currentPlace = null; cityStations = []; currentIndex = 0; renderStationChips();
         $('playerTitle').textContent = station.title; $('playerTitle').title = station.title;
-        $('playerTech').textContent = `Opus · ${station.bitrate} kbps`;
-        $('playerCity').textContent = s.place || 'User radio'; $('playerCity').classList.remove('approx'); $('playerCity').title = '';
+        $('playerTech').textContent = `Opus · ${num(station.bitrate)} kbps`;
+        $('playerCity').textContent = s.place || t('qcast.label'); $('playerCity').classList.remove('approx'); $('playerCity').title = '';
         $('playerCountry').textContent = '· Q-Cast';
         $('btnPlayPause').disabled = false;
         $('bottomPlayer').dataset.station = '1';
         player.select(station, config, '', '');
+        if (player.allowed) player.start(); else askConsent();
+        updatePlayer();
     };
     // In the app, tapping a station hands it over at once: the app's own dialog asks before any connection.
     if (APP_MODE) player.setConsent(true);
+    // The website asks once, in one sheet, before any media connection.
+    const askConsent = () => { if (!$('audioConsent').open) $('audioConsent').showModal(); $('btnAcceptAudio').focus(); };
     $('btnAcceptAudio').onclick = () => {
-        player.setConsent(true); $('audioConsent').hidden = true; $('btnRevokeAudio').hidden = false;
+        player.setConsent(true); $('audioConsent').close(); $('btnRevokeAudio').hidden = false;
         if (player.station) player.start();
     };
-    $('btnRevokeAudio').onclick = () => { player.setConsent(false); $('audioConsent').hidden = false; $('btnRevokeAudio').hidden = true; };
+    $('btnDeclineAudio').onclick = () => $('audioConsent').close();
+    $('btnRevokeAudio').onclick = () => { player.setConsent(false); player.pause?.(); $('btnRevokeAudio').hidden = true; toast(t('player.revoked')); };
     $('volumeSlider').oninput = e => player.setVolume(e.target.value);
     $('btnPlayPause').onclick = () => {
         if (APP_MODE) { player.setConsent(true); player.start(); return; }
         if (player.allowed) { player.toggle(); return; }
-        playerMini = false; applyPlayerSize(); // the consent bar is in the full player
-        $('audioConsent').hidden = false; $('btnAcceptAudio').focus();
+        askConsent();
     };
-    $('btnPlayerSize').onclick = () => { playerMini = !$('bottomPlayer').classList.contains('mini'); applyPlayerSize(); };
+    $('btnPlayerSize').onclick = () => { playerExpanded = !$('bottomPlayer').classList.contains('expanded'); updatePlayer(); };
     $('btnShareStation').onclick = () => { if (player.station) shareLink(new URLSearchParams({ layer: 'radio', station: player.station.id }), `${player.station.title} · Q-P1NG Globe`); };
-    $('btnNextStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex+1)%cityStations.length; tune(cityStations[currentIndex]); } };
-    $('btnPrevStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex-1+cityStations.length)%cityStations.length; tune(cityStations[currentIndex]); } };
+    $('btnNextStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex + 1) % cityStations.length; tune(cityStations[currentIndex]); } };
+    $('btnPrevStation').onclick = () => { if (cityStations.length) { currentIndex = (currentIndex - 1 + cityStations.length) % cityStations.length; tune(cityStations[currentIndex]); } };
     $('btnRandom').onclick = async () => {
+        haptic('tick');
         if (mode !== 'radio') {
             const pool = dirShown();
             if (pool.length) selectDir(pool[Math.floor(Math.random() * pool.length)]);
             return;
         }
         if (!catalog?.stations.length) return;
-        const station = catalog.stations[Math.floor(Math.random()*catalog.stations.length)];
+        const station = catalog.stations[Math.floor(Math.random() * catalog.stations.length)];
         selectPlace(catalog.byId.get(station.place_id), station.id);
     };
     explorer = createExplorer({
-        drawer: $('countryDrawer'), title: $('countryDrawerTitle'), meta: $('countryDrawerMeta'), list: $('countryCitiesList'),
+        sheet: $('sheet'), title: $('sheetTitle'), meta: $('sheetMeta'), list: $('sheetList'), cardBox: $('sheetCard'),
         getCenter: () => globe ? globe.world.pointOfView() : { lat: 41.9, lng: 12.5 },
-        onPick: selectDir, onShare: shareItem
+        onPick: it => mode === 'radio' ? selectPlace(it) : selectDir(it), onShare: shareItem,
+        onView: () => { syncLayout(); syncAppState(); }
     });
-    $('countryDrawerClose').onclick = () => { $('countryDrawer').hidden = true; };
-    $('searchInput').oninput = triggerSearch;
-    $('searchInput').addEventListener('keydown', e => { if (e.key === 'Escape') hideSearch(); if (e.key === 'ArrowDown') $('searchResults').querySelector('button')?.focus(); });
-    renderTabs();
-    document.addEventListener('click', e => { if (!e.target.closest?.('.search-wrapper')) hideSearch(); });
+    initSheet();
+    initModeMenu(); markMode();
+    document.addEventListener('qglobe:context-lost', () => {
+        const reload = node('button', 'btn btn-tonal', t('error.reload')); reload.type = 'button'; reload.onclick = () => location.reload();
+        pageNotice(t('error.contextLost'), [reload]);
+    });
     let savedMode = null;
     try { savedMode = localStorage.getItem('qradio.mode'); } catch { /* not remembered */ }
     const link = readLink(); // a shared link wins over the layer used last time
@@ -978,59 +1225,59 @@ async function start() {
     const linkLayer = link?.get('layer');
     const first = PICK_MODE ? 'qcast' : link ? (DIRECTORIES[linkLayer] ? linkLayer : 'radio') : DIRECTORIES[savedMode] ? savedMode : 'radio';
     const firstData = DIRECTORIES[first] ? loadDirectory(DIRECTORIES[first]) : loadCatalog();
-    firstData.catch(() => { /* handled below */ });
+    firstData.catch(() => { /* shown by setMode */ });
     try {
         const runtimeConfig = await loadJSON('app-config.json');
-        if (!['direct','proxy'].includes(runtimeConfig?.streamMode)) throw new Error('Invalid catalog or configuration');
+        if (!['direct', 'proxy'].includes(runtimeConfig?.streamMode)) throw new Error('Invalid catalog or configuration');
         config = runtimeConfig;
-        // The globe is drawn once its first layer's data is here; without it, radio as before; without radio, an error.
-        const firstOk = await firstData.then(() => true, e => { if (first === 'radio') throw e; return false; });
-        if (!firstOk) { unavailable(DIRECTORIES[first]); await loadCatalog(); } // tried once, as before
-        try {
-            // Choosing a point for the app: tapping a station opens nothing and plays nothing; only a long press counts.
-            globe = createGlobe($('globeViz'), item => PICK_MODE ? null : mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false),
-                { lite: LITE_MODE, onPick: PICK_MODE ? point => requestNativePick(point.lat, point.lng) : null });
-            // Choosing a point for the app: start where the station already is, ringed.
-            const start = PICK_MODE && pickStart();
-            if (start) { globe.markPick(start.lat, start.lng); globe.world.pointOfView({ ...start, altitude: 1.4 }, 0); }
-            setTheme(theme.id);
-            $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
-            $('btnResetView').onclick = () => globe.navigation.flyTo({lat:41.9,lng:12.5,altitude:2.2});
-            $('btnAutoRotate').disabled = false;
-            $('btnAutoRotate').onclick = () => {
-                globe.navigation.cancel(); const enabled = !globe.world.controls().autoRotate;
-                globe.world.controls().autoRotate = enabled; updateRotate(enabled);
-            };
-        } catch {
-            $('globeNotice').textContent = '3D globe unavailable: check WebGL and CDN access. Search, countries and the player remain usable.';
-            $('globeNotice').hidden = false;
-            document.querySelector('.reticle-container').hidden = true;
-            for (const id of ['btnZoomIn','btnZoomOut','btnResetView']) $(id).disabled = true;
-        }
-        if (APP_MODE) { $('audioConsent').hidden = true; $('btnRevokeAudio').hidden = true; }
-        $('playerDetail').textContent = 'Pick a dot on the globe, a shortcut, or search for a station.';
-        initModeMenu(); markMode(); watchLive();
-        tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });
-        // The first layer is remembered as before: a link's or the picker's, not the default radio one.
-        const shown = firstOk ? await setMode(first, { remember: false }) || (first !== 'radio' && await setMode('radio', { remember: false }))
-            : await setMode('radio', { remember: false });
-        if (!shown) throw new Error('Invalid catalog or configuration');
-        if (first !== 'radio' && mode === first && !PICK_MODE) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
-        ready = true; $('btnRandom').disabled = false;
+    } catch {
+        // Without its configuration the page cannot play anything, but the globe and every layer still work.
+        config = { streamMode: 'direct', proxyBase: '', requireAudioConsent: true };
+    }
+    // The globe is drawn at once, before any data: a layer that fails to load leaves the globe and an error with Retry.
+    try {
+        // Choosing a point for the app: tapping a station opens nothing and plays nothing; only a long press counts.
+        globe = createGlobe($('globeViz'), item => PICK_MODE ? null : mode === 'radio' ? selectPlace(item) : selectDir(item), () => updateRotate(false),
+            { lite: LITE_MODE, onPick: PICK_MODE ? point => requestNativePick(point.lat, point.lng) : null });
+        // Choosing a point for the app: start where the station already is, ringed.
+        const pick = PICK_MODE && pickStart();
+        if (pick) { globe.markPick(pick.lat, pick.lng); globe.world.pointOfView({ ...pick, altitude: 1.4 }, 0); }
+        setTheme(theme.id);
+        $('btnZoomIn').onclick = globe.navigation.zoomIn; $('btnZoomOut').onclick = globe.navigation.zoomOut;
+        $('btnResetView').onclick = () => {
+            const it = mode === 'radio' ? currentPlace : explorer.selected;
+            globe.navigation.flyTo(it && placed(it) ? { lat: it.lat, lng: it.lng, altitude: Math.min(globe.world.pointOfView().altitude, .8) } : { lat: 41.9, lng: 12.5, altitude: 2.2 });
+        };
+        $('btnAutoRotate').disabled = false;
+        $('btnAutoRotate').onclick = () => {
+            globe.navigation.cancel(); const enabled = !globe.world.controls().autoRotate;
+            globe.world.controls().autoRotate = enabled; updateRotate(enabled);
+        };
+    } catch {
+        const reload = node('button', 'btn btn-tonal', t('error.reload')); reload.type = 'button'; reload.onclick = () => location.reload();
+        pageNotice(t('error.noGlobe'), [reload]);
+        document.querySelector('.reticle').hidden = true;
+        for (const id of ['btnZoomIn', 'btnZoomOut', 'btnResetView']) $(id).disabled = true;
+        postError('fatal', true);
+    }
+    syncLayout();
+    $('loaderSplash').hidden = true;
+    watchLive();
+    tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });
+    ready = true; $('btnRandom').disabled = false;
+    // The first layer is remembered as before: a link's or the picker's, not the default radio one.
+    const shown = await setMode(first, { remember: false });
+    if (shown && first !== 'radio' && mode === first && !PICK_MODE) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
+    if (shown) {
         markReady('qglobe:globe-ready');
         // Then what the link adds: its view, filters, card or station (unless its layer could not be loaded).
         if (link && !PICK_MODE && mode === first) await applyLink(link, { justShown: true });
-        linked = true;
         markReady('qglobe:layer-ready');
-        post('ready', { layer: mode });
-        syncAppState();
-        window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
-    } catch (e) {
-        $('playerTitle').textContent = 'Loading failed';
-        $('playerDetail').textContent = 'Serve the folder over HTTP/HTTPS, not via file://. Check the data/ files and app-config.json, then reload.';
-        $('globeNotice').textContent = String(e.message); $('globeNotice').hidden = false;
-        postError('fatal');
-    } finally { $('loaderSplash').hidden = true; }
+    }
+    linked = true;
+    post('ready', { layer: mode });
+    syncAppState();
+    window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
     globalThis.QRadioGlobe = Object.freeze({
         diagnostics: () => ({ ready, mode: config?.streamMode, places: catalog?.places.length || 0, stations: catalog?.stations.length || 0, worker: Boolean(catalog?.worker), playerState: player.state, ...globe?.diagnostics() }),
         // The area in view, as the live loads compute it and as globe.gl's raycast does (tests compare them).
@@ -1041,6 +1288,8 @@ async function start() {
         if (document.hidden) { globe.navigation.cancel(); globe.world.pauseAnimation(); }
         else globe.world.resumeAnimation();
     });
+    // The app's playback state (data-native-playback) shows or hides the page's player.
+    new MutationObserver(updatePlayer).observe(document.documentElement, { attributes: true, attributeFilter: ['data-native-playback'] });
     window.addEventListener('pagehide', e => { player.pause(); if (!e.persisted) { globe?.destroy(); catalog?.destroy(); clearTimeout(searchTimer); } });
 }
 if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', start, { once: true }); else start();
