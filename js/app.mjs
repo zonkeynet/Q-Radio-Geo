@@ -1189,7 +1189,33 @@ function syncLayout() {
         const insets = { top: chromeBottom, bottom: dock + (portrait ? playerH : 0), left: Math.round(left), right: Math.round(right) };
         for (const [k, v] of Object.entries(insets)) root.setProperty(`--view-${k}`, `${v}px`);
         globe?.setViewInsets(insets);
+        centreSearch(insets);
     });
+}
+/**
+ * Desktops: the search pill centred on the globe, like the player (the free area's centre beside an open panel, the
+ * window's once it is collapsed), as wide as fits between the header's other parts; in the row when there is no room.
+ */
+const wide = matchMedia('(min-width: 1051px)');
+function centreSearch({ left, right }) {
+    const bar = $('topbar');
+    let on = false;
+    if (wide.matches) {
+        const centre = (left + innerWidth - right) / 2;
+        let from = 0, to = innerWidth;
+        for (const el of bar.querySelectorAll(':scope > :not(.search, .menu)')) {
+            const r = el.getBoundingClientRect();
+            if (!r.width) continue; // not shown (⋮ on desktops)
+            if (r.left + r.width / 2 < centre) from = Math.max(from, r.right); else to = Math.min(to, r.left);
+        }
+        const half = Math.min(260, centre - from - 12, to - centre - 12);
+        if (half >= 160) {
+            on = true;
+            bar.style.setProperty('--search-x', `${Math.round(centre - half - bar.getBoundingClientRect().left)}px`);
+            bar.style.setProperty('--search-w', `${Math.round(half * 2)}px`);
+        }
+    }
+    bar.classList.toggle('search-centred', on);
 }
 function initSheet() {
     const sheet = $('sheet'), handle = $('sheetHandle'), list = $('sheetList');
@@ -1275,7 +1301,8 @@ function initSheet() {
     top.onclick = () => list.scrollTo({ top: 0, behavior: 'smooth' });
     $('sheetBody').appendChild(top);
     list.addEventListener('scroll', () => { top.hidden = list.scrollTop < 500; }, { passive: true });
-    for (const el of [$('topbar'), $('chipsRow'), $('sheetHead'), $('sheetStatus'), $('dirLive'), $('bottomPlayer')]) new ResizeObserver(syncLayout).observe(el);
+    // The layer's name sizes its button, and with it the room for a centred search.
+    for (const el of [$('topbar'), $('btnMode'), $('chipsRow'), $('sheetHead'), $('sheetStatus'), $('dirLive'), $('bottomPlayer')]) new ResizeObserver(syncLayout).observe(el);
     addEventListener('resize', syncLayout);
     panelMode.addEventListener('change', () => setSheet(sheetState()));
     setSheet(PICK_MODE ? 'peek' : 'half');

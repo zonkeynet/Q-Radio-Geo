@@ -5,7 +5,8 @@
 // Then the interface: the app contract (messages, back(), commands, insets), Italian and English, a right-to-left
 // sanity check, landscape (side panel), a 320 px phone and 130 % page zoom (no header overlap, nothing cut off).
 // Layout: the TV dock and the player stay between the chips and the sheet (full sheet too), a webcam card's actions fit
-// the sheet, theme names read on dark and light menus, search results sit under the field on tablets and desktops.
+// the sheet, theme names read on dark and light menus, search results sit under the field on tablets and desktops, and
+// on desktops the search pill sits on the globe's centre.
 // News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
 // Loading: a compact row (the sheet only its title while a layer loads), transient failures retried with "Retrying
 // (n/3)", the error only after the last attempt. Search: the ✕ and the "no results" state. In the app: no page
@@ -598,6 +599,11 @@ try {
                 await p.locator('#searchResults .search-item').first().waitFor({ timeout: 20000 });
                 const field = await box('.search'), results = await box('#searchResults');
                 assert.ok(Math.abs(results.l - field.l) <= 1 && Math.abs(results.w - field.w) <= 1 && results.t >= field.b, `${w} px: results under the field ${JSON.stringify({ field, results })}`);
+                // Desktops: the search pill centred on the globe (its reticle), like the player.
+                if (w >= 1051) {
+                    const reticle = await box('.reticle');
+                    assert.ok(Math.abs((field.l + field.r) / 2 - (reticle.l + reticle.r) / 2) <= 2, `${w} px: the search on the globe's centre ${JSON.stringify({ field, reticle })}`);
+                }
                 await p.locator('#searchInput').fill('');
             }
             await p.close();
