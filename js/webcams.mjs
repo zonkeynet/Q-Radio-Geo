@@ -313,14 +313,16 @@ export function embedUrl(value) {
         return u.href;
     } catch { return null; }
 }
-/** Where a live stream plays: frame (the player, website only), watch (the page that opens outside), who sees it. */
+/** Where a live stream plays: frame (the player, website only), watch (the page that opens outside), who sees it.
+ * A channel plays its current live, which survives a restart of the stream (a new video id); the data names a channel
+ * only when it carries this one live. The video id, when known, gives the app's thumbnail. */
 export function streamSource(camera) {
     if (camera?.format === 'youtube') {
         const ids = youtubeIds(camera.youtube);
         if (!ids) return null;
         return { who: 'YouTube', youtube: true,
-            frame: ids.video ? `https://${YOUTUBE_EMBED}/embed/${ids.video}?autoplay=1` : `https://${YOUTUBE_EMBED}/embed/live_stream?channel=${ids.channel}&autoplay=1`,
-            watch: ids.video ? `https://www.youtube.com/watch?v=${ids.video}` : `https://www.youtube.com/channel/${ids.channel}/live`,
+            frame: ids.channel ? `https://${YOUTUBE_EMBED}/embed/live_stream?channel=${ids.channel}&autoplay=1` : `https://${YOUTUBE_EMBED}/embed/${ids.video}?autoplay=1`,
+            watch: ids.channel ? `https://www.youtube.com/channel/${ids.channel}/live` : `https://www.youtube.com/watch?v=${ids.video}`,
             thumbnail: ids.video ? `https://i.ytimg.com/vi/${ids.video}/hqdefault_live.jpg` : null };
     }
     if (camera?.format === 'embed') {
@@ -657,7 +659,9 @@ function openStream(camera) {
         // Created only now: before this tap no request reaches YouTube or the owner's server.
         frame = element('iframe', 'embed-frame');
         frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
-        frame.setAttribute('referrerpolicy', 'no-referrer');
+        // YouTube's player refuses to start without the embedding site's identity (error 153, "player configuration"):
+        // it gets this site's origin, never the page address. Owners' players get no referrer.
+        frame.setAttribute('referrerpolicy', source.youtube ? 'strict-origin-when-cross-origin' : 'no-referrer');
         frame.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
         frame.setAttribute('allowfullscreen', '');
         frame.setAttribute('title', text(camera.name, 160));

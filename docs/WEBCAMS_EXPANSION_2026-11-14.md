@@ -314,6 +314,28 @@ I collector dei giri precedenti non riscrivono più le policy delle fonti ora co
 
 `webcams-live.json`: **6.390.861 → 6.714.072 byte** (gzip 980.929 → 1.000.479 byte). I campi di posizione sono codificati a tabella. Preparazione nel viewer: ~0,41 s, invariata.
 
+## Dirette dei proprietari (15 novembre 2026)
+
+Le dirette che il proprietario della camera pubblica sul proprio canale YouTube, o con il proprio player sulla propria pagina, entrano dalla fonte rivista `scripts/webcam_live_streams.json` (`--live-streams`, fonte `owner_live_streams`, formato e regole in `docs/WEBCAM_LIVE_STREAMS.md`). Dei 110 candidati della ricerca (confidenza alta o media, YouTube o player del proprietario) ne entrano **77: 64 YouTube e 13 player del proprietario**; gli altri 33 restano fuori con il motivo scritto nel file (`left_out`). Ogni record è stato verificato il 15 novembre da questo PC, senza Tor.
+
+Catalogo: **64.988 → 65.052 record** (77 dirette, 13 record comunitari della stessa camera fusi nella diretta), visualizzabili **24.263 → 24.340**, **153 → 154 fonti**. Paesi con almeno un record **84 → 99**, con almeno una camera visualizzabile **24 → 49**.
+
+| Area | Dirette | Paesi (dirette) |
+| --- | ---: | --- |
+| Caraibi e Atlantico | 19 | Curaçao 6, Sint Maarten 4, Cayman 3, Anguilla, Aruba, Bermuda, Rep. Dominicana, Turks e Caicos, Isole Vergini britanniche |
+| Nord America | 12 | Messico 7, Stati Uniti 5 (Florida 3, Gateway Arch 2) |
+| America centrale e meridionale | 14 | Cile 7, Argentina 3, Brasile 2, Guatemala, Panama |
+| Europa | 10 | Paesi Bassi 5, Germania 2, Francia, Irlanda, Regno Unito |
+| Africa | 10 | Malawi 3, Namibia 3, Sudafrica 3, Egitto |
+| Asia | 9 | Thailandia 3, India 2, Indonesia 2, Filippine 2 |
+| Oceania | 3 | Australia, Fiji, Samoa americane |
+
+- **Paesi nuovi nel catalogo (15):** Anguilla, Aruba, Bermuda, Curaçao, Rep. Dominicana, Fiji, Guatemala, Cayman, Malawi, Messico, Panama, Sint Maarten, Samoa americane, Turks e Caicos, Isole Vergini britanniche.
+- **Paesi che diventano visualizzabili (25):** i 15 sopra più Argentina, Brasile, Egitto, Indonesia, Irlanda, Namibia, Paesi Bassi, Filippine, Thailandia, Sudafrica (prima solo link).
+- **Duplicati:** 8 record comunitari (OSM, Wikidata) che puntano alla stessa diretta e 5 dello stesso sito del proprietario a meno di 300 m sono fusi nella diretta (Rotterdam ×3, Amsterdam, Noordwijk, Les Arcs, Berlino ×2, Cipolletti ×2, Santiago ×3).
+- **Fuori, per scelta:** BeachCam Israel (5: il player nudo salta la pubblicità del sito; e-mail di richiesta preparata), ElCat in Kirghizistan (2: nessun embed pubblico), FOX 35 Orlando (2: da confermare con l'emittente), santuario dell'Imam Ali a Najaf (verifica sanzioni non completata), WebCamera.pl (2: miniatura con link, non un player, e carica Google Analytics).
+- **Fuori, per le verifiche:** 9 video non in diretta a due controlli (Monterrey, Acapulco, Bogotá, Mendoza, Varanasi, Ambaji, Nieuwpoort, Curtea de Argeș, Pitești), Congonhas e Guarulhos (sessioni di 12 ore con id nuovi), Somnath (il canale trasmette un altro tempio), Golden Temple (solo audio), Ocean Frontiers (canale non in diretta), i 5 player Ozolio di Miami (non partono fuori dal sito del proprietario, provato su un telefono), i 2 player rtsp.me di Amirsoy («accesso temporaneamente limitato»).
+
 ## Pubblicazione del database
 
 `db/qp1ng-webcams.sqlite.gz` (circa 30 MB) è tracciato nel repository e pubblicato dal sito e dal mirror IPFS come gli altri due database (`db/` è escluso solo dal riscaldamento del gateway: si carica a richiesta). La guida (scheda Sources) lo collega a `db/qp1ng-webcams.sqlite.gz` e riporta le licenze: record e collegamenti OpenStreetMap ODbL 1.0, metadati Illinois DOT CC BY-SA 2.0, Wikidata CC0, le altre fonti secondo la tabella `sources`; nessuna licenza copre immagini e video collegati.
@@ -353,7 +375,7 @@ python3 -m unittest discover -s tests -p 'test_webcams*.py'
 node --test scripts/test_webcams.mjs scripts/test_native_app.mjs
 ```
 
-Per gli input del 14 novembre (pomeriggio) aggiungere un `--extra-catalog` per ogni file di `webcam-inputs-2026-11/` (variabile `QGLOBE_NEW_INPUTS`), più `--snapshot-checks` e `--health` per i file di `checks/`, e `--generated-at 2026-11-14T08:00:00+00:00`.
+Per gli input del 14 novembre (pomeriggio) aggiungere un `--extra-catalog` per ogni file di `webcam-inputs-2026-11/` (variabile `QGLOBE_NEW_INPUTS`), più `--snapshot-checks` e `--health` per i file di `checks/`, e `--generated-at 2026-11-14T08:00:00+00:00`. Il catalogo pubblicato dal 15 novembre usa `--generated-at 2026-11-14T16:00:00+00:00` e aggiunge `--live-streams scripts/webcam_live_streams.json` (le dirette dei proprietari, che portano ciascuna la data del proprio controllo).
 
 
 `published_urls` deduplica gli indirizzi; `webcam_url_links` conserva i loro scopi e le associazioni. `webcam_streams` contiene solo HLS ammessi dal player. `snapshot_access_checks` conserva le verifiche immagini; `osm_candidate_links` solo candidati geografici. Per l'integrazione usare i campi dei diritti e gli stati datati, senza trasformare ogni URL in `is_live=true`.

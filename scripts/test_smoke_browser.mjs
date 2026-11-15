@@ -312,9 +312,10 @@ try {
             await page.locator('#sheetList .dir-item').first().click();
             const card = page.locator('#sheetCard .dir-card');
             await card.waitFor();
-            assert.match(await card.innerText(), /snapshot|video|play in the app|web link|image/i);
-            // The TV wall's idle <video> elements exist from the start, without a source: only a source or a viewer counts.
-            const media = await page.evaluate(() => [...document.querySelectorAll('dialog[open], video, audio')]
+            assert.match(await card.innerText(), /snapshot|video|play in the app|web link|image|live stream/i);
+            // The TV wall's idle <video> elements exist from the start, without a source: only a source, a viewer or a framed
+            // player counts (a live stream frames nothing before "Load the player").
+            const media = await page.evaluate(() => [...document.querySelectorAll('dialog[open], video, audio, iframe')]
                 .filter(e => e.tagName === 'DIALOG' || e.currentSrc || e.getAttribute('src') || e.srcObject).map(e => e.outerHTML.slice(0, 120)));
             assert.deepEqual(media, [], `no media element or open viewer: ${JSON.stringify(media)}`);
         });
@@ -333,7 +334,7 @@ try {
             await page.waitForFunction(() => document.getElementById('sheet').dataset.sheet !== 'peek', null, { timeout: 10000 });
             const card = page.locator('#sheetCard .dir-card');
             await card.waitFor();
-            assert.match(await card.innerText(), /snapshot|video|play in the app|web link|image/i);
+            assert.match(await card.innerText(), /snapshot|video|play in the app|web link|image|live stream/i);
         });
         await step('the view area agrees with globe.gl\'s raycast (live loads use it)', async () => {
             for (const view of ['51.507,-0.128,0.150', '35.680,139.760,0.400', '-33.900,151.200,0.080', '0.000,0.000,2.200']) {
@@ -577,7 +578,7 @@ try {
                     const frame = p.locator('dialog iframe');
                     await frame.waitFor({ state: 'attached' });
                     assert.equal(await frame.getAttribute('sandbox'), 'allow-scripts allow-same-origin allow-presentation');
-                    assert.equal(await frame.getAttribute('referrerpolicy'), 'no-referrer');
+                    assert.equal(await frame.getAttribute('referrerpolicy'), 'strict-origin-when-cross-origin', 'YouTube gets the site, not the page');
                     await p.waitForTimeout(800);
                     assert.ok(stream().some(u => u.startsWith('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')), stream().join(' '));
                 } else {

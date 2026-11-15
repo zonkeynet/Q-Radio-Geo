@@ -504,7 +504,7 @@ export default {
     "webcams.outsideHost": "Contenuti della telecamera fuori dal server del flusso",
     "webcams.pausedHidden": "In pausa perché la pagina è nascosta. Premi Riproduci o Carica per ricollegarti.",
     "webcams.streamTitle": "Diretta",
-    "webcams.embedNoteYoutube": "YouTube vedrà la tua connessione quando il lettore si carica. Non si carica nulla finché non tocchi.",
+    "webcams.embedNoteYoutube": "YouTube vedrà la tua connessione e l’indirizzo di questo sito quando il lettore si carica (il suo lettore lo richiede). Non si carica nulla finché non tocchi.",
     "webcams.embedNoteOwner": "Il server del proprietario ({host}) vedrà la tua connessione quando il lettore si carica. Non si carica nulla finché non tocchi.",
     "webcams.loadPlayer": "Carica il lettore",
     "webcams.watchOnYoutube": "Guarda su YouTube",

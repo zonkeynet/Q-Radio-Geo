@@ -62,12 +62,17 @@ test('stream sources: youtube-nocookie frames, watch pages, and the only thumbna
     assert.equal(channel.frame, 'https://www.youtube-nocookie.com/embed/live_stream?channel=UCi4CSgJk3i_slWnWG9Y14qA&autoplay=1');
     assert.equal(channel.watch, 'https://www.youtube.com/channel/UCi4CSgJk3i_slWnWG9Y14qA/live');
     assert.equal(channel.thumbnail, null, 'a channel alone has no thumbnail: the placeholder');
+    // Both: the channel's current live plays (it survives a restart of the stream), the video gives the thumbnail.
+    const both = streamSource(record({ youtube: { channel: 'UCi4CSgJk3i_slWnWG9Y14qA', video: 'dQw4w9WgXcQ' } }));
+    assert.equal(both.frame, channel.frame);
+    assert.equal(both.watch, channel.watch);
+    assert.equal(both.thumbnail, video.thumbnail);
     const owner = streamSource(record({ format: 'embed', embed_url: 'https://relay.ozolio.com/pub.api?cmd=embed&oid=EMB_X' }));
     assert.equal(owner.watch, 'https://port.example.org/live', 'the owner\'s page opens outside');
 });
 
 /** Runs openWebcam on a stream record in a stand-in DOM; app: with the app's channel. Returns what was created and sent. */
-function viewer({ app }) {
+function viewer({ app, over = {} }) {
     const script = `
         const created = [], sent = [];
         class El { constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.style = {}; this.attrs = {}; this.hidden = false; }
@@ -80,7 +85,7 @@ function viewer({ app }) {
         ${app ? 'globalThis.qglobeNative = { postMessage: m => sent.push(JSON.parse(m)) };' : ''}
         globalThis.fetch = () => { throw Error('nothing is fetched'); };
         const W = await import(${JSON.stringify(new URL('../js/webcams.mjs', import.meta.url).href)});
-        const [camera] = W.prepareWebcams({ schema_version: 2, sources: [{ id: 'test', name: 'Test' }], items: [${JSON.stringify(record())}] });
+        const [camera] = W.prepareWebcams({ schema_version: 2, sources: [{ id: 'test', name: 'Test' }], items: [${JSON.stringify(record(over))}] });
         const opened = W.openWebcam(camera);
         const before = created.filter(e => e.tagName === 'IFRAME').length;
         const load = created.find(e => e.tagName === 'BUTTON' && e.onclick && /player/i.test(e.textContent || ''));
@@ -90,15 +95,24 @@ function viewer({ app }) {
     return JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim().split('\n').pop());
 }
 
-test('website: nothing is framed before the tap on "Load the player"; then a sandboxed, no-referrer frame', () => {
+test('website: nothing is framed before the tap on "Load the player"; then a sandboxed frame that tells YouTube only the site', () => {
     const r = viewer({ app: false });
     assert.equal(r.opened, true);
     assert.equal(r.before, 0, 'no frame before the tap');
     assert.equal(r.frame.src, 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1');
     assert.equal(r.frame.attrs.sandbox, 'allow-scripts allow-same-origin allow-presentation');
-    assert.equal(r.frame.attrs.referrerpolicy, 'no-referrer');
+    // YouTube's player does not start without the embedding site (error 153): the origin, never the page address.
+    assert.equal(r.frame.attrs.referrerpolicy, 'strict-origin-when-cross-origin');
     assert.equal(r.frame.attrs.allow, 'autoplay; fullscreen; picture-in-picture');
     assert.equal(r.label, 'Watch live');
+});
+
+test('website: an owner\'s player is framed with no referrer at all', () => {
+    const r = viewer({ app: false, over: { id: 'own-1', format: 'embed', youtube: undefined, embed_url: 'https://iframe.dacast.com/live/a/b' } });
+    assert.equal(r.before, 0, 'no frame before the tap');
+    assert.equal(r.frame.src, 'https://iframe.dacast.com/live/a/b');
+    assert.equal(r.frame.attrs.sandbox, 'allow-scripts allow-same-origin allow-presentation');
+    assert.equal(r.frame.attrs.referrerpolicy, 'no-referrer');
 });
 
 test('app: never a frame; "Watch the live" goes to the app as openExternal with the watch address', () => {

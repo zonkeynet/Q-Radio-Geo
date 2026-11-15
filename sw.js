@@ -20,7 +20,7 @@
  * this version, which deletes the Q-Globe caches, unregisters itself and reloads the open pages from the network. */
 'use strict';
 const ENABLED = true;
-const MANIFEST_HASH = '5d5b280f01a35815'; // scripts/build_sw.mjs
+const MANIFEST_HASH = '48a7f7b01eeaf769'; // scripts/build_sw.mjs
 
 const PREFIX = 'qglobe-';
 const SHELL = `${PREFIX}shell-${MANIFEST_HASH}`, DATA = `${PREFIX}data`, TILES = `${PREFIX}tiles`, META = `${PREFIX}meta`;

@@ -76,6 +76,45 @@ if WORLD_POLICY_PATH.exists():
         _policy["media_hosts"] = set(_policy.get("media_hosts", []))
         PROVIDER_POLICIES[_provider] = _policy
         EXTRA_CATALOG_PROVIDERS.add(_provider)
+# Owners' live streams (docs/WEBCAM_LIVE_STREAMS.md): a YouTube live that the camera's owner publishes on its own
+# channel with embedding allowed, or the owner's own player on a reviewed frame host. The reviewed list is repository
+# data (scripts/webcam_live_streams.json): each record names its owner and evidence and carries a dated check, and
+# only a record whose last check passed is admitted. Only --live-streams reads it (not an --extra-catalog provider).
+LIVE_STREAMS_PATH = Path(__file__).with_name("webcam_live_streams.json")
+YOUTUBE_TERMS = "https://www.youtube.com/t/terms"
+LIVE_STREAM_SOURCE = {
+    "id": "owner_live_streams", "name": "Owners' live streams (YouTube and the owners' own players)",
+    "url": "https://globe.qp1ng.com/docs/WEBCAM_LIVE_STREAMS.md", "terms_url": YOUTUBE_TERMS,
+    "attribution": "Each stream belongs to its owner, named on its card.",
+    "rights_status": "official_embed",
+    "license": "The owner's stream in the owner's player; no licence is granted",
+    "metadata_license": "Q-Globe review of the owners' public pages (scripts/webcam_live_streams.json)",
+    "media_rights": "Played only in the owner's own player (YouTube's player for YouTube), loaded on a tap; "
+                    "never copied, recorded or re-streamed by Q-Globe.",
+    "rights_note": "Each record is a stream its owner publishes for viewing: a YouTube live on the owner's own channel "
+                   "with embedding enabled (YouTube oEmbed answers 200), or the player the owner embeds on its own page, "
+                   "on a frame host reviewed in js/webcams.mjs (EMBED_HOSTS). Streams whose owner forbids embedding or "
+                   "third-party use, or with a sanctions concern, are left out with the reason in the source file.",
+    "review_status": "reviewed_live_streams",
+}
+PROVIDER_POLICIES[LIVE_STREAM_SOURCE["id"]] = {"source": LIVE_STREAM_SOURCE, "media_hosts": set(), "formats": ["youtube", "embed"]}
+STREAM_FORMATS = ("youtube", "embed")
+# Owner players that may be framed: EMBED_HOSTS in js/webcams.mjs and the frame-src of index.html list the same hosts.
+EMBED_HOSTS = frozenset({"g1.ipcamlive.com", "g2.ipcamlive.com", "g3.ipcamlive.com", "ipcamlive.com", "relay.ozolio.com",
+                         "rtsp.me", "iframe.dacast.com", "api.wetmet.net", "imageserver.webcamera.pl", "webcam.elcat.kg"})
+YOUTUBE_VIDEO_ID = re.compile(r"[A-Za-z0-9_-]{11}")
+YOUTUBE_CHANNEL_ID = re.compile(r"UC[A-Za-z0-9_-]{22}")
+YOUTUBE_VIDEO_LINK = re.compile(r"(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|embed/|live/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})")
+YOUTUBE_CHANNEL_LINK = re.compile(r"youtube(?:-nocookie)?\.com/(?:channel/|embed/live_stream\?(?:[^#]*&)?channel=)(UC[A-Za-z0-9_-]{22})")
+# Hosts that say nothing about who owns a camera: video platforms, frame hosts and directories.
+PLATFORM_HOSTS = frozenset({"youtube.com", "m.youtube.com", "youtu.be", "youtube-nocookie.com", "windy.com", "facebook.com",
+                            "instagram.com", "twitch.tv", "x.com", "twitter.com", "tiktok.com", "openstreetmap.org",
+                            "wikidata.org", "wikipedia.org", *EMBED_HOSTS})
+LIVE_STREAM_ROLES = ("camera_location", "associated_feature", "approximate", "named_feature", "place_centre")
+# Duplicates of a live stream (drop_live_duplicates): the same owner at the same place, within this radius; a record
+# that links the very same stream may lie as far as the live record's stated uncertainty (at most the second figure).
+LIVE_DUPLICATE_RADIUS_M = 300
+LIVE_SAME_STREAM_MAX_M = 5000
 INCOMPLETE_PROBE_STATUSES = {"budget_exhausted", "stopped", "interrupted"}
 OSM_ATTRIBUTION = "© OpenStreetMap contributors, ODbL 1.0; https://www.openstreetmap.org/copyright"
 # Positions placed by QGlobe where the operator publishes none: at the named feature in an open dataset
@@ -491,7 +530,215 @@ def duplicate_summary(log, radius):
                 f"{e['provider']} -> {e['superseded_by'].split(':', 1)[0]}" for e in log).items())),
             "note": "A community record goes only when an official record within the radius carries every one of its "
                     "links; page-only official records go only for reviewed same-operator provider pairs with matching "
-                    "names, their page kept as a reference. Anything uncertain is kept."}
+                    "names, their page kept as a reference. An owner's live stream merges with a record of the same "
+                    "stream, or the nearest record of the same owner's site within "
+                    f"{LIVE_DUPLICATE_RADIUS_M} m: the live stream stays (its page kept as a reference), unless the other "
+                    "record is an admitted feed. Anything uncertain is kept."}
+
+
+def stream_watch_url(item):
+    """The page a live stream opens outside the globe: YouTube's watch page (the channel's live when that is all
+    there is), or the owner's player."""
+    if item.get("format") == "youtube":
+        ids = item.get("youtube") or {}
+        return (f"https://www.youtube.com/watch?v={ids['video']}" if ids.get("video")
+                else f"https://www.youtube.com/channel/{ids['channel']}/live" if ids.get("channel") else None)
+    return item.get("embed_url") if item.get("format") == "embed" else None
+
+
+def stream_keys(item):
+    """What identifies a live stream: its YouTube video and channel, or the owner's player."""
+    ids = item.get("youtube") or {}
+    keys = {f"youtube-video:{ids['video']}"} if ids.get("video") else set()
+    keys |= {f"youtube-channel:{ids['channel']}"} if ids.get("channel") else set()
+    return keys | ({f"player:{link_key(item['embed_url'])}"} if item.get("embed_url") else set())
+
+
+def linked_stream_keys(item):
+    """The live streams another record links to (a YouTube watch, embed or channel address, an owner player)."""
+    keys = set()
+    for url in record_links_raw(item):
+        keys |= {f"youtube-video:{v}" for v in YOUTUBE_VIDEO_LINK.findall(url)}
+        keys |= {f"youtube-channel:{c}" for c in YOUTUBE_CHANNEL_LINK.findall(url)}
+        if (urlsplit(url).hostname or "").lower() in EMBED_HOSTS:
+            keys.add(f"player:{link_key(url)}")
+    return keys
+
+
+def record_links_raw(item):
+    fields = ("official_page", "stream_url", "snapshot_url", "embed_url", *REFERENCE_FIELDS)
+    return [item[f] for f in fields if isinstance(item.get(f), str) and item[f]]
+
+
+def site_host(url):
+    host = (urlsplit(url).hostname or "").lower().rstrip(".")
+    host = host[4:] if host.startswith("www.") else host
+    return None if not host or any(host == p or host.endswith("." + p) for p in PLATFORM_HOSTS) else host
+
+
+def owner_sites(live):
+    """The owner's own web site(s) for a live stream: its official and source pages, unless on a platform."""
+    return {h for h in (site_host(live[f]) for f in ("official_page", "source_page") if live.get(f)) if h}
+
+
+def drop_live_duplicates(items, radius=LIVE_DUPLICATE_RADIUS_M):
+    """One record per camera when an owner's live stream joins the catalogue (the rule in duplicate_summary).
+
+    The same stream: another record links the very same YouTube video (or one it had before a restart) or channel, or
+    the same owner player, within the live record's stated uncertainty (at least `radius`, at most
+    LIVE_SAME_STREAM_MAX_M). Failing that, the same owner: the nearest record within `radius` whose links are on the
+    owner's own site. Such records merge into the live record (the first one's page kept as a reference), unless one
+    is an admitted feed: then the live record goes.
+    """
+    live_id = LIVE_STREAM_SOURCE["id"]
+    grid = collections.defaultdict(list)
+    for x in items:
+        if x["provider"] != live_id:
+            grid[(math.floor(x["lat"] * 10), math.floor(x["lng"] * 10))].append(x)
+    gone, log = set(), []
+    for live in sorted((x for x in items if x["provider"] == live_id), key=lambda x: x["id"]):
+        reach = min(max(radius, float(live.get("coordinate_uncertainty_m") or 0)), LIVE_SAME_STREAM_MAX_M)
+        cy, cx = math.floor(live["lat"] * 10), math.floor(live["lng"] * 10)
+        nx = max(1, math.ceil(reach / (11_132 * max(math.cos(math.radians(live["lat"])), 0.05))))  # 0.1 deg of longitude
+        near = sorted(((distance_m(live["lat"], live["lng"], o["lat"], o["lng"]), o)
+                       for dy in (-1, 0, 1) for dx in range(-nx, nx + 1) for o in grid.get((cy + dy, cx + dx), [])
+                       if o["id"] not in gone), key=lambda pair: (pair[0], pair[1]["id"]))
+        keys = stream_keys(live) | {f"youtube-video:{v}" for v in live.get("previous_videos", [])}
+        sites = owner_sites(live)
+        same = [(d, o, "live-stream-same-stream") for d, o in near if d <= reach and keys & linked_stream_keys(o)]
+        owner = [(d, o, "live-stream-same-owner") for d, o in near if d <= radius and sites
+                 and sites & {site_host(u) for u in record_links_raw(o)}]
+        matches = same or owner[:1]
+        feeds = [(d, o) for d, o, _ in matches if viewable(o)]
+        if feeds:
+            d, o = feeds[0]
+            gone.add(live["id"])
+            log.append({"id": live["id"], "provider": live_id, "superseded_by": o["id"], "distance_m": round(d, 1),
+                        "rule": "live-stream-duplicate-of-feed"})
+            continue
+        for d, o, rule in matches:
+            gone.add(o["id"])
+            page = o.get("official_page")
+            if page and not live.get("reference_url") and link_key(page) not in record_links(live, provenance=True):
+                live["reference_url"] = page
+            log.append({"id": o["id"], "provider": o["provider"], "superseded_by": live["id"], "distance_m": round(d, 1),
+                        "rule": rule})
+    return [x for x in items if x["id"] not in gone], log
+
+
+def normalize_live_stream(raw, observed_at=None):
+    """One reviewed record of scripts/webcam_live_streams.json as a catalogue item. Nothing is requested."""
+    if not isinstance(raw, dict):
+        raise ValueError("Live-stream record must be an object")
+    for field in ("official_page", "source_page", "embed_url", "still_url"):
+        reason = private_url_reason(raw.get(field))
+        if reason:
+            raise PrivacyFiltered(reason, field)
+    source = LIVE_STREAM_SOURCE
+    provider_id = raw.get("provider_id")
+    if not isinstance(provider_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{2,99}", provider_id):
+        raise ValueError("Invalid live-stream identifier")
+    check = raw.get("check")
+    if not isinstance(check, dict) or check.get("result") != "ok" or not re.fullmatch(r"\d{4}-\d\d-\d\dT[\d:]{8}Z", str(check.get("checked_at"))):
+        raise ValueError("Not admitted: the last dated check did not pass")
+    lat, lng = float(raw["lat"]), float(raw["lng"])
+    if not (math.isfinite(lat) and math.isfinite(lng) and -90 <= lat <= 90 and -180 <= lng <= 180) or (lat == 0 and lng == 0):
+        raise ValueError("Missing or invalid coordinates")
+    country = str(raw.get("country") or "").upper()
+    if not re.fullmatch(r"[A-Z]{2}", country):
+        raise ValueError("Invalid country code")
+    format_, youtube, embed = raw.get("format"), None, None
+    if format_ == "youtube":
+        ids = raw.get("youtube") if isinstance(raw.get("youtube"), dict) else {}
+        video, channel = ids.get("video"), ids.get("channel")
+        if set(ids) - {"video", "channel"} or video is not None and not (isinstance(video, str) and YOUTUBE_VIDEO_ID.fullmatch(video)) \
+                or channel is not None and not (isinstance(channel, str) and YOUTUBE_CHANNEL_ID.fullmatch(channel)) or not (video or channel):
+            raise ValueError("A YouTube record needs a valid video (11 characters) and/or channel (UC..., 24 characters)")
+        if raw.get("embed_url"):
+            raise ValueError("A YouTube record has no owner player")
+        youtube = {k: v for k, v in (("channel", channel), ("video", video)) if v}
+        previous = raw.get("previous_videos", [])
+        if not isinstance(previous, list) or not all(isinstance(v, str) and YOUTUBE_VIDEO_ID.fullmatch(v) for v in previous):
+            raise ValueError("previous_videos must list YouTube video ids")
+    elif format_ == "embed":
+        value = raw.get("embed_url")
+        embed = canonical_url(value, EMBED_HOSTS)
+        if not embed or not embed.startswith("https://") or "#" in value or urlsplit(value).port is not None:
+            raise ValueError("An owner player must be https, on a reviewed frame host, without port or fragment")
+        if raw.get("youtube"):
+            raise ValueError("An owner-player record has no YouTube ids")
+    else:
+        raise ValueError("Unsupported live-stream format")
+    still = canonical_url(raw.get("still_url")) if raw.get("still_url") else None
+    if raw.get("still_url") and not (still and still.startswith("https://")):
+        raise ValueError("A still image must be an https address")
+    official_page = page_url(raw.get("official_page"))
+    source_page = page_url(raw.get("source_page") or raw.get("official_page"))
+    if not official_page or not source_page:
+        raise ValueError("A live stream needs the owner's page")
+    owner = " ".join(str(raw.get("owner") or "").split())
+    if not owner:
+        raise ValueError("A live stream needs its owner, for the attribution")
+    role = raw.get("coordinate_role")
+    if role not in LIVE_STREAM_ROLES:
+        raise ValueError("Unknown coordinate role")
+    uncertainty = raw.get("coordinate_uncertainty_m")
+    if role in PLACED_ROLES and not (raw.get("coordinate_source") and raw.get("coordinate_feature")
+                                     and isinstance(uncertainty, (int, float)) and uncertainty > 0):
+        raise ValueError("A placed position needs coordinate_source, coordinate_feature and coordinate_uncertainty_m")
+    item = {"id": f"{source['id']}:{provider_id}", "provider": source["id"], "provider_id": provider_id,
+            "identity_basis": "reviewed_live_stream", "name": " ".join(str(raw.get("name") or provider_id).split())[:160],
+            "lat": lat, "lng": lng, "country": country, "region": str(raw.get("region") or ""), "district": None,
+            "road": None, "direction": None, "format": format_, "stream_url": None, "snapshot_url": None,
+            "youtube": youtube, "embed_url": embed, "still_url": still, "official_page": official_page,
+            "source_page": source_page, "source_catalog": source_page, **{f: None for f in REFERENCE_FIELDS},
+            "metadata_license": source["metadata_license"], "terms_url": YOUTUBE_TERMS if youtube else official_page,
+            "license_url": None, "media_rights": source["media_rights"], "rights_status": "official_embed",
+            "attribution": f"{owner} (YouTube)" if youtube else owner, "owner": owner,
+            "coordinate_role": role, "coordinate_crs": "EPSG:4326",
+            "coordinate_source": raw.get("coordinate_source"), "coordinate_feature": raw.get("coordinate_feature"),
+            "coordinate_uncertainty_m": uncertainty, "coordinate_source_licence": raw.get("coordinate_source_licence"),
+            "identity_confirmed": False if role in PLACED_ROLES else None, "reason": raw.get("reason"),
+            # Ids the same stream had before a restart: only to recognise other records of it (drop_live_duplicates).
+            "previous_videos": (raw.get("previous_videos") or None) if youtube else None,
+            "stream_check": check, "provider_in_service": None, "observed_at": check["checked_at"] or observed_at,
+            "source_video_url": None, "unclassified_video_url": None, "invalid_source_video_url": False,
+            "health": unverified_health()}
+    return {k: v for k, v in item.items() if v is not None or k in ("district", "road", "direction", "stream_url",
+            "snapshot_url", "provider_in_service", "source_video_url", "unclassified_video_url", *REFERENCE_FIELDS)}
+
+
+def load_live_streams(path, privacy_log=None):
+    """The reviewed owners' live streams; a record that fails validation is rejected with its reason."""
+    path = Path(path)
+    body = path.read_bytes()
+    obj = json.loads(body)
+    if (not isinstance(obj, dict) or obj.get("schema_version") != 1 or obj.get("source") != LIVE_STREAM_SOURCE["id"]
+            or not isinstance(obj.get("items"), list)):
+        raise ValueError(f"Unsupported live-stream file: {path}")
+    items, rejected = [], []
+    for index, raw in enumerate(obj["items"]):
+        pid = raw.get("provider_id") if isinstance(raw, dict) else None
+        try:
+            items.append(normalize_live_stream(raw, obj.get("checked_at")))
+        except PrivacyFiltered as exc:
+            if privacy_log is not None:
+                privacy_log.append({"id": f"{LIVE_STREAM_SOURCE['id']}:{pid}", "provider": LIVE_STREAM_SOURCE["id"],
+                                    "field": exc.field, "reason": exc.reason, "action": "record_removed"})
+            rejected.append({"file": path.name, "source_index": index, "source": LIVE_STREAM_SOURCE["id"],
+                             "provider": LIVE_STREAM_SOURCE["id"], "provider_id": pid, "reason": str(exc)})
+        except (KeyError, ValueError, TypeError) as exc:
+            rejected.append({"file": path.name, "source_index": index, "source": LIVE_STREAM_SOURCE["id"],
+                             "provider": LIVE_STREAM_SOURCE["id"], "provider_id": pid, "reason": str(exc)})
+    seen = collections.Counter(k for x in items for k in stream_keys(x))
+    twice = sorted(k for k, n in seen.items() if n > 1)
+    if twice or len({x["id"] for x in items}) != len(items):
+        raise ValueError(f"The same live stream or identifier twice in {path.name}: {twice[:3]}")
+    lf = body.replace(b"\r\n", b"\n")  # as committed, whatever line endings the checkout uses
+    provenance = [{"source": LIVE_STREAM_SOURCE["id"], "file": path.name, "kind": "reviewed_live_streams",
+                   "sha256": hashlib.sha256(lf).hexdigest(), "bytes": len(lf),
+                   "records": len(obj["items"]), "observed_at": obj.get("checked_at")}]
+    return sorted(items, key=lambda x: x["id"]), dict(LIVE_STREAM_SOURCE), provenance, rejected
 
 
 def exclusion_summary(exclusions, log):
@@ -1246,20 +1493,26 @@ def write_json(path, data):
 
 
 def primary_url(item):
+    if item["format"] in STREAM_FORMATS:
+        return stream_watch_url(item)
     return item.get({"hls": "stream_url", "snapshot": "snapshot_url", "official_page": "official_page"}.get(item["format"], ""))
 
 
 def published_links(item):
     """Many camera views can share one URL; store the URL exactly once in SQLite."""
     first = primary_url(item)
-    for field, purpose in (("stream_url", "hls"), ("snapshot_url", "snapshot"),
+    if item["format"] == "youtube":
+        yield {"url": first, "purpose": "youtube_live", "is_primary": True}
+    for field, purpose in (("stream_url", "hls"), ("snapshot_url", "snapshot"), ("embed_url", "owner_player"),
+                           ("still_url", "still_image"),
                            ("official_page", "web_page"), ("reference_url", "reference_only"),
                            ("reported_clip_url", "clip_reference_only"),
                            ("reference_hls_url", "hls_reference_only"),
                            ("reference_snapshot_url", "snapshot_reference_only")):
         url = item.get(field)
         if url:
-            yield {"url": url, "purpose": purpose, "is_primary": url == first and not purpose.endswith("reference_only")}
+            yield {"url": url, "purpose": purpose,
+                   "is_primary": url == first and not purpose.endswith("reference_only") and item["format"] != "youtube"}
 
 
 def viewer_catalog(catalog):
@@ -1274,9 +1527,12 @@ def viewer_catalog(catalog):
               "coordinate_reference_system", "coordinate_crs", "coordinate_transform_applied",
               "image_observed_at", "requires_catalog_refresh", "minimum_refresh_seconds", "provider_notice", "media_access",
               "coordinate_source", "coordinate_feature", "coordinate_uncertainty_m", "coordinate_source_licence"}
+    # A live stream also carries what plays it and its owner's attribution and terms (one source, many owners).
+    stream_fields = {"youtube", "embed_url", "still_url", "attribution", "terms_url"}
     rows = []
     for item in catalog["items"]:
-        row = {k: v for k, v in item.items() if k in fields and v not in (None, "")}
+        keep = fields | stream_fields if item["format"] in STREAM_FORMATS else fields
+        row = {k: v for k, v in item.items() if k in keep and v not in (None, "")}
         # Reference URLs remain external: the view must retain them without
         # creating media permissions or losing a second image/video per camera.
         references = {}
@@ -1301,7 +1557,9 @@ LIVE_TABLE_FIELDS = frozenset({
     "image_observed_at", "requires_catalog_refresh", "minimum_refresh_seconds", "provider_in_service",
     "provider_notice", "media_access", "health", "country_inferred", "coordinate_source_licence",
     # Placed positions (few distinct values, null on almost every row): an index costs less than an inline null.
-    "coordinate_source", "coordinate_feature", "coordinate_uncertainty_m"})
+    "coordinate_source", "coordinate_feature", "coordinate_uncertainty_m",
+    # Live streams: on a few rows only, so the same.
+    "youtube", "embed_url", "still_url", "attribution", "terms_url"})
 # Source fields the viewer reads (prepareWebcams); the rest stays in the full catalog.
 LIVE_SOURCE_FIELDS = ("id", "name", "terms_url", "license_url", "license", "metadata_license",
                       "coordinate_reference_system", "coordinate_crs", "provider_notice", "requires_catalog_refresh",
@@ -1309,7 +1567,9 @@ LIVE_SOURCE_FIELDS = ("id", "name", "terms_url", "license_url", "license", "meta
 
 
 def viewable(row):
-    """An admitted HLS stream or snapshot: what can be played or loaded from the card."""
+    """An admitted HLS stream or snapshot, or an owner's live stream: what can be played or loaded from the card."""
+    if row.get("rights_status") == "official_embed":
+        return row.get("format") == "youtube" and bool(row.get("youtube")) or row.get("format") == "embed" and bool(row.get("embed_url"))
     return row.get("rights_status") == "official_public_feed" and (
         row.get("format") == "hls" and bool(row.get("stream_url"))
         or row.get("format") == "snapshot" and bool(row.get("snapshot_url")))
@@ -1497,6 +1757,7 @@ def main():
     ap.add_argument("--fetch", action="store_true", help="Fetch only the 12 official metadata catalogs")
     ap.add_argument("--extra-catalog", type=Path, action="append", default=[],
                     help="Normalized version-1 catalog from an approved additional provider; repeatable")
+    ap.add_argument("--live-streams", type=Path, help="The reviewed owners' live streams (scripts/webcam_live_streams.json)")
     ap.add_argument("--osm-db", type=Path, required=True, help="Existing uncompressed surveillance DB, opened read-only")
     ap.add_argument("--health", type=Path, action="append", default=[], help="JSON/JSONL explicit probe evidence; repeatable")
     ap.add_argument("--snapshot-checks", type=Path, action="append", default=[], help="Bounded image access observations, separate from live-video health")
@@ -1526,6 +1787,12 @@ def main():
     exclusions = load_exclusions()
     extra_items, extra_sources, extra_provenance, extra_rejected = load_extra_catalogs(
         args.extra_catalog, stamp, privacy_log, exclusions, exclusion_log)
+    if args.live_streams:
+        live_items, live_source, live_provenance, live_rejected = load_live_streams(args.live_streams, privacy_log)
+        extra_items += live_items
+        extra_sources = sorted(extra_sources + [live_source], key=lambda s: s["id"])
+        extra_provenance += live_provenance
+        extra_rejected += live_rejected
     items = sorted(items + extra_items, key=lambda x: x["id"])
     if len({x["id"] for x in items}) != len(items):
         raise ValueError("Duplicate camera identity across providers/catalogs")
@@ -1541,6 +1808,8 @@ def main():
     rejected += [{"source": e["provider"], "provider": e["provider"], "provider_id": e["id"].split(":", 1)[-1],
                   "reason": f"Excluded: {e['rule']} (scripts/webcam_exclusions.json)"} for e in excluded]
     items, duplicates = drop_duplicates(items, args.radius)
+    items, live_duplicates = drop_live_duplicates(items)
+    duplicates += live_duplicates
     rejected += [{"source": e["provider"], "provider": e["provider"], "provider_id": e["id"].split(":", 1)[-1],
                   "reason": f"Duplicate of {e['superseded_by']} ({e['rule']})"} for e in duplicates]
     stray = media_page_records(items)
@@ -1570,7 +1839,9 @@ def main():
     provider_stats = provider_statistics(items, provenance, rejected, events, matches)
     link_stats, shared_urls = link_statistics(items)
     scope = ["All 12 official Caltrans metadata catalogs"]
-    scope.extend(f"supplied {s['name']} normalized catalog(s)" for s in sources if s["id"] != SOURCE["id"])
+    scope.extend(f"supplied {s['name']} normalized catalog(s)" for s in sources if s["id"] not in (SOURCE["id"], LIVE_STREAM_SOURCE["id"]))
+    if any(s["id"] == LIVE_STREAM_SOURCE["id"] for s in sources):
+        scope.append("the reviewed owners' live streams (scripts/webcam_live_streams.json)")
     report = {
         "generated_at": stamp, "baseline_commit": args.baseline_commit,
         # Hashes of the files as committed (LF), whatever line endings the checkout uses.
@@ -1581,6 +1852,7 @@ def main():
         "hls_camera_records": len(hls), "distinct_hls_urls": len({x["stream_url"] for x in hls}),
         "snapshot_only_records": sum(x["format"] == "snapshot" for x in items),
         "official_page_records": sum(x["format"] == "official_page" for x in items),
+        "live_stream_records": dict(sorted(collections.Counter(x["format"] for x in items if x["format"] in STREAM_FORMATS).items())),
         **link_stats,
         "country_counts": dict(sorted(collections.Counter(x["country"] for x in items).items())),
         "known_country_codes": len({x["country"] for x in items if x["country"] != "ZZ"}),

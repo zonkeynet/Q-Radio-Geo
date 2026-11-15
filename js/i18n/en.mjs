@@ -504,7 +504,7 @@ export default {
     "webcams.outsideHost": "Camera media outside the stream host",
     "webcams.pausedHidden": "Paused because the page is hidden. Press Play or Load to reconnect.",
     "webcams.streamTitle": "Live stream",
-    "webcams.embedNoteYoutube": "YouTube will see your connection when the player loads. Nothing loads until you tap.",
+    "webcams.embedNoteYoutube": "YouTube will see your connection and this site’s address when the player loads (its player requires the address). Nothing loads until you tap.",
     "webcams.embedNoteOwner": "The owner’s server ({host}) will see your connection when the player loads. Nothing loads until you tap.",
     "webcams.loadPlayer": "Load the player",
     "webcams.watchOnYoutube": "Watch on YouTube",

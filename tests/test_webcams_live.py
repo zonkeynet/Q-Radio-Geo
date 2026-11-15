@@ -72,7 +72,7 @@ class PublishedLiveCatalogTest(unittest.TestCase):
         viewable = [row for row in full["items"] if M.viewable(row)]
         self.assertEqual(expand(live), viewable)
         self.assertEqual(live["full_catalog"]["records"], len(full["items"]))
-        self.assertEqual({f for f in ("hls", "snapshot")}, {row["format"] for row in viewable})
+        self.assertEqual({"hls", "snapshot", "youtube", "embed"}, {row["format"] for row in viewable}, "feeds and live streams")
 
 
 if __name__ == "__main__":
