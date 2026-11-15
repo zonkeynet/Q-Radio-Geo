@@ -57,7 +57,10 @@ export function createTv({ toggle, onSound }) {
     const bConsent = Object.assign(node('button', 'consent-btn'), { type: 'button' });
     bConsent.append(icon('play'), document.createTextNode(` ${t('tv.watch')}`));
     consent.append(consentText, bConsent);
-    dock.append(head, wall, consent, langs, list, note);
+    // The header stays in view; what is under it scrolls when the dock has little room (a phone, assets/app.css).
+    const body = node('div', 'tv-body');
+    body.append(wall, consent, langs, list, note);
+    dock.append(head, body);
     document.body.appendChild(dock);
 
     const screens = Array.from({ length: 4 }, (_, i) => {
@@ -206,7 +209,8 @@ export function createTv({ toggle, onSound }) {
     bFull.onclick = () => { (document.fullscreenElement ? document.exitFullscreen() : dock.requestFullscreen()).catch(() => {}); };
     bSmall.onclick = () => { st.small = !st.small; render(); };
     bClose.onclick = close;
-    new ResizeObserver(() => document.documentElement.style.setProperty('--tv-h', dock.hidden ? '0px' : `${dock.offsetHeight}px`)).observe(dock);
+    // Its height and the gap above it: the map tools stand above the dock on phones (assets/app.css).
+    new ResizeObserver(() => document.documentElement.style.setProperty('--tv-h', dock.hidden ? '0px' : `${dock.offsetHeight + 8}px`)).observe(dock);
     return {
         /** The radio started: the TV goes quiet (pictures keep playing). */
         mute() { if (!st.muted) setSound(false); },

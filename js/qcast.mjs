@@ -96,6 +96,9 @@ export const QCAST = {
     listOrder: (a, b) => Number(Number.isFinite(b.lat)) - Number(Number.isFinite(a.lat)) || b.startsAt - a.startsAt,
     sectionOf: s => Number.isFinite(s.lat) ? t('qcast.section.globe') : t('qcast.section.noPlace'),
     stats: items => tn('qcast.stats', items.length),
+    // Before and while the relays are asked (js/app.mjs loadLive sets liveState), when none answered, when nobody is on air.
+    emptyText: (values, items) => items.length ? null : QCAST.liveState === 'done' ? t('qcast.empty.none')
+        : QCAST.liveState === 'failed' ? t('qcast.empty.failed') : t('qcast.empty.loading'),
     live: {
         label: t('qcast.live.refresh'),
         note: t(QCAST_IN_APP ? 'qcast.live.noteApp' : 'qcast.live.noteWeb', { relays: RELAYS.map(r => r.replace('wss://', '')).join(', ') }),

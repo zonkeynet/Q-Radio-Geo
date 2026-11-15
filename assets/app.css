@@ -55,6 +55,7 @@
 @media (max-width: 380px) { .layer-name { display: none; } .layer-btn { padding-inline: 12px 8px; } }
 
 /* ---------- Themes: accent and scenery presets. [data-preview] scopes one to an element (theme swatches). ---------- */
+[data-preview="tactical"] { --bg: #05070b; --panel-solid: #080c13; --accent: #00ff88; --accent-2: #00e5ff; --approx: #ffb703; --accent-3: #b388ff; --on-accent: #03140b; }
 :root[data-theme="satellite"], [data-preview="satellite"] {
     --bg: #02040a; --panel-solid: #0a1220; --accent: #ffd60a; --accent-2: #7ec8ff; --approx: #ff7b54; --on-accent: #1a1400; --accent-3: #c792ea;
     --text-dim: #9fb0c8;
@@ -285,6 +286,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .search-empty { display: grid; justify-items: center; gap: 4px; padding: 24px 16px; text-align: center; color: var(--on-surface-variant); font: 400 14px/20px var(--font); }
 .search-empty .icon { width: 32px; height: 32px; margin-bottom: 4px; }
 .search-empty b { color: var(--on-surface); font: 500 16px/24px var(--font); overflow-wrap: anywhere; }
+@media (min-width: 720px) { .search-results { position: absolute; top: calc(100% + 8px); inset-inline: 0; } }
 
 /* ---------- Chips row: the layer's main filter, then "Filters (n)" ---------- */
 .chips { position: fixed; z-index: 30; top: var(--header-bottom, 64px); inset-inline: calc(var(--inset-x) + var(--panel-w)) 0; height: 48px;
@@ -306,8 +308,15 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .chip-filters[data-active] > span { border-color: var(--primary); }
 
 /* ---------- Map tools: recentre (phones), zoom too with a mouse ---------- */
+/* Above the sheet (beside a side panel: above the bottom safe area), the player and, on phones, the TV dock (--tv-h, its
+   height and gap, js/tv.mjs); never above the chips: without room for them (a full sheet) they step aside (.no-room,
+   js/app.mjs syncLayout). On tablets and large screens the TV dock stands beside them instead. */
 .map-tools { position: fixed; z-index: 20; inset-inline-end: calc(var(--inset-x) + var(--g)); bottom: 0; display: flex; flex-direction: column; gap: 8px;
-    transform: translateY(calc(-1 * (var(--dock-h) + var(--player-h) + 16px + var(--inset-b-free, 0px)))); transition: transform var(--dur) var(--ease); }
+    --tools-below: calc(max(var(--dock-h), var(--inset-b)) + var(--player-h) + 16px);
+    transform: translateY(calc(-1 * min(var(--tools-below), 100dvh - var(--chrome-bottom, 120px) - 8px - var(--tools-h, 48px))));
+    transition: transform var(--dur) var(--ease); }
+@media (max-width: 719px) { .map-tools { --tools-below: calc(max(var(--dock-h), var(--inset-b)) + var(--player-h) + var(--tv-h, 0px) + 16px); } }
+.map-tools.no-room { visibility: hidden; }
 .fab { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--glass); color: var(--on-surface); box-shadow: var(--shadow); }
 .fab:hover { background: var(--surface-3); }
 #btnZoomIn, #btnZoomOut { display: none; }
@@ -338,7 +347,11 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .sheet-heading { flex: 1; min-width: 0; cursor: default; }
 .sheet-title { display: flex; align-items: center; gap: 8px; font: 600 20px/28px var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sheet-title .icon { width: 22px; height: 22px; color: var(--primary); }
-.sheet-meta { font: 400 14px/20px var(--font); color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Up to two lines: how old the data is (news, fires) comes last and must stay readable. The sheet's heights measure the
+   header (js/app.mjs sheetHeights). */
+.sheet-meta { font: 400 14px/20px var(--font); color: var(--on-surface-variant); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow-wrap: anywhere; }
 .sheet-meta.stale { color: var(--warning); }
 .sheet-body { flex: none; height: var(--body-h, auto); min-height: 0; position: relative; display: flex; flex-direction: column; }
 .sheet-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 8px calc(16px + var(--inset-b)); }
@@ -438,8 +451,8 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 /* Live loads (data for the area in view): one row, the note behind (i). */
 .dir-live { flex: none; display: grid; gap: 4px; padding: 0 16px 8px; }
 .live-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.live-btn { flex: none; max-width: 70%; min-height: 40px; padding: 0 16px; }
-.live-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-btn { flex: 0 1 auto; max-width: 70%; min-height: 40px; padding: 6px 16px; }
+.live-btn span { text-align: start; line-height: 18px; }
 .live-status { flex: 1; min-width: 0; font: 400 12px/16px var(--font); color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-note { font: 400 12px/16px var(--font); color: var(--on-surface-variant); }
 
@@ -466,10 +479,11 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .fold .dir-facts { margin-top: 0; padding-bottom: 8px; }
 .fold > p, .fold > a, .fold > button { margin-bottom: 8px; }
 .fold .dir-item { min-height: 56px; }
-.card-actions { flex: none; display: grid; gap: 8px; padding: 12px 16px calc(12px + var(--inset-b)); border-top: 1px solid var(--outline); background: var(--surface-2); }
-.card-actions .row { display: flex; gap: 8px; }
-.card-actions .row > .btn { flex: 1; min-width: 0; }
-.card-actions .btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-actions { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 16px calc(12px + var(--inset-b)); border-top: 1px solid var(--outline); background: var(--surface-2); }
+.card-actions .row { display: flex; gap: 8px; min-width: 0; }
+.card-actions .row > .btn { flex: 1 1 0; min-width: 0; padding-inline: 12px; }
+.card-actions .btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-actions .row > .btn span { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 18px; overflow-wrap: anywhere; }
 @media (min-width: 1051px), (min-aspect-ratio: 3/2) and (max-height: 560px) { .card-actions { padding-bottom: 12px; } }
 /* Older names kept for layer modules that build card content themselves. */
 .dir-open { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 24px;
@@ -483,10 +497,13 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 
 /* ---------- Player: only once a station is chosen; a mini-player docked above the sheet ---------- */
 .player { position: fixed; z-index: 35; bottom: 0; inset-inline: calc(var(--inset-x) + var(--g)); max-width: 640px; margin-inline: auto;
-    transform: translateY(calc(-1 * (var(--dock-h) + 8px))); transition: transform var(--dur) var(--ease);
+    transform: translateY(calc(-1 * min(var(--dock-h) + 8px, 100dvh - var(--chrome-bottom, 120px) - var(--player-h, 0px)))); transition: transform var(--dur) var(--ease);
     border-radius: var(--r-card); background: var(--surface-2); border: 1px solid var(--outline); box-shadow: var(--shadow); }
+/* Beside a side panel: centred under the globe, in what the open panel leaves free and in the whole width when it is
+   collapsed (a station picked on a desktop collapses it): the globe's own insets (--view-*, js/app.mjs syncLayout). */
 @media (min-width: 1051px), (min-aspect-ratio: 3/2) and (max-height: 560px) {
-    .player { inset-inline-start: calc(var(--inset-x) + var(--panel-w) + var(--g)); transform: translateY(calc(-1 * (var(--inset-b) + 8px))); }
+    .player { left: calc(var(--inset-x) + var(--view-left, 0px) + var(--g)); right: calc(var(--inset-x) + var(--view-right, 0px) + var(--g));
+        transform: translateY(calc(-1 * (var(--inset-b) + 8px))); transition: transform var(--dur) var(--ease), left var(--dur) var(--ease), right var(--dur) var(--ease); }
 }
 .player-row { display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px 4px 8px 8px; }
 .play-btn { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: var(--on-primary); }
@@ -510,7 +527,14 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .eq i { width: 3px; height: 6px; border-radius: 1px; background: var(--primary); }
 .eq.active i:nth-child(2) { height: 12px; } .eq.active i:nth-child(3) { height: 9px; }
 .player-more { display: none; padding: 0 8px 8px; }
-.player.expanded .player-more { display: grid; gap: 8px; }
+/* The expanded part takes at most about 3/5 of the globe's space (between the chips and the sheet or the bottom), so a
+   short screen keeps a globe; what does not fit scrolls. */
+.player.expanded .player-more { display: grid; gap: 8px; overflow-y: auto; overscroll-behavior: contain;
+    max-height: max(64px, calc((100dvh - var(--chrome-bottom, 120px) - max(var(--dock-h), var(--inset-b))) * .6 - 80px)); }
+/* Phones and tablets in portrait: over a full sheet the player is its row only, between the chips and the sheet. */
+@media not ((min-width: 1051px) or ((min-aspect-ratio: 3/2) and (max-height: 560px))) {
+    body:has(> .sheet[data-sheet="full"]:not([hidden])) .player :is(.player-more, #btnPlayerSize) { display: none; }
+}
 .player-controls { display: flex; align-items: center; gap: 4px; }
 .volume { flex: 1; display: flex; align-items: center; min-height: 48px; padding-inline: 8px; }
 .volume-slider { width: 100%; accent-color: var(--primary); }
@@ -542,7 +566,8 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .latest { position: fixed; z-index: 12; top: calc(var(--chrome-bottom, 120px) + 4px); inset-inline: calc(var(--inset-x) + var(--panel-w) + var(--g)) calc(var(--inset-x) + var(--g));
     display: flex; align-items: center; gap: 12px; height: 40px; padding-inline: 16px 4px; border-radius: 20px; background: var(--glass); box-shadow: var(--shadow); }
 .latest-label { flex: none; font: 600 12px/16px var(--font); color: var(--red); }
-.latest-track { display: flex; gap: 24px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.latest-track { display: flex; gap: 24px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding-inline-end: 32px;
+    -webkit-mask-image: linear-gradient(to var(--fade-end, right), #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to var(--fade-end, right), #000 calc(100% - 32px), transparent); }
 .latest-track::-webkit-scrollbar { display: none; }
 .ticker-item { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; white-space: nowrap; font: 400 14px/20px var(--font); }
 .ticker-item:hover .ticker-text { color: var(--primary-text); }
@@ -643,15 +668,28 @@ dialog::backdrop { background: var(--scrim); }
 .embed-frame { display: block; width: 100%; height: 100%; border: 0; }
 
 /* ---------- Live TV (website dock; the app lists channels and plays them itself) ---------- */
-.tv-dock { position: fixed; z-index: 30; inset-inline-end: calc(var(--inset-x) + var(--g)); bottom: calc(var(--dock-h) + var(--player-h) + 16px + var(--inset-b-free, 0px));
-    width: min(460px, calc(100vw - 2 * var(--g))); display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 12px; border-radius: 20px;
-    background: var(--surface-2); border: 1px solid var(--outline); box-shadow: var(--shadow); }
-@media (min-width: 1051px), (min-aspect-ratio: 3/2) and (max-height: 560px) { .tv-dock { bottom: calc(var(--inset-b) + var(--player-h) + 16px); } }
-.tv-head { display: flex; align-items: center; gap: 8px; min-width: 0; padding-inline-start: 8px; }
-.tv-title { display: flex; align-items: center; gap: 8px; font: 600 14px/20px var(--font); color: var(--red); flex: none; }
+/* Its bottom: above the sheet (beside a side panel, the bottom safe area) and the player; its top: under the chips, or the
+   latest stories. It keeps at least its header (92 px); the rest scrolls (.tv-body). */
+.tv-dock { position: fixed; z-index: 30; inset-inline-end: calc(var(--inset-x) + var(--g));
+    --tv-top: calc(var(--chrome-bottom, 120px) + 8px);
+    --tv-bottom: min(max(var(--dock-h), var(--inset-b)) + var(--player-h) + 16px, 100dvh - var(--tv-top) - 92px);
+    bottom: var(--tv-bottom); max-height: calc(100dvh - var(--tv-top) - var(--tv-bottom));
+    width: min(460px, calc(100vw - 2 * var(--g) - 2 * var(--inset-x))); display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 12px; border-radius: 20px;
+    background: var(--surface-2); border: 1px solid var(--outline); box-shadow: var(--shadow); container: tv / inline-size; }
+body:has(> #newsTicker:not([hidden])) .tv-dock { --tv-top: calc(var(--chrome-bottom, 120px) + 52px); }
+@media (max-width: 1050px) { body:has(> #newsTicker:not([hidden])) .tv-dock { --tv-top: calc(var(--chrome-bottom, 120px) + 8px); } }
+/* Tablets and large screens: beside the map tools (48 px and a gap), never over the side panel. */
+@media (min-width: 720px) {
+    .tv-dock { inset-inline-end: calc(var(--inset-x) + var(--g) + 56px); width: min(460px, calc(100vw - var(--panel-w) - 2 * var(--g) - 56px - 2 * var(--inset-x))); }
+}
+/* Two rows: the title and what plays (or "pick a channel"), then the tools; one row when the dock is wide (full screen). */
+.tv-head { flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; min-width: 0; padding-inline-start: 8px; }
+.tv-title { display: flex; align-items: center; gap: 8px; font: 600 14px/20px var(--font); color: var(--red); }
 .tv-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
-.tv-now { flex: 1; min-width: 0; font: 400 14px/20px var(--font); color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tv-tools { display: flex; flex: none; }
+.tv-now { min-width: 0; font: 400 14px/20px var(--font); color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-tools { display: flex; grid-column: 1 / -1; justify-self: end; margin-inline-end: -4px; }
+@container tv (min-width: 640px) { .tv-head { grid-template-columns: auto minmax(0, 1fr) auto; } .tv-tools { grid-column: auto; } }
+.tv-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .tv-tool { display: inline-grid; place-items: center; width: 44px; height: 48px; border-radius: 22px; color: var(--on-surface); }
 .tv-tool:hover { background: var(--surface-3); }
 .tv-tool .icon { width: 20px; height: 20px; }
@@ -672,14 +710,17 @@ dialog::backdrop { background: var(--scrim); }
 .tv-langs::-webkit-scrollbar, .tv-channels::-webkit-scrollbar { display: none; }
 .tv-lang { flex: none; height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--outline); color: var(--on-surface-variant); font: 500 14px/20px var(--font); }
 .tv-lang.active { background: var(--primary); color: var(--on-primary); border-color: transparent; }
-.tv-channels { max-height: 120px; flex-wrap: wrap; overflow-y: auto; }
-.tv-chan { flex: none; display: flex; flex-direction: column; align-items: flex-start; min-height: 48px; padding: 4px 12px; border-radius: 12px; border: 1px solid var(--outline); text-align: start; }
+.tv-channels { flex: none; max-height: calc(2 * 48px + 8px); flex-wrap: wrap; overflow-y: auto; scroll-snap-type: y mandatory; }
+.tv-chan { flex: none; display: flex; flex-direction: column; align-items: flex-start; height: 48px; padding: 4px 12px; border-radius: 12px; border: 1px solid var(--outline); text-align: start;
+    scroll-snap-align: start; }
 .tv-chan small { font: 400 12px/16px var(--font); color: var(--on-surface-variant); }
 .tv-chan.on { border-color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
 .tv-note { font: 400 12px/16px var(--font); color: var(--on-surface-variant); padding-inline: 8px; }
-.tv-dock.small { width: min(320px, calc(100vw - 2 * var(--g))); }
+.tv-dock.small { width: min(320px, calc(100vw - 2 * var(--g) - 2 * var(--inset-x))); }
+.tv-dock.small .tv-body { display: none; }
 .tv-dock.small :is(.tv-wall, .tv-langs, .tv-channels, .tv-note, .tv-consent) { display: none; }
-.tv-dock:fullscreen { width: 100vw; height: 100vh; border-radius: 0; padding: 16px; background: #000; }
+.tv-dock:fullscreen { width: 100vw; height: 100vh; max-height: none; border-radius: 0; padding: 16px; background: #000; }
+.tv-dock:fullscreen .tv-body { overflow: hidden; }
 .tv-dock:fullscreen .tv-wall { flex: 1; min-height: 0; }
 .tv-dock:fullscreen .tv-screen { aspect-ratio: auto; height: 100%; }
 .tv-dock:fullscreen.grid .tv-screen { height: auto; }

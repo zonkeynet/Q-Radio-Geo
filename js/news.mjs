@@ -59,11 +59,16 @@ const quakes = json => (json.features || []).map(f => {
     return { id: `q${f.id}`, kind: 'QUAKE', name: p.place ? t('news.quake.namePlace', { mag, place: p.place }) : t('news.quake.name', { mag }), ts: new Date(p.time).toISOString(), lat, lng,
         url: p.url, source: 'USGS', topic: 'disaster', mag: p.mag ?? 0, depth, tsunami: p.tsunami === 1, pager: p.alert, place: p.place };
 });
+/** GDACS's severity in words, unless it says nothing ("Magnitude 0" for an event it has no measure for). */
+const severityText = d => {
+    const text = typeof d?.severitytext === 'string' ? d.severitytext.trim() : '';
+    return text && !/^magnitude\s*0+(?:[.,]0+)?\s*$/i.test(text) && !(Number(d.severity) === 0 && /^magnitude\b/i.test(text)) ? text : null;
+};
 const alerts = json => (json.features || []).filter(f => f.geometry?.type === 'Point').map(f => {
     const p = f.properties, [lng, lat] = f.geometry.coordinates;
     return { id: `a${p.eventtype}${p.eventid}`, kind: 'ALERT', name: p.name || p.description, ts: new Date(`${p.datemodified || p.fromdate}Z`).toISOString(), lat, lng,
         url: p.url?.report, source: 'GDACS', topic: 'disaster', level: p.alertlevel, type: GDACS_TYPE[p.eventtype] || p.eventtype, place: p.country,
-        severity: p.severitydata?.severitytext, from: p.fromdate?.slice(0, 10), to: p.todate?.slice(0, 10), current: p.iscurrent === 'true' };
+        severity: severityText(p.severitydata), from: p.fromdate?.slice(0, 10), to: p.todate?.slice(0, 10), current: p.iscurrent === 'true' };
 });
 const nature = json => (json.events || []).map(e => {
     const g = e.geometry?.[e.geometry.length - 1], c = g?.type === 'Point' ? g.coordinates : g?.coordinates?.[0]?.[0];

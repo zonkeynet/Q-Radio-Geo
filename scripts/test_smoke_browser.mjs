@@ -4,6 +4,8 @@
 // no console error other than the blocked requests, and third parties only among the documented automatic ones.
 // Then the interface: the app contract (messages, back(), commands, insets), Italian and English, a right-to-left
 // sanity check, landscape (side panel), a 320 px phone and 130 % page zoom (no header overlap, nothing cut off).
+// Layout: the TV dock and the player stay between the chips and the sheet (full sheet too), a webcam card's actions fit
+// the sheet, theme names read on dark and light menus, search results sit under the field on tablets and desktops.
 // News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
 // Loading: a compact row (the sheet only its title while a layer loads), transient failures retried with "Retrying
 // (n/3)", the error only after the last attempt. Search: the ✕ and the "no results" state. In the app: no page
@@ -492,6 +494,113 @@ try {
             assert.equal(await fresh.evaluate(() => document.documentElement.lang), 'en');
             assert.match(await fresh.locator('#sheetMeta').innerText(), /receivers/);
             await fresh.close();
+        });
+        if (variant === 'site') await step('layout: TV dock and player within the screen, card actions fit, theme names readable, search results under the field', async () => {
+            const p = await context.newPage();
+            p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+            const box = sel => p.evaluate(s => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; }, sel);
+            const chrome = () => p.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--chrome-bottom')));
+            const sheetTo = async target => {
+                const order = ['peek', 'half', 'full'];
+                for (let i = 0; i < 4; i++) {
+                    const now = await p.evaluate(() => document.getElementById('sheet').dataset.sheet);
+                    if (now === target) break;
+                    await p.focus('#sheetHandle');
+                    await p.keyboard.press(order.indexOf(target) > order.indexOf(now) ? 'ArrowUp' : 'ArrowDown');
+                    await p.waitForTimeout(350);
+                }
+                await p.waitForTimeout(300);
+            };
+            const overlap = (a, b) => a && b && Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
+            const toolsShown = () => p.evaluate(() => getComputedStyle(document.getElementById('mapTools')).visibility === 'visible');
+            // 1. The TV dock on a phone: between the chips and the sheet, its header (with Close) in view, the rest scrolling;
+            // over a full sheet it still keeps its header under the chips.
+            await p.goto(`${server.origin}/?hl=it#layer=sdr`);
+            await ready(p);
+            await p.evaluate(() => document.getElementById('btnTv').click()); // the layer menu's entry on phones
+            await p.locator('#tvDock').waitFor({ state: 'visible' });
+            await p.waitForTimeout(400);
+            for (const state of ['half', 'full']) {
+                await sheetTo(state);
+                const dock = await box('#tvDock'), head = await box('#tvDock .tv-head'), close = await box('#tvDock .tv-tool:last-child'), top = await chrome();
+                assert.ok(dock.t >= top - 1, `${state} sheet: the TV dock under the chips (${dock.t} < ${top})`);
+                assert.ok(head.t >= dock.t && head.b <= dock.b && close.t >= top && close.b <= 860, `${state} sheet: its header and Close in view ${JSON.stringify({ head, close })}`);
+                if (state === 'half') assert.ok(dock.b <= (await box('#sheet')).t + 1, 'the dock above the sheet');
+                assert.match(await p.locator('#tvDock .tv-now').innerText(), /Scegli un canale/);
+                assert.ok(await p.evaluate(() => { const n = document.querySelector('#tvDock .tv-now'); return n.scrollWidth <= n.clientWidth + 1; }), '"Scegli un canale" fits');
+                if (await toolsShown()) assert.ok(!overlap(await box('#btnResetView'), dock), 'recentre is not under the dock');
+            }
+            await sheetTo('half');
+            await p.locator('#tvDock .tv-tool').last().click();
+            await p.locator('#tvDock').waitFor({ state: 'hidden' });
+            // 2. A station chosen, the sheet full: the player's row between the chips and the sheet, its controls in view,
+            // recentre either above the player under the chips or out of the way.
+            await p.goto(`${server.origin}/?hl=it#layer=radio&view=41.900,12.500,0.50`);
+            await ready(p);
+            await p.locator('#searchInput').fill('roma');
+            await p.locator('#searchResults .search-item').filter({ hasText: 'Italia' }).first().click();
+            await p.waitForFunction(() => !document.getElementById('bottomPlayer').hidden, null, { timeout: 10000 });
+            for (const state of ['half', 'full']) {
+                await sheetTo(state);
+                const player = await box('#bottomPlayer'), play = await box('#btnPlayPause'), sheet = await box('#sheet'), top = await chrome();
+                assert.ok(player.t >= top - 1 && play.t >= top, `${state} sheet: the player under the chips ${JSON.stringify({ player, top })}`);
+                assert.ok(player.b <= sheet.t + 1, `${state} sheet: the player above the sheet ${JSON.stringify({ player, sheet })}`);
+                if (await toolsShown()) {
+                    const tools = await box('#mapTools');
+                    assert.ok(tools.t >= top && !overlap(tools, player) && tools.b <= sheet.t, `${state} sheet: recentre in the open ${JSON.stringify(tools)}`);
+                }
+                // 3. The expanded player leaves the globe about a third of its space.
+                if (state === 'half') assert.ok(player.t - top >= (sheet.t - top) / 3 - 8, `the globe keeps a third: ${player.t - top} of ${sheet.t - top}`);
+            }
+            await sheetTo('half');
+            // 4. A webcam card's actions fit the sheet (Italian labels, a 360 px phone and the landscape panel).
+            for (const [w, h] of [[360, 740], [844, 390]]) {
+                await p.setViewportSize({ width: w, height: h });
+                // A fresh page: a link to the same layer keeps the card of the size before open.
+                await p.goto('about:blank');
+                await p.goto(`${server.origin}/?hl=it#layer=webcams&view=43.500,16.440,0.40`);
+                await ready(p);
+                await p.waitForFunction(() => document.documentElement.dataset.mode === 'webcams' && document.querySelector('#sheetList .dir-item'), null, { timeout: 60000 });
+                await p.locator('#sheetList .dir-item').first().click();
+                await p.locator('#sheetCard .card-actions').waitFor();
+                const fit = await p.evaluate(() => {
+                    const sheet = document.getElementById('sheet').getBoundingClientRect();
+                    return [...document.querySelectorAll('#sheetCard .card-actions .btn')].map(b => { const r = b.getBoundingClientRect(); return { text: b.innerText, l: r.left, r: r.right, in: r.left >= sheet.left - 1 && r.right <= Math.min(sheet.right, innerWidth) + 1 }; });
+                });
+                assert.ok(fit.length >= 1 && fit.every(b => b.in), `${w}×${h}: card actions inside the sheet ${JSON.stringify(fit)}`);
+            }
+            await p.setViewportSize({ width: 412, height: 860 });
+            // 5. Theme names read on every theme (the swatch shows the theme, the name keeps the menu's colours); Tactical
+            // has its own swatch colours on a light page.
+            const contrast = () => p.evaluate(() => {
+                const parse = s => { const m = s.match(/[\d.]+/g).map(Number); return s.startsWith('color(') ? m.slice(0, 3).map(v => v * 255) : m.slice(0, 3); };
+                const lum = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; const [r, g, b] = c.map(f); return .2126 * r + .7152 * g + .0722 * b; };
+                const bg = parse(getComputedStyle(document.getElementById('themeMenu')).backgroundColor);
+                return [...document.querySelectorAll('#themeMenu .menu-item b')].map(b => { const a = lum(parse(getComputedStyle(b).color)), c = lum(bg); return [b.textContent, Math.round((Math.max(a, c) + .05) / (Math.min(a, c) + .05) * 10) / 10]; });
+            });
+            const pick = id => p.evaluate(id => { document.getElementById('btnTheme').click(); document.querySelector(`#themeMenu [data-id="${id}"]`).click(); }, id);
+            await p.evaluate(() => document.getElementById('btnTheme').click());
+            const dark = await contrast();
+            assert.ok(dark.every(([, ratio]) => ratio >= 4.5), `theme names on a dark menu: ${JSON.stringify(dark)}`);
+            await p.keyboard.press('Escape');
+            await pick('daylight');
+            await p.evaluate(() => document.getElementById('btnTheme').click());
+            const light = await contrast();
+            assert.ok(light.every(([, ratio]) => ratio >= 4.5), `theme names on a light menu: ${JSON.stringify(light)}`);
+            assert.equal(await p.evaluate(() => getComputedStyle(document.querySelector('#themeMenu [data-id="tactical"] .theme-swatch i')).backgroundColor), 'rgb(0, 255, 136)', 'Tactical swatch on a light page');
+            await p.keyboard.press('Escape');
+            await pick('tactical');
+            // 8. Search results: from tablet widths up, under the search field and as wide; phones keep the screen's width.
+            for (const w of [820, 1280]) {
+                await p.setViewportSize({ width: w, height: 800 });
+                await p.waitForTimeout(300);
+                await p.locator('#searchInput').fill('rome');
+                await p.locator('#searchResults .search-item').first().waitFor({ timeout: 20000 });
+                const field = await box('.search'), results = await box('#searchResults');
+                assert.ok(Math.abs(results.l - field.l) <= 1 && Math.abs(results.w - field.w) <= 1 && results.t >= field.b, `${w} px: results under the field ${JSON.stringify({ field, results })}`);
+                await p.locator('#searchInput').fill('');
+            }
+            await p.close();
         });
         if (variant !== 'mirror') await step('sheet under touch: header buttons, drags from the header and the list, list scroll only when full, landscape panel', async () => {
             const p = await context.newPage();

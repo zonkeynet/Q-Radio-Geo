@@ -243,6 +243,8 @@ export function expandLiveCatalog(json) {
     return { schema_version: 2, generated_at: json.generated_at, sources: json.sources, items };
 }
 
+/** Sources this site runs itself, named in the page's language (the catalogue names them in English). */
+const SOURCE_NAMES = { owner_live_streams: 'webcams.source.ownerStreams' };
 export function prepareWebcams(json) {
     urlAnswers = new Map(); urlPaths = new Map();
     try { return prepareItems(json); } finally { urlAnswers = null; urlPaths = null; }
@@ -266,7 +268,7 @@ function prepareItems(json) {
         const embed = row.format === 'embed' ? embedUrl(row.embed_url) : null;
         if (!(isLink ? page : row.format === 'hls' ? stream : row.format === 'youtube' ? youtube : row.format === 'embed' ? embed : snapshot)) continue;
         const country = text(row.country, 80).trim().toUpperCase();
-        items.push({ ...row, name: text(row.name || row.id, 160), provider_name: text(source.name || row.provider, 160),
+        items.push({ ...row, name: text(row.name || row.id, 160), provider_name: SOURCE_NAMES[row.provider] ? t(SOURCE_NAMES[row.provider]) : text(source.name || row.provider, 160),
             country, country_name: countryName(country), region: text(row.region, 100), stream_url: stream, snapshot_url: snapshot,
             official_page: page, source_page: pageUrl(row.source_page, community), terms_url: pageUrl(row.terms_url || source.terms_url),
             reference_links: referenceLinks({ ...row, official_page: page, stream_url: stream, snapshot_url: snapshot }, community),
@@ -732,6 +734,7 @@ export function streamPreview(camera) {
 export const WEBCAMS = {
     id: 'webcams', label: t('webcams.label'), group: 'live', noun: t('webcams.noun'), dataUrl: LIVE_URL, fullUrl: FULL_URL, loadTimeout: WEBCAM_LOAD_TIMEOUT_MS,
     countOf: n => tn('webcams.count', n),
+    twoLines: true, // names that differ near their end (numbered views, receivers of one site) show it
     sidebarTitle: t('webcams.about'), placeholder: t('webcams.placeholder'), randomTitle: t('webcams.random'),
     prepare: prepareWebcams,
     searchText: c => `${c.name} ${c.region} ${c.country} ${c.country_name || countryName(c.country)} ${c.road || c.road_number || ''} ${c.country === 'US' ? 'USA America' : c.country === 'NO' ? 'Norge Norvegia' : ''} ${c.provider_name}`,

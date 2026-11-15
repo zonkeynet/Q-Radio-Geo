@@ -286,6 +286,7 @@ const day = d => date(d, { dateStyle: 'medium', timeZone: 'UTC' }) || d;
 export const CONFLICT = {
     id: 'conflict', label: t('osint.conflict.label'), group: 'safety', noun: t('osint.conflict.noun'), dataUrl: 'data/conflict.json',
     countOf: n => tn('osint.conflict.count', n),
+    twoLines: true, // names that differ near their end (numbered views, receivers of one site) show it
     sidebarTitle: t('osint.conflict.title'), placeholder: t('osint.conflict.placeholder'), randomTitle: t('osint.conflict.random'),
     prepare: json => json.items || [],
     searchText: it => `${it.conflict} ${it.a} ${it.b} ${it.place || ''} ${it.adm || ''} ${it.cc} ${it.d}`,

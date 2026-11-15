@@ -11,6 +11,7 @@ const line = r => [r.type, r.bands, r.place].filter(Boolean).join(' · ');
 export const SDR = {
     id: 'sdr', label: t('sdr.label'), group: 'listen', noun: t('sdr.noun'), dataUrl: 'data/sdr.json',
     countOf: n => tn('sdr.count', n),
+    twoLines: true, // names that differ near their end (numbered views, receivers of one site) show it
     sidebarTitle: t('sdr.sidebarTitle'), placeholder: t('sdr.placeholder'), randomTitle: t('sdr.randomTitle'),
     prepare: json => (json.receivers || []).map(r => ({ ...r, url: safeLinkURL(r.url) })).filter(r => r.url),
     searchText: r => `${r.name} ${r.place || ''} ${r.type} ${r.antenna || ''}`,

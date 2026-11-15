@@ -262,7 +262,9 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
         list.replaceChildren(); list.scrollTop = 0;
         if (!sorted.length) {
             const empty = node('div', 'empty-state');
-            empty.append(icon('search'), node('p', '', def.emptyText || t('dir.empty')));
+            // A mode may say why its list is empty (user radio: still looking, or nobody on air) before "these filters".
+            const own = typeof def.emptyText === 'function' ? def.emptyText(values, items) : def.emptyText;
+            empty.append(icon('search'), node('p', '', own || t('dir.empty')));
             list.append(empty, footer());
             return;
         }

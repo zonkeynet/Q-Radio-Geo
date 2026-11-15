@@ -128,7 +128,9 @@ function updatePlayer() {
     // In the app, the app's own player is the only one: a station tapped goes to it (tune), the page never shows its bar.
     p.hidden = APP_MODE || !chosen || (mode !== 'radio' && !playing);
     markStationRows();
-    const expanded = playerExpanded ?? (mode === 'radio' && cityStations.length > 1);
+    // Open by itself when the place has several stations and the screen is tall enough to keep a globe beside them (a
+    // landscape phone starts folded); app.css caps its height either way.
+    const expanded = playerExpanded ?? (mode === 'radio' && cityStations.length > 1 && innerHeight - chromeBottomNow >= 560);
     p.classList.toggle('expanded', expanded);
     const b = $('btnPlayerSize');
     b.replaceChildren(icon(expanded ? 'down' : 'up'));
@@ -584,6 +586,7 @@ async function loadLive(def) {
     stopLive();
     const run = liveRun = { def, ctrl: new AbortController(), area: overview ? OVERVIEW : area?.query || true };
     st.liveTried = run.area; // a failed area is not retried by itself: the button retries
+    def.liveState = 'loading'; emptyAgain(def);
     setLiveStatus(def, def.live.slow ? t('live.loadingSlow') : t('live.loading'));
     if (dir() === def && !switching && def.statusOf?.()) showStatus({ kind: 'loading', text: def.loadingText || t('live.loading') }); // Retry pressed
     postLoading('area');
@@ -591,7 +594,7 @@ async function loadLive(def) {
         const { items: loaded, note, complete = true } = overview ? await def.live.overview(st.base, run.ctrl.signal)
             : await def.live.load(area?.query, st.base, run.ctrl.signal);
         if (liveRun !== run) return; // replaced by a newer request
-        st.liveFails = 0;
+        st.liveFails = 0; def.liveState = 'done';
         if (!complete) st.liveTried = { ...area.need, partial: true }; // capped: any new view loads again
         // An open card stays open: its item is kept (live items, and the one shown, by id).
         const shownCard = dir() === def ? explorer.selected : null;
@@ -614,7 +617,7 @@ async function loadLive(def) {
     } catch (e) {
         if (liveRun === run) {
             st.liveAt = Date.now(); // the next timed refresh tries again
-            st.liveFails = (st.liveFails || 0) + 1; st.liveFailedAt = Date.now();
+            st.liveFails = (st.liveFails || 0) + 1; st.liveFailedAt = Date.now(); def.liveState = 'failed';
             st.liveStatus = t(liveTabOn(def) ? 'live.failedRetrying' : 'live.failed', { reason: String(e.message || '').replace(/\.$/, '') });
             // Items that carry their own end (user radio) go when it passes, even while no fresh data arrives.
             const kept = def.live.prune ? def.live.prune(st.items) : st.items;
@@ -625,9 +628,14 @@ async function loadLive(def) {
             if (dir() === def) modeStatus(def);
         }
     } finally {
-        if (liveRun === run) liveRun = null;
+        if (liveRun === run) { liveRun = null; emptyAgain(def); }
         if (dir() === def) renderLive();
     }
+}
+/** An empty list again, so it says whether its layer is still loading (directory.mjs emptyText). */
+function emptyAgain(def) {
+    if (dir() !== def || $('sheet').hidden || explorer.selected || applyFilters(def, dirState[def.id].items, dirState[def.id].values).length) return;
+    explorer.open();
 }
 /** After a failure, the same area is tried again after 1, 2, 4… minutes (at most 10) while a live tab stays on. */
 const retryDue = st => st.liveFails > 0 && Date.now() - st.liveFailedAt > Math.min(60000 * 2 ** (st.liveFails - 1), 600000);
@@ -1097,6 +1105,8 @@ const phone = matchMedia('(max-width: 640px)');
 // The same query is in assets/app.css.
 const panelMode = matchMedia('(min-width: 1051px), (min-aspect-ratio: 3/2) and (max-height: 560px)');
 const sheetState = () => $('sheet').dataset.sheet;
+/** Phones: the tools fold into ⋮, the TV dock is as wide as the screen (assets/app.css, max-width: 719px). */
+const narrow = matchMedia('(max-width: 719px)');
 /** The safe area at the bottom (the browser's or the app's), measured on a probe sized by the CSS variable. */
 let probe = null;
 const insetBottom = () => {
@@ -1105,7 +1115,9 @@ const insetBottom = () => {
 };
 let chromeBottomNow = 120;
 function sheetHeights(top = chromeBottomNow) {
-    const full = Math.max(200, innerHeight - top - 8);
+    // A chosen station's player stays in view above a full sheet: its row only (assets/app.css), under the chips.
+    const p = $('bottomPlayer'), playerRow = p.hidden ? 0 : p.querySelector('.player-row').offsetHeight + 2 + 8;
+    const full = Math.max(200, innerHeight - top - 8 - playerRow);
     const head = $('sheetHandle').offsetHeight + $('sheetHead').offsetHeight + ($('sheetStatus').hidden ? 0 : $('sheetStatus').offsetHeight + 8);
     const peek = Math.min(full, head + 4 + insetBottom());
     return { peek, half: Math.min(full, Math.max(peek + 120, Math.round(innerHeight * .5))), full };
@@ -1168,6 +1180,11 @@ function syncLayout() {
         root.setProperty('--dock-h', `${dock}px`);
         const p = $('bottomPlayer'), playerH = p.hidden ? 0 : p.offsetHeight + 8;
         root.setProperty('--player-h', `${playerH}px`);
+        // The map tools: above the sheet, the player and (phones) the TV dock, never over the chips; without room, aside.
+        const tools = $('mapTools'), toolsH = tools.offsetHeight, tv = $('tvDock');
+        const tvH = tv && !tv.hidden && narrow.matches ? tv.offsetHeight + 8 : 0;
+        root.setProperty('--tools-h', `${toolsH}px`);
+        tools.classList.toggle('no-room', innerHeight - Math.max(dock, insetBottom()) - playerH - tvH - 16 - toolsH < chromeBottom + 8);
         // The reticle marks the globe's centre: the same insets, as CSS variables.
         const insets = { top: chromeBottom, bottom: dock + (portrait ? playerH : 0), left: Math.round(left), right: Math.round(right) };
         for (const [k, v] of Object.entries(insets)) root.setProperty(`--view-${k}`, `${v}px`);
@@ -1385,11 +1402,12 @@ function initThemeMenu() {
     for (const th of APP_MODE ? [] : THEMES) {
         const item = node('button', 'menu-item');
         item.type = 'button';
-        // data-preview scopes the theme's colours to the item, so the swatch shows them.
-        Object.assign(item.dataset, { id: th.id, preview: th.id });
+        item.dataset.id = th.id;
         item.setAttribute('role', 'menuitemradio');
         item.setAttribute('aria-checked', String(th.id === theme.id));
         const swatch = node('span', 'theme-swatch');
+        // data-preview scopes the theme's colours to the swatch only: the item's text keeps the menu's colours.
+        swatch.dataset.preview = th.id;
         swatch.append(node('i'), node('i'), node('i'));
         const text = node('span', 'menu-text');
         text.append(node('b', '', th.label), node('small', '', th.note));
@@ -1529,6 +1547,7 @@ async function start() {
     $('loaderSplash').hidden = true;
     watchLive();
     tv = createTv({ toggle: $('btnTv'), onSound: () => { if (['playing', 'buffering'].includes(player.state)) player.pause(); } });
+    if ($('tvDock')) new ResizeObserver(syncLayout).observe($('tvDock'));
     ready = true; $('btnRandom').disabled = false;
     // The first layer is remembered as before: a link's or the picker's, not the default radio one.
     const shown = await setMode(first, { remember: false });
