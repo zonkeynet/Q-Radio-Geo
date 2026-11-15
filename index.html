@@ -5,7 +5,10 @@
 <meta name="description" content="Global spectrum &amp; tactical awareness on a live 3D globe: news, radio, SDR, Wi-Fi, surveillance and infrastructure. No account, no ads, no trackers.">
 <meta name="theme-color" content="#05070b">
 <meta name="color-scheme" content="dark light">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: wss://relay.damus.io wss://relay.primal.net wss://relay.snort.social; media-src 'self' https: blob:; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<!-- frame-src: live streams (YouTube without cookies, owners' players) load in a sandboxed frame only after a tap; the hosts are
+     js/webcams.mjs FRAME_HOSTS (scripts/test_webcam_streams.mjs checks both). Inside Q-P1NG the app adds its own policy
+     (frame-src 'none'), which this one cannot relax: nothing is framed there. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: wss://relay.damus.io wss://relay.primal.net wss://relay.snort.social; media-src 'self' https: blob:; worker-src 'self'; frame-src https://www.youtube-nocookie.com https://g1.ipcamlive.com https://g2.ipcamlive.com https://g3.ipcamlive.com https://ipcamlive.com https://relay.ozolio.com https://rtsp.me https://iframe.dacast.com https://api.wetmet.net https://imageserver.webcamera.pl https://webcam.elcat.kg; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Q-P1NG Globe · Global Spectrum &amp; Tactical Awareness</title>
 <meta name="application-name" content="Q-P1NG Globe">
 <link rel="canonical" href="https://globe.qp1ng.com/">

@@ -25,6 +25,20 @@ const VARIANTS = [['site', '/'], ['app', '/?app=1'], ['mirror', `${MIRROR}/`]].f
 const server = await startServer({ root });
 const browser = await chromium.launch({ headless: true, args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'],
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined) });
+/** A YouTube live record added to the viewable webcams (the catalogue has none yet): schema 3 columns, value tables. */
+const STREAM = { id: 'yt-smoke', provider: 'smoke', name: 'Harbour live (test)', lat: 41.9, lng: 12.5, country: 'IT', region: 'Lazio', format: 'youtube',
+    rights_status: 'official_embed', youtube: { video: 'dQw4w9WgXcQ' }, official_page: 'https://port.example.org/live' };
+function withStream(json) {
+    for (const f of Object.keys(STREAM)) if (!json.fields.includes(f)) { json.fields.push(f); for (const row of json.rows) row.push(null); }
+    json.rows.push(json.fields.map(f => {
+        const v = STREAM[f], table = json.values?.[f];
+        if (v === undefined) return null;
+        if (!Array.isArray(table)) return v;
+        if (!table.includes(v)) table.push(v);
+        return table.indexOf(v);
+    }));
+    return json;
+}
 const ready = page => page.waitForFunction(() => performance.getEntriesByName('qglobe:layer-ready').length > 0, null, { timeout: 90000 });
 let failures = 0;
 try {
@@ -237,6 +251,57 @@ try {
             assert.equal(await fresh.evaluate(() => document.documentElement.lang), 'en');
             assert.match(await fresh.locator('#sheetMeta').innerText(), /receivers/);
             await fresh.close();
+        });
+        if (variant === 'site') await step('live streams: website frame only after a tap; app preview only while the card is open, capped, and openExternal', async () => {
+            for (const app of [false, true]) {
+                const ctx = await browser.newContext({ viewport: { width: 412, height: 860 }, isMobile: true, hasTouch: true, locale: 'en-US' });
+                const asked = [];
+                await ctx.route(u => !u.href.startsWith(server.origin), r => { asked.push(r.request().url()); r.abort(); });
+                await ctx.route(u => u.pathname.endsWith('/data/webcams-live.json'), async r => { const response = await r.fetch(); r.fulfill({ response, json: withStream(await response.json()) }); });
+                const p = await ctx.newPage();
+                p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+                if (app) await p.addInitScript(() => { window.__msgs = []; window.qglobeNative = { postMessage: m => window.__msgs.push(JSON.parse(m)) }; });
+                await p.goto(`${server.origin}/${app ? '?app=1&hl=en' : '?hl=en'}#layer=webcams&format=stream`);
+                await ready(p);
+                const stream = () => asked.filter(u => /youtube|ytimg/.test(u));
+                await p.locator('#sheetList .dir-item').first().waitFor();
+                assert.deepEqual(stream(), [], 'nothing for the list or the globe');
+                await p.locator('#sheetList .dir-item').first().click();
+                await p.locator('#sheetCard .dir-card').waitFor();
+                const main = p.locator('#sheetCard .card-actions .btn-filled');
+                if (!app) {
+                    assert.equal(await main.innerText(), 'Watch live');
+                    await main.click();
+                    await p.locator('dialog.webcam-viewer[open]').waitFor();
+                    assert.equal(await p.locator('iframe').count(), 0, 'no frame before the tap');
+                    assert.deepEqual(stream(), [], 'no request before the tap');
+                    await p.getByRole('button', { name: 'Load the player' }).click();
+                    const frame = p.locator('dialog iframe');
+                    await frame.waitFor({ state: 'attached' });
+                    assert.equal(await frame.getAttribute('sandbox'), 'allow-scripts allow-same-origin allow-presentation');
+                    assert.equal(await frame.getAttribute('referrerpolicy'), 'no-referrer');
+                    await p.waitForTimeout(800);
+                    assert.ok(stream().some(u => u.startsWith('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')), stream().join(' '));
+                } else {
+                    await p.waitForTimeout(1500);
+                    const first = stream();
+                    assert.ok(first.length >= 1 && first.length <= 2 && first.every(u => /^https:\/\/i\.ytimg\.com\/vi\/dQw4w9WgXcQ\/hqdefault(_live)?\.jpg\?t=\d+$/.test(u)), first.join(' '));
+                    for (let i = 0; i < 4; i++) await p.locator('.stream-refresh').click();
+                    await p.waitForTimeout(600);
+                    assert.ok(stream().length - first.length <= 2, `rapid refreshes: ${stream().length - first.length} requests`);
+                    assert.equal(await main.innerText(), 'Watch the live');
+                    assert.match(await p.locator('.action-note').innerText(), /opens outside Q-P1NG/);
+                    await main.click();
+                    assert.deepEqual(await p.evaluate(() => window.__msgs.filter(m => m.type === 'openExternal').at(-1)),
+                        { v: 1, type: 'openExternal', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'Harbour live (test)' });
+                    assert.equal(await p.locator('iframe').count(), 0, 'never a frame in the app');
+                    const n = stream().length;
+                    assert.equal(await p.evaluate(() => qglobeApp.back()), true);
+                    await p.waitForTimeout(6000);
+                    assert.equal(stream().length, n, 'no request once the card is closed');
+                }
+                await ctx.close();
+            }
         });
         await step('no page or console errors', () => assert.deepEqual(errors, []));
         await step('third parties: only the automatic data requests, all blocked; no media', () => {

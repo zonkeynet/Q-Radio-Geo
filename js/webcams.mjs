@@ -706,7 +706,8 @@ export function streamPreview(camera) {
         if (stopped || document.hidden || !box.isConnected) return;
         if (Date.now() - last < 2000) return; // a double tap is one request
         last = Date.now();
-        img.src = `${base}?t=${Math.floor(last / 1000)}`;
+        // YouTube's image takes the one cache-buster the app allows; an owner's still image is loaded as published.
+        img.src = base.startsWith('https://i.ytimg.com/') ? `${base}?t=${Math.floor(last / 1000)}` : base;
     };
     img.onload = () => { img.hidden = false; placeholder.hidden = true; updated.textContent = t('webcams.updatedAt', { time: date(new Date(), { hour: '2-digit', minute: '2-digit' }) }); };
     img.onerror = () => {
