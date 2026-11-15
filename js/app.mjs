@@ -19,6 +19,8 @@ import { createGuide } from './guide.mjs';
 import { QCAST } from './qcast.mjs';
 import { WEBCAMS, WEBCAM_DB, closeWebcamPlayer } from './webcams.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
+import { hasNative, post, postState, postLoading, postError, onApp, shareNative, openExternal } from './app-bridge.mjs';
+import { showAddress } from './ui.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
 // the app only while it asks for a point for a station (its viewer then reads the Q-Cast relays, nothing else).
 const DIRECTORIES = { news: NEWS, webcams: WEBCAMS, ...(APP_MODE && !PICK_MODE && !QCAST_IN_APP ? {} : { qcast: QCAST }), sdr: SDR, repeaters: REPEATERS, aviation: AVIATION, maritime: MARITIME,
@@ -546,12 +548,14 @@ async function setMode(next, { remember = true } = {}) {
     if (next !== 'webcams') closeWebcamPlayer();
     const def = DIRECTORIES[next];
     if (def && !dirState[next]) {
+        postLoading('layer');
         try { const items = await loadDirectory(def); dirState[next] = { base: items, items, values: initialValues(def) }; }
-        catch { unavailable(def); return false; }
+        catch { unavailable(def); postError(navigator.onLine === false ? 'network' : 'data'); return false; }
     }
     if (!def && !catalog) {
+        postLoading('catalog');
         try { await loadCatalog(); }
-        catch { $('globeNotice').textContent = 'Radio catalog unavailable. Check data/places.json and data/stations.json and reload.'; $('globeNotice').hidden = false; return false; }
+        catch { $('globeNotice').textContent = 'Radio catalog unavailable. Check data/places.json and data/stations.json and reload.'; $('globeNotice').hidden = false; postError('data'); return false; }
     }
     if (liveRun && liveRun.def !== def) stopLive();
     mode = def ? next : 'radio';
@@ -664,7 +668,10 @@ function toast(text) {
 async function shareLink(p, title) {
     const url = linkUrl(p);
     // In Q-P1NG the app asks where to share: its encrypted chat or another app.
-    if (APP_MODE) { if (!requestNativeShare({ url, title })) toast('Sharing is available from the globe address only.'); return; }
+    if (APP_MODE) {
+        if (hasNative() ? shareNative(url, title) : requestNativeShare({ url, title })) return;
+        toast('Sharing is available from the globe address only.'); return;
+    }
     try {
         if (phone.matches && navigator.share) await navigator.share({ title, url });
         else { await navigator.clipboard.writeText(url); toast('Link copied'); }
@@ -832,7 +839,71 @@ function initThemeMenu() {
         else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
     });
 }
+/* ---------- Inside the Q-P1NG app (contract v1, js/app-bridge.mjs) ---------- */
+/** What Back closes, topmost first: each step's test says whether it is open, its close() closes it. */
+function backSteps() {
+    const search = $('searchResults'), menus = [$('modeMenu'), $('themeMenu')];
+    return [
+        { open: () => search.style.display === 'block' || document.activeElement === $('searchInput'),
+          close: () => { hideSearch(); $('searchInput').value = ''; $('searchInput').blur(); } },
+        { open: () => menus.some(m => !m.hidden), close: () => { for (const m of menus) m.hidden = true; $('btnMode').setAttribute('aria-expanded', 'false'); $('btnTheme').setAttribute('aria-expanded', 'false'); } },
+        { open: () => Boolean(document.querySelector('dialog[open]')), close: () => [...document.querySelectorAll('dialog[open]')].pop().close() },
+        { open: () => Boolean(tv?.open), close: () => tv.close?.() },
+        { open: () => Boolean(document.fullscreenElement), close: () => document.exitFullscreen?.() },
+        { open: () => Boolean(explorer?.selected) && !$('countryDrawer').hidden, close: () => explorer.deselect() },
+        { open: () => phone.matches && $('countryDrawer').dataset.sheet === 'full' && !$('countryDrawer').hidden, close: () => { $('countryDrawer').dataset.sheet = 'half'; setFolded(false); } }
+    ];
+}
+function pageBack() {
+    const step = backSteps().find(s => s.open());
+    if (!step) return false;
+    step.close();
+    syncAppState();
+    return true;
+}
+const pagePlaying = () => ['playing', 'buffering'].includes(player?.state) || [...document.querySelectorAll('.webcam-viewer video')].some(v => !v.paused)
+    || Boolean(document.querySelector('.webcam-viewer iframe'));
+let stateFrame = 0;
+/** Tells the app whether Back would close something here (its Back callback and predictive back follow it). */
+function syncAppState() {
+    if (!APP_MODE || stateFrame) return;
+    stateFrame = requestAnimationFrame(() => {
+        stateFrame = 0;
+        postState({ canGoBack: backSteps().some(s => s.open()), layer: mode, playing: pagePlaying() });
+    });
+}
+/** The app's ⋮ menu: the page tools it hosts (themes, guide, rotate, lite), and the layer menu, search and random. */
+function appCommand(name) {
+    if (name === 'layers') { $('btnMode').click(); return true; }
+    if (name === 'search') { $('searchInput').focus(); return true; }
+    if (name === 'themes') { $('btnTheme').click(); return true; }
+    if (name === 'guide') { guide.open(); return true; }
+    if (name === 'rotate') { if ($('btnAutoRotate').disabled) return false; $('btnAutoRotate').click(); return true; }
+    if (name === 'random') { $('btnRandom').click(); return true; }
+    if (name === 'lite') {
+        // Lite mode is chosen at load (fewer effects, no imagery tiles): the page reloads with it switched, at the same view.
+        const url = new URL(location.href);
+        if (LITE_MODE) url.searchParams.delete('lite'); else url.searchParams.set('lite', '1');
+        location.replace(url.href);
+        return true;
+    }
+    return false;
+}
+function initAppContract() {
+    if (!APP_MODE) return;
+    onApp({ back: pageBack, command: appCommand, theme: () => setTheme(theme.id) });
+    // Any change of what is open (menus, dialogs, card, sheet, search) may change canGoBack.
+    new MutationObserver(syncAppState).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'open', 'data-sheet', 'aria-expanded'] });
+    for (const type of ['focusin', 'focusout', 'play', 'pause', 'fullscreenchange']) document.addEventListener(type, syncAppState, true);
+    // The station's own site: through the app, which asks first (window.open and other origins are blocked in the app).
+    if (hasNative()) $('btnExternal').addEventListener('click', e => {
+        e.preventDefault();
+        if (!openExternal($('btnExternal').href, player?.station?.title || '')) showAddress($('btnExternal').href, player?.station?.title || '');
+    });
+}
+
 async function start() {
+    initAppContract();
     guide = createGuide({ button: $('btnGuide'), layers: [RADIO_MODE, ...Object.values(DIRECTORIES)], groups: MODE_GROUPS,
         onLayer: id => { if (ready) setMode(id); },
         dbFiles: [['qp1ng.sqlite.gz', 'db/qp1ng.sqlite.gz'], ['qp1ng-surveillance.sqlite.gz', 'db/qp1ng-surveillance.sqlite.gz'],
@@ -951,11 +1022,14 @@ async function start() {
         if (link && !PICK_MODE && mode === first) await applyLink(link, { justShown: true });
         linked = true;
         markReady('qglobe:layer-ready');
+        post('ready', { layer: mode });
+        syncAppState();
         window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
     } catch (e) {
         $('playerTitle').textContent = 'Loading failed';
         $('playerDetail').textContent = 'Serve the folder over HTTP/HTTPS, not via file://. Check the data/ files and app-config.json, then reload.';
         $('globeNotice').textContent = String(e.message); $('globeNotice').hidden = false;
+        postError('fatal');
     } finally { $('loaderSplash').hidden = true; }
     globalThis.QRadioGlobe = Object.freeze({
         diagnostics: () => ({ ready, mode: config?.streamMode, places: catalog?.places.length || 0, stations: catalog?.stations.length || 0, worker: Boolean(catalog?.worker), playerState: player.state, ...globe?.diagnostics() }),

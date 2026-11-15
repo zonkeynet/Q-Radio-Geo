@@ -10,6 +10,35 @@ const ICONS = {
     wall: '<rect x="3.5" y="4.5" width="7.5" height="6.5" rx="1.6"/><rect x="13" y="4.5" width="7.5" height="6.5" rx="1.6"/><rect x="3.5" y="13" width="7.5" height="6.5" rx="1.6"/><rect x="13" y="13" width="7.5" height="6.5" rx="1.6"/>',
     close: '<path d="m6 6 12 12"/><path d="M18 6 6 18"/>',
     play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
+    stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor"/>',
+    prev: '<path d="M6.5 5.5v13"/><path d="M18 5.5 9.5 12l8.5 6.5z" fill="currentColor"/>',
+    next: '<path d="M17.5 5.5v13"/><path d="M6 5.5 14.5 12 6 18.5z" fill="currentColor"/>',
+    back: '<path d="M19 12H5"/><path d="m11 6-6 6 6 6"/>',
+    external: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
+    share: '<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1"/><path d="m8.2 13.2 7.6 4.1"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>',
+    filter: '<path d="M4 6h10M18 6h2M4 12h3M11 12h9M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    down: '<path d="m6 9 6 6 6-6"/>',
+    up: '<path d="m6 15 6-6 6 6"/>',
+    more: '<circle cx="12" cy="5.5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="1.5" fill="currentColor" stroke="none"/>',
+    refresh: '<path d="M20 11.5A8 8 0 0 0 6.3 6.3L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 12.5a8 8 0 0 0 13.7 5.2L20 15.5"/><path d="M20 20v-4.5h-4.5"/>',
+    info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/>',
+    alert: '<path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5"/><path d="M12 17.3v.1"/>',
+    locate: '<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>',
+    volume: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+    mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+    power: '<path d="M12 3v8"/><path d="M7 6.3a7.5 7.5 0 1 0 10 0"/>',
+    pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+    star: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+    check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    pip: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><rect x="12" y="11.5" width="6.5" height="5" rx="1" fill="currentColor" stroke="none"/>',
+    fullscreen: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    minimize: '<path d="M5 12h14"/>',
+    wide: '<path d="M3 12h18"/><path d="m7 8-4 4 4 4"/><path d="m17 8 4 4-4 4"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
 
     news: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h10A1.5 1.5 0 0 1 17 5.5V18a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z"/><path d="M17 9h2.5A1.5 1.5 0 0 1 21 10.5V18a2 2 0 0 1-2 2"/><path d="M7.5 7.5h6v4h-6z"/><path d="M7.5 14.5h6"/><path d="M7.5 17.5h4"/>',
     radio: '<rect x="3" y="9" width="18" height="11.5" rx="2.5"/><path d="M6.5 9 17 3.5"/><circle cx="8.6" cy="14.75" r="2.6"/><path d="M14 13h3.5"/><path d="M14 16.5h3.5"/>',
@@ -29,11 +58,14 @@ const ICONS = {
     wifi: '<path d="M2.5 9a14 14 0 0 1 19 0"/><path d="M5.5 12.6a9.5 9.5 0 0 1 13 0"/><path d="M8.6 16.1a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.6" r="1.3" fill="currentColor" stroke="none"/>'
 };
 
+// Plain names for the header controls, so other modules need not know the element ids.
+Object.assign(ICONS, { shuffle: ICONS.btnRandom, rotate: ICONS.btnAutoRotate, tv: ICONS.btnTv, theme: ICONS.btnTheme });
+
 /** An inline SVG icon, or an empty one for an unknown name. */
 export function icon(name, className = 'icon') {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', className);
-    for (const [k, v] of Object.entries({ fill: 'none', stroke: 'currentColor', 'stroke-width': '1.9', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) svg.setAttribute(k, v);
+    for (const [k, v] of Object.entries({ fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) svg.setAttribute(k, v);
     svg.innerHTML = ICONS[name] || ''; // static markup above, never page or catalog data
     return svg;
 }

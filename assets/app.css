@@ -629,3 +629,7 @@ body:has(#newsTicker:not([hidden])) .country-drawer { bottom: calc(var(--player-
 .mirror-notice a:hover { text-decoration: underline; }
 .mirror-close { flex-shrink: 0; margin-left: 8px; width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--text-dim); }
 @media (max-width: 640px) { .mirror-notice { width: calc(100vw - 16px); font-size: 11.5px; } }
+
+/* External links carry the same line icon on the website and in the app (where the app opens them, after asking). */
+.ext-icon { width: 14px; height: 14px; flex: none; margin-inline-start: 4px; vertical-align: -2px; }
+button.dir-link, button.guide-link { font: inherit; border: 0; background: none; cursor: pointer; text-align: start; color: var(--accent-2); }

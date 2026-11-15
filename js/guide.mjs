@@ -1,8 +1,9 @@
 // The ⓘ guide: how to use the globe, what every layer shows, the keyboard shortcuts, privacy, and every source with
 // its licence. A native <dialog>, so focus, Esc and screen readers behave as expected.
 import { icon } from './icons.mjs';
+import { externalLink } from './ui.mjs';
 const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
-const link = (text, href) => Object.assign(node('a', '', text), { href, target: '_blank', rel: 'noopener noreferrer' });
+const link = (text, href) => externalLink(text, href, 'guide-link');
 const SEEN = 'qradio.guideSeen';
 
 // One line per layer, keyed by mode id.

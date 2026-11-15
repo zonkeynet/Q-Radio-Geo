@@ -4,9 +4,11 @@ import { loadJSON } from './catalog.mjs';
 import { icon } from './icons.mjs';
 import { normalize } from './core.mjs';
 import { COUNTRY_ALIASES } from './aliases.mjs';
+import { externalLink } from './ui.mjs';
 
 export const node = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = String(text); return e; };
-export const link = (text, href, className = '') => Object.assign(node('a', className, text), { href, target: '_blank', rel: 'noopener noreferrer' });
+/** A link to another site: a new tab on the website, the app's confirmation inside Q-P1NG (js/ui.mjs). */
+export const link = (text, href, className = '') => externalLink(text, href, className);
 const compactOf = s => s.replace(/[^\p{L}\p{N}]+/gu, '');
 function km(a, b) {
     const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
@@ -138,7 +140,7 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
         const f = node('div', 'dir-footer');
         for (const [heading, links] of def.links) {
             f.append(node('p', 'dir-sub', heading));
-            for (const [text, href] of links) f.append(link(`${text} ↗`, href, 'dir-link'));
+            for (const [text, href] of links) f.append(link(text, href, 'dir-link'));
         }
         if (def.note) f.append(node('p', 'dir-note', def.note));
         f.append(node('p', 'dir-note', def.credit));
@@ -191,6 +193,8 @@ export function createExplorer({ drawer, title, meta, list, getCenter, onPick, o
         },
         open: render,
         select(it) { selected = it; render(); },
+        /** Back to the list from a card. */
+        deselect() { selected = null; render(); },
         get selected() { return selected; },
         close() { drawer.hidden = true; }
     };

@@ -138,3 +138,7 @@
 .app-mode[data-native-playback] .bottom-player .station-tag.active { color: var(--accent); border-color: var(--accent); }
 
 .lite-mode .reticle-container { display: none; }
+
+/* Inside Q-P1NG with the contract channel: the app's ⋮ menu hosts the themes, the guide, rotation and lite mode
+   (window.qglobeApp.command), so the page shows no second copy of them. Without the channel they stay here. */
+.has-native :is(#btnTheme, #btnGuide, #btnAutoRotate) { display: none !important; }

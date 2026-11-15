@@ -228,5 +228,5 @@ export function createNativeTv({ toggle, defaults = [] }) {
             render();
         } catch { pending = null; hint.textContent = 'Channel list unavailable. Close and try again.'; }
     };
-    return { mute() {}, get open() { return !dock.hidden; } };
+    return { mute() {}, close: hide, get open() { return !dock.hidden; } };
 }
