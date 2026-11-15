@@ -116,7 +116,12 @@ try {
         });
         await step('security bubbles view (cameras zoomed out)', async () => {
             await page.evaluate(() => { location.hash = '#layer=security&kind=CAMERA&view=30.000,0.000,2.50'; });
-            await page.locator('#countryCitiesList .dir-item-name', { hasText: 'surveillance cameras in this area' }).first().waitFor({ timeout: 60000 });
+            try { await page.locator('#countryCitiesList .dir-item-name', { hasText: 'surveillance cameras in this area' }).first().waitFor({ timeout: 60000 }); }
+            catch (e) {
+                const seen = await page.evaluate(() => ({ mode: document.documentElement.dataset.mode, hash: location.hash, live: document.getElementById('dirLive')?.innerText,
+                    items: document.querySelectorAll('#countryCitiesList .dir-item').length, drawer: document.getElementById('countryDrawer').hidden, bounds: QRadioGlobe.viewBounds() }));
+                throw new Error(`${e.message.split(String.fromCharCode(10))[0]} ${JSON.stringify(seen)}`);
+            }
         });
         await step('a webcams link starts without the radio catalogue, which loads with the radio layer', async () => {
             const fresh = await context.newPage();
