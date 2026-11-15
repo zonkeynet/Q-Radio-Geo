@@ -90,18 +90,23 @@
     --scrim: rgba(16, 24, 40, .4); --shadow: 0 6px 22px rgba(16, 24, 40, .16);
     color-scheme: light;
 }
-/* The app's own colours (window.qglobeApp.setTheme), the default theme in the app. Other themes keep their own. */
+/* The app's own theme (window.qglobeApp.setTheme), the page's only UI theme in the app. Contract v1.1 sends the
+   whole palette (background, sky, three surface steps: js/app-theme.mjs); v1 only surface, text, accent and error. */
 :root[data-theme="app"], [data-preview="app"] {
-    --panel-solid: var(--app-surface, #080c13); --bg: var(--app-surface, #05070b);
+    --panel-solid: var(--app-surface, #080c13); --bg: var(--app-bg, var(--app-surface, #05070b));
     --surface-2: var(--app-surface-2, color-mix(in srgb, var(--panel-solid) 93%, #fff));
+    --surface-3: var(--app-surface-3, color-mix(in srgb, var(--panel-solid) 86%, #fff));
+    --sky: var(--app-sky, radial-gradient(ellipse at 50% 45%, #0b1622 0%, #05070b 62%));
     --on-surface: var(--app-on-surface, #eef3f8); --text-dim: var(--app-on-surface-variant, #93a3bb);
     --outline: var(--app-outline, rgba(255, 255, 255, .13));
     --accent: var(--app-primary, #00ff88); --on-accent: var(--app-on-primary, #03140b);
     --error: var(--app-error, #ff6b81);
 }
 :root[data-theme="app"][data-app-scheme="light"], [data-preview="app"][data-app-scheme="light"] {
-    --panel-solid: var(--app-surface, #f6f8fb); --bg: var(--app-surface, #e9eef5);
-    --surface-2: var(--app-surface-2, #ffffff); --on-surface: var(--app-on-surface, #1a2230);
+    --panel-solid: var(--app-surface, #f6f8fb); --bg: var(--app-bg, var(--app-surface, #e9eef5));
+    --surface-2: var(--app-surface-2, #ffffff); --surface-3: var(--app-surface-3, #eef2f7);
+    --sky: var(--app-sky, radial-gradient(ellipse at 50% 45%, #ffffff 0%, #dfe8f3 55%, #c9d6e6 100%));
+    --on-surface: var(--app-on-surface, #1a2230);
     --text-dim: var(--app-on-surface-variant, #445266); --outline: var(--app-outline, rgba(16, 24, 40, .14));
     --accent: var(--app-primary, #0b6e4f); --on-accent: var(--app-on-primary, #ffffff); --error: var(--app-error, #c62839);
 }
@@ -245,6 +250,13 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .theme-swatch i:nth-child(1) { background: var(--accent); }
 .theme-swatch i:nth-child(2) { background: var(--accent-2); }
 .theme-swatch i:nth-child(3) { background: var(--approx); }
+/* The app's globe styles: a small picture of each globe. */
+.globe-swatch { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--outline-strong); background: #0b1622; }
+.globe-swatch[data-globe="auto"] { background: linear-gradient(135deg, #0b1622 50%, #2f6db3 50%); }
+.globe-swatch[data-globe="night"] { background: radial-gradient(circle at 34% 40%, #ffd27a 0 1.5px, transparent 2px), radial-gradient(circle at 62% 58%, #ffd27a 0 1px, transparent 1.5px),
+    radial-gradient(circle at 48% 30%, #ffe3a8 0 1px, transparent 1.5px), #0b1622; }
+.globe-swatch[data-globe="day"] { background: radial-gradient(circle at 36% 38%, #6f9f58 0 28%, transparent 30%), radial-gradient(circle at 70% 66%, #c9b27a 0 16%, transparent 18%), #2a63a8; }
+.globe-swatch[data-globe="dots"] { background: radial-gradient(circle, var(--accent) 0 1.2px, transparent 1.6px) 0 0 / 5px 5px, var(--bg); }
 
 /* Search results */
 .search-results { position: fixed; z-index: 60; top: calc(var(--header-bottom, 64px) + 8px); inset-inline: calc(var(--inset-x) + var(--g));

@@ -4,7 +4,7 @@ import { icon } from './icons.mjs';
 import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer, stateLabel } from './player.mjs';
 import { createGlobe } from './globe.mjs';
-import { THEMES, themeById, savedThemeId, applyThemeCss, globeSettings } from './themes.mjs';
+import { THEMES, GLOBE_STYLES, themeById, savedThemeId, applyThemeCss, globeSettings, globeStyleById, savedGlobeStyleId, saveGlobeStyle } from './themes.mjs';
 import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory, countText } from './directory.mjs';
 import { SDR } from './sdr.mjs';
 import { REPEATERS } from './repeaters.mjs';
@@ -38,6 +38,8 @@ const dirState = {}; // mode -> { items, values } once loaded
 const dir = () => DIRECTORIES[mode], state = () => dirState[mode];
 const dirShown = () => applyFilters(dir(), state().items, state().values);
 let theme = themeById(savedThemeId());
+// In the app: the globe style (the page's UI always wears the app theme); null on the website.
+let globeStyle = APP_MODE ? globeStyleById(savedGlobeStyleId()) : null;
 applyThemeCss(theme);
 const approxLabel = p => t(p.loc === 'n' ? 'radio.approxCountry' : 'radio.approxRegion');
 /** Data names in the UI language: a country from its ISO code (catalogue countries.json), the data's name otherwise;
@@ -330,8 +332,15 @@ function initSearch() {
 function setTheme(id) {
     theme = themeById(id);
     applyThemeCss(theme);
-    for (const item of $('themeMenu').querySelectorAll('[data-id]')) item.setAttribute('aria-checked', String(item.dataset.id === theme.id));
-    globe?.setTheme(theme.id, globeSettings(theme));
+    const chosen = globeStyle ? globeStyle.id : theme.id;
+    for (const item of $('themeMenu').querySelectorAll('[data-id]')) item.setAttribute('aria-checked', String(item.dataset.id === chosen));
+    globe?.setTheme(theme.id, globeSettings(theme, globeStyle));
+}
+/** In the app: the globe's imagery (the menu's only choice there); colours and fonts stay the app's. */
+function setGlobeStyle(id) {
+    globeStyle = globeStyleById(id);
+    saveGlobeStyle(globeStyle);
+    setTheme(theme.id);
 }
 
 /* ---------- Chips row and filters ---------- */
@@ -1042,7 +1051,7 @@ function applyStatic() {
         b.setAttribute('aria-label', label); b.title = label;
     };
     tool('btnTv', 'tv', t('tools.tv')); tool('btnAutoRotate', 'rotate', t('tools.rotate'));
-    tool('btnTheme', 'theme', t('tools.theme')); tool('btnGuide', 'info', t('tools.guide'));
+    tool('btnTheme', 'theme', t(APP_MODE ? 'tools.globeStyle' : 'tools.theme')); tool('btnGuide', 'info', t('tools.guide'));
     tool('btnMore', 'more', t('tools.more'));
     const plain = (id, name, label) => { const b = $(id); b.replaceChildren(icon(name)); b.setAttribute('aria-label', label); b.title = label; };
     plain('btnZoomIn', 'plus', t('map.zoomIn')); plain('btnZoomOut', 'minus', t('map.zoomOut')); plain('btnResetView', 'locate', t('map.recentre'));
@@ -1120,7 +1129,7 @@ function initAppContract() {
         if (!openExternal($('btnExternal').href, player?.station?.title || '')) showAddress($('btnExternal').href, player?.station?.title || '');
     });
 }
-/** The theme menu: each theme's own colours in its swatch; in the app, the app's colours first. */
+/** The theme menu: each theme's own colours in its swatch; in the app, the globe styles (the UI is the app's theme). */
 function openThemes() {
     const menu = $('themeMenu'), open = menu.hidden;
     closeMenus();
@@ -1131,7 +1140,25 @@ function openThemes() {
 function initThemeMenu() {
     const menu = $('themeMenu');
     menu.replaceChildren();
-    for (const th of THEMES) {
+    if (APP_MODE) {
+        menu.setAttribute('aria-label', t('tools.globeStyle'));
+        menu.append(node('p', 'menu-group', t('tools.globeStyle')));
+        for (const style of GLOBE_STYLES) {
+            const item = node('button', 'menu-item');
+            item.type = 'button';
+            item.dataset.id = style.id;
+            item.setAttribute('role', 'menuitemradio');
+            item.setAttribute('aria-checked', String(style.id === globeStyle.id));
+            const swatch = node('span', 'globe-swatch');
+            swatch.dataset.globe = style.id;
+            const text = node('span', 'menu-text');
+            text.append(node('b', '', style.label), node('small', '', style.note));
+            item.append(swatch, text, icon('check', 'icon check'));
+            item.onclick = () => { setGlobeStyle(style.id); closeMenus(); haptic('tick'); };
+            menu.appendChild(item);
+        }
+    }
+    for (const th of APP_MODE ? [] : THEMES) {
         const item = node('button', 'menu-item');
         item.type = 'button';
         // data-preview scopes the theme's colours to the item, so the swatch shows them.

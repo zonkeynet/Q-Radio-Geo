@@ -120,7 +120,7 @@ export function createGuide({ button, layers, groups, onLayer, dbFiles }) {
                 ['layers', t('guide.app.step1'), t('guide.app.step1Text')],
                 ['search', t('guide.app.step2'), t('guide.app.step2Text')],
                 ['play', t('guide.app.step3'), t('guide.app.step3Text')]])),
-            section(t('guide.app.more'), list([[t('guide.app.menu'), t('guide.app.menuText')], [t('guide.app.back'), t('guide.app.backText')],
+            section(t('guide.app.more'), list([[t('guide.app.menu'), t('guide.app.menuText')], [t('guide.app.theme'), t('guide.app.themeText')], [t('guide.app.back'), t('guide.app.backText')],
                 [t('guide.app.links'), t('guide.app.linksText')], [t('guide.app.share'), t('guide.app.shareText')]]))],
         [t('guide.tab.layers'), layersPage],
         [t('guide.tab.privacy'), section(t('guide.privacy'), list([t('guide.app.p1'), t('guide.app.p2'), t('guide.app.p3'), t('guide.app.p4'), t('guide.p.data')]))],

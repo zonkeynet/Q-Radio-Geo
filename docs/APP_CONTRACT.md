@@ -1,4 +1,4 @@
-# Q-Globe app ↔ page contract, v1 (2026-11-15)
+# Q-Globe app ↔ page contract, v1.1 (2026-11-15)
 
 The only interface between the Q-P1NG app (QGlobeActivity, Android) and the Q-Globe page in app mode.
 Both sides implement exactly this; any change bumps `v` and is agreed on both sides.
@@ -11,7 +11,8 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
 - **App → page:** `webView.evaluateJavascript("window.qglobeApp && window.qglobeApp.<method>(<json>)", callback)`.
   - The page defines `window.qglobeApp` only in app mode (`?app=1`).
   - Calls that arrive before the page is ready are queued by the app and re-sent after `ready`.
-- Every message carries `v: 1`. Unknown types are ignored on both sides.
+- Every message carries `v: 1`. Unknown types and unknown fields are ignored on both sides (v1.1 only adds optional
+  `setTheme` fields, see below).
 
 ## Load URL
 `https://globe.qp1ng.com/?app=1&hl=<lang>&mode=<dark|light>`, plus the existing parameters such as the pick mode.
@@ -22,10 +23,10 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
 | Method | Argument | Page does |
 |---|---|---|
 | `setInsets(o)` | `{v, top, right, bottom, left, ime}` in CSS px | sets `--qg-inset-top/right/bottom/left/ime` on `:root`; layout uses them for safe areas |
-| `setTheme(o)` | `{v, mode, surface, surfaceVariant, onSurface, onSurfaceVariant, accent, onAccent, outline, error}` as `#rrggbb` | sets the colour roles as CSS custom properties; the page's own themes still apply when the user picks one in the page |
+| `setTheme(o)` | `{v, mode, surface, surfaceVariant, onSurface, onSurfaceVariant, accent, onAccent, outline, error}` as `#rrggbb`; v1.1 adds `theme`, `palette` and `fonts` (below) | sets the colour roles as CSS custom properties; in the app the page's interface always wears them (v1.1: the palette and the title font on large headings) |
 | `setLocale(o)` | `{v, hl}` | switches the UI language without reload, if supported; otherwise the app reloads with the new `hl` |
 | `back()` | – | closes the topmost open page layer (search, menu, guide, card, sheet expanded → collapsed, in-page fullscreen); **returns `true` if it consumed Back, `false` otherwise** (evaluateJavascript result string) |
-| `command(o)` | `{v, name}`, name ∈ `layers`, `search`, `themes`, `guide`, `rotate`, `lite`, `random` | opens or toggles that page feature (used by the native ⋮ menu) |
+| `command(o)` | `{v, name}`, name ∈ `layers`, `search`, `themes`, `guide`, `rotate`, `lite`, `random` | opens or toggles that page feature (used by the native ⋮ menu); `themes` opens the globe style menu |
 
 ## Page → app (`qglobeNative.postMessage`)
 | `type` | Fields | App does |
@@ -49,8 +50,54 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
   4. exit.
 - Fullscreen of an embedded player (YouTube or the owner's player) goes through `WebChromeClient.onShowCustomView`; Back leaves fullscreen first.
 
+## setTheme v1.1 (2026-11-15)
+v1.1 only adds optional fields to `setTheme`; messages still carry `v: 1`, and a page that does not know them ignores
+them (it keeps using the v1 roles). An app that does not send them gets the v1 behaviour.
+
+```
+{ v: 1, mode, surface, surfaceVariant, onSurface, onSurfaceVariant, accent, onAccent, outline, error,   // v1
+  theme: "paper",                                                                                     // v1.1
+  palette: { background, surface, primary, secondary, highlight, error, text, textDim, border },      // #rrggbb
+  fonts: { title: { family, url?, axes? }, body: { family, url? }, mono: { family, url? } } }
+```
+- `theme`: the app's HudTheme id, lowercase (`quantum`, `paper`, `gameboy`…).
+- `palette`: the built-in theme's own colours (`highlight` is the app's gold; `mode` stays the top-level field). They
+  are the same for everyone using that theme. A custom colour chosen in the app is never sent as is: `primary` and
+  `secondary` are then the same coarse accent as `accent`.
+- `fonts.title`: the font of the app's titles (the theme's display font, or the font style the user chose), the bold
+  file where the family has one. `url` is a same-origin path, `/__qp1ng/fonts/<file>.ttf|otf`; `axes` are variation
+  settings for that file (`{"ELSH":50,"CRSV":0,"wght":325}` for Bitcount). No `url` means a system family:
+  `sans-serif` or `monospace`.
+- `fonts.body` and `fonts.mono`: the app's readable families (system `sans-serif` and `monospace` today), sent for
+  completeness. **The page ignores them.**
+
+**The title font goes on large headings only.** The page applies `fonts.title` to its large headings (sheet title,
+card title, dialog titles, the guide's title and section headings), never below 18 px. Everything else (body text,
+list rows, subtitles, chips, buttons, small labels, numbers and distances) stays in the page's own readable system sans
+and its mono for numbers, identical for every theme apart from colours. The page loads the title font with the
+FontFace API and switches the headings only once it has loaded (system font until then, never invisible text); a font
+that fails to load leaves the system font.
+
+**Colours.** The page maps the palette onto its own colour tokens and keeps every text colour (text, secondary text,
+primary as text, error) at 4.5:1 or more on each surface it is drawn on, moving a colour toward the text (or white or
+black) only as far as needed, as the app does for its secondary text. Its data colours (the layers' dots) stay its own.
+
+**Fonts are served by the app.** The viewer answers `GET https://globe.qp1ng.com/__qp1ng/fonts/<file>` itself from the
+APK's `res/font` files: a fixed allow-list (exact file name to resource), `font/ttf` or `font/otf`, `Cache-Control:
+no-store` (the bytes stay in the app's memory), never a network request. Any other path under `/__qp1ng/` is refused.
+The fonts are OFL-1.1 or CC0, served unchanged with their embedded notices (the app's licence notices list them).
+
+**Theme changes.** The viewer runs in its own process and receives the theme in its launch intent; opening Q-Globe
+again from the app after a theme change re-sends `setTheme` to the open page.
+
+**Coherent behaviour.** In the app the page's interface always wears the app's theme: its own themes are not offered.
+The `themes` command opens the "Globe style" menu ("Stile del globo"), which changes only the globe: automatic (night
+lights with a dark app theme, Blue Marble with a light one), night lights, Blue Marble (day, with relief), dotted
+continents (in the app's colour). The website keeps its themes and loads no app font.
+
 ## Page side (this repository)
-- `js/app-bridge.mjs` implements the contract; `scripts/test_app_bridge.mjs` checks it.
+- `js/app-bridge.mjs` implements the contract and `js/app-theme.mjs` its v1.1 theme (palette mapping, title font);
+  `scripts/test_app_bridge.mjs` checks both.
 - `window.qglobeApp` is defined in app mode only; `has-native` is set on `<html>` when `window.qglobeNative` exists.
   Without it (an older app) the page keeps its own theme, guide and rotate buttons and shows external addresses to copy.
 - `back()` closes, in this order: the search (results or focused field) → an open menu (layers, themes) → the topmost
@@ -59,10 +106,14 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
   plain globe with its list leaves Q-Globe at once. `state.canGoBack` is exactly "one of these is open".
 - `state.playing` is true while the page itself plays something: the website's radio player, a webcam video or an
   embedded live stream (in the app, radio and TV play in the app's player).
-- `command`: `layers` opens the layer menu, `search` focuses the search, `themes` opens the theme menu, `guide` the
+- `command`: `layers` opens the layer menu, `search` focuses the search, `themes` opens the globe style menu, `guide` the
   guide, `rotate` toggles rotation, `random` picks something at random in the layer, `lite` reloads with `lite=1`
   switched (same view).
 - `setLocale` with a different language reloads the page with the new `hl`; the address keeps the layer, view and card.
 - `loading` is sent with `what: layer` or `catalog` when a layer's data starts loading, with `progress` while it streams.
 - `error` is sent with `network` or `data` for a layer that could not load (the page shows Retry), and `fatal` when
   the page cannot draw at all.
+- `setTheme` v1.1: `--app-*` variables from the palette (`[data-theme="app"]` in `assets/app.css`), the title font as
+  `--qg-font-title`, `--qg-title-size` (18, 20 or 22 px from the font's width) and `--qg-title-axes`, applied by
+  `assets/native-app.css` to `.sheet-title`, `.dir-card-title`, `.sheet-dialog h2`, `.guide-head h2`, `.native-tv
+  header b` and `.guide-section h3` (18 px) only. The globe style is kept in `localStorage` (`qradio.globeStyle`).

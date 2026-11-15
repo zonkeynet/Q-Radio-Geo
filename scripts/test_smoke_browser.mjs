@@ -67,12 +67,15 @@ try {
             // Map imagery is blocked here, so the themes fall back to the bundled textures.
             await page.waitForFunction(() => performance.getEntriesByName('qglobe:texture-ready').length > 0, null, { timeout: 30000 });
             assert.equal(await page.evaluate(() => QRadioGlobe.diagnostics().texture), 'assets/textures/earth-night-2k.webp');
-            // The theme menu, clicked from the page (the app's header may hide the button).
+            // The theme menu, clicked from the page (the app's header may hide the button). In the app it holds the
+            // globe styles only (the page wears the app's theme): Blue Marble and night lights there.
             const theme = id => page.evaluate(id => { document.getElementById('btnTheme').click(); document.querySelector(`#themeMenu [data-id="${id}"]`).click(); }, id);
-            await theme('satellite');
+            const app = variant === 'app';
+            if (app) assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#themeMenu [data-id]')].map(e => e.dataset.id)), ['auto', 'night', 'day', 'dots']);
+            await theme(app ? 'day' : 'satellite');
             await page.waitForFunction(() => QRadioGlobe.diagnostics().texture === 'assets/textures/earth-blue-marble-2k.webp' && QRadioGlobe.diagnostics().textured, null, { timeout: 30000 });
             await page.waitForFunction(() => performance.getEntriesByType('resource').some(e => e.name.endsWith('assets/textures/earth-topology.webp')), null, { timeout: 30000 });
-            await theme('tactical');
+            await theme(app ? 'night' : 'tactical');
             await page.waitForFunction(() => QRadioGlobe.diagnostics().texture === 'assets/textures/earth-night-2k.webp' && QRadioGlobe.diagnostics().textured, null, { timeout: 30000 });
         });
         await step('global search and a station card', async () => {
@@ -211,7 +214,6 @@ try {
             assert.equal(await fresh.evaluate(() => qglobeApp.back()), true);
             assert.equal(await fresh.evaluate(() => qglobeApp.command({ v: 1, name: 'nonsense' })), false);
             // Insets and theme roles.
-            await fresh.evaluate(() => document.querySelector('#themeMenu [data-id="app"]').click()); // the app's colours (default in a new session)
             await fresh.evaluate(() => { qglobeApp.setInsets({ v: 1, top: 0, right: 0, bottom: 48, left: 0, ime: 0 }); qglobeApp.setTheme({ v: 1, mode: 'light', surface: '#f6f8fb', surfaceVariant: '#ffffff', onSurface: '#1a2230', onSurfaceVariant: '#445266', accent: '#0b6e4f', onAccent: '#ffffff', outline: '#d0d5dd', error: '#c62839' }); });
             await fresh.waitForTimeout(400);
             const sheetBottom = await fresh.evaluate(() => getComputedStyle(document.getElementById('sheetList')).paddingBottom);

@@ -1,9 +1,11 @@
-// The page side of the Q-P1NG app ↔ page contract, v1 (docs/APP_CONTRACT.md).
+// The page side of the Q-P1NG app ↔ page contract, v1.1 (docs/APP_CONTRACT.md). Messages carry v: 1; v1.1 only adds
+// optional setTheme fields (theme, palette, fonts: js/app-theme.mjs), which older pages ignore.
 // Page → app: window.qglobeNative.postMessage(JSON) — present only inside the app, on the globe's own origin.
 // App → page: window.qglobeApp.<method>(object) — defined only in app mode (?app=1).
 // Nothing here assumes the app: every call checks window.qglobeNative first, and the website never sees either object.
 import { APP_MODE } from './native-app.mjs';
 import { LANG, supported } from './i18n.mjs';
+import { parseTheme, paletteTokens, applyTitleFont } from './app-theme.mjs';
 
 export const CONTRACT_VERSION = 1;
 const nativeObject = () => {
@@ -47,7 +49,6 @@ export function openExternal(url, title = '') {
 export const shareNative = (url, title) => post('share', { url, title: String(title).slice(0, 120) });
 
 // ---------- App → page ----------
-const HEX = /^#[0-9a-f]{6}$/i;
 const ROLES = { surface: '--app-surface', surfaceVariant: '--app-surface-2', onSurface: '--app-on-surface', onSurfaceVariant: '--app-on-surface-variant',
     accent: '--app-primary', onAccent: '--app-on-primary', outline: '--app-outline', error: '--app-error' };
 const INSETS = ['top', 'right', 'bottom', 'left', 'ime'];
@@ -65,15 +66,20 @@ function setInsets(o) {
     }
     handlers.insets?.();
 }
-/** The app's colour roles: `--app-*` variables used by the "app colours" theme; other page themes keep theirs. */
+/**
+ * The app's theme as `--app-*` variables, read by the page's app theme (in the app the page's UI always wears it).
+ * v1.1: the full palette (mapped with readable text, js/app-theme.mjs) and the title font; v1: the colour roles.
+ */
 function setTheme(o) {
     const root = document.documentElement;
-    const mode = o?.mode === 'light' ? 'light' : 'dark';
-    root.dataset.appScheme = mode;
-    for (const [role, variable] of Object.entries(ROLES)) {
-        if (HEX.test(o?.[role] || '')) root.style.setProperty(variable, o[role]);
-    }
-    received.theme = { mode, accent: HEX.test(o?.accent || '') ? o.accent : null };
+    const theme = parseTheme(o, Object.keys(ROLES));
+    root.dataset.appScheme = theme.mode;
+    const vars = theme.palette ? paletteTokens(theme.palette, theme.mode)
+        : Object.fromEntries(Object.entries(theme.roles).map(([role, value]) => [ROLES[role], value]));
+    for (const [variable, value] of Object.entries(vars)) root.style.setProperty(variable, value);
+    // Only the title font is used; body and mono stay the page's own (system sans and mono).
+    if (theme.hasFonts) applyTitleFont(theme.fonts.title).catch(() => { /* the headings keep the system font */ });
+    received.theme = { mode: theme.mode, accent: vars['--app-primary'] || null, theme: theme.theme };
     handlers.theme?.(received.theme);
 }
 /** A new language: the page reloads itself with the new hl (layer, view and open card are kept in the address). */
