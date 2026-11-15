@@ -1091,7 +1091,11 @@ function initKeys() {
 
 /* ---------- The sheet: peek, half, full on phones (portrait); a side panel otherwise ---------- */
 const phone = matchMedia('(max-width: 640px)');
-const panelMode = matchMedia('(min-width: 1051px), (orientation: landscape) and (max-height: 560px)');
+// A landscape phone is wide, not just wider than tall: a portrait page shortened by the keyboard (an in-app browser,
+// a WebView resized for it) is wider than tall too, and its sheet must not turn into a side panel while typing. Phones
+// held sideways are 16:9 or wider; a portrait page loses at most about half its height to a keyboard (under 3:2).
+// The same query is in assets/app.css.
+const panelMode = matchMedia('(min-width: 1051px), (min-aspect-ratio: 3/2) and (max-height: 560px)');
 const sheetState = () => $('sheet').dataset.sheet;
 /** The safe area at the bottom (the browser's or the app's), measured on a probe sized by the CSS variable. */
 let probe = null;
@@ -1121,6 +1125,17 @@ function setSheet(next) {
     syncLayout();
     syncAppState();
 }
+/**
+ * The app's keyboard came up over a field of the sheet (a card's station filter): the field goes to the top of what
+ * scrolls around it, so its results fill the space left above the keyboard (the sheet itself rides up, assets/app.css).
+ */
+function revealField() {
+    const field = document.activeElement;
+    if (!(field instanceof HTMLInputElement) || !$('sheet').contains(field)) return;
+    if (!(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--qg-inset-ime')) > 0)) return;
+    const box = field.closest('.card-scroll, .sheet-list');
+    if (box) box.scrollTo({ top: box.scrollTop + field.getBoundingClientRect().top - box.getBoundingClientRect().top - 8, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
 let layoutFrame = 0;
 /** Header, chips, sheet and player heights as CSS variables, and the globe's view offset from them. */
 function syncLayout() {
@@ -1133,7 +1148,7 @@ function syncLayout() {
         root.setProperty('--header-bottom', `${Math.round(header.bottom)}px`);
         root.setProperty('--chrome-bottom', `${chromeBottom}px`);
         const sheet = $('sheet'), portrait = !panelMode.matches, shown = !sheet.hidden;
-        let dock = 0, left = 0;
+        let dock = 0, left = 0, right = 0;
         if (portrait && shown) {
             const h = sheetHeights(), visible = h[sheet.dataset.sheet] || h.half;
             root.setProperty('--sheet-full', `${h.full}px`);
@@ -1143,12 +1158,20 @@ function syncLayout() {
             dock = visible;
         } else {
             sheet.style.removeProperty('--body-h');
-            if (shown && !portrait) left = sheet.getBoundingClientRect().right;
+            // A collapsed panel is only its title bar, beside the chips: the globe takes the whole width again. The panel
+            // is on the inline-start side: the right one in a right-to-left page.
+            if (shown && !portrait && sheet.dataset.sheet !== 'peek') {
+                const r = sheet.getBoundingClientRect();
+                if (r.left < innerWidth / 2) left = r.right; else right = innerWidth - r.left;
+            }
         }
         root.setProperty('--dock-h', `${dock}px`);
         const p = $('bottomPlayer'), playerH = p.hidden ? 0 : p.offsetHeight + 8;
         root.setProperty('--player-h', `${playerH}px`);
-        globe?.setViewInsets({ top: chromeBottom, bottom: dock + (portrait ? playerH : 0), left });
+        // The reticle marks the globe's centre: the same insets, as CSS variables.
+        const insets = { top: chromeBottom, bottom: dock + (portrait ? playerH : 0), left: Math.round(left), right: Math.round(right) };
+        for (const [k, v] of Object.entries(insets)) root.setProperty(`--view-${k}`, `${v}px`);
+        globe?.setViewInsets(insets);
     });
 }
 function initSheet() {
@@ -1320,7 +1343,7 @@ function appCommand(name) {
 }
 function initAppContract() {
     if (!APP_MODE) return;
-    onApp({ back: pageBack, command: appCommand, theme: () => setTheme(theme.id), insets: syncLayout });
+    onApp({ back: pageBack, command: appCommand, theme: () => setTheme(theme.id), insets: () => { syncLayout(); revealField(); } });
     // Any change of what is open (menus, dialogs, card, sheet, search) may change canGoBack.
     new MutationObserver(syncAppState).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'open', 'data-sheet', 'data-view', 'aria-expanded', 'class'] });
     for (const type of ['focusin', 'focusout', 'play', 'pause', 'fullscreenchange']) document.addEventListener(type, syncAppState, true);

@@ -102,9 +102,9 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         else camera.setViewOffset(w, h, viewOffset.x, viewOffset.y, w, h);
         wake?.();
     }
-    /** top, bottom, left: CSS px of the screen covered by the header, the sheet and a side panel. */
-    function setViewInsets({ top = 0, bottom = 0, left = 0 } = {}) {
-        offsetTarget = { x: Math.round(-left / 2), y: Math.round((bottom - top) / 2) };
+    /** top, bottom, left, right: CSS px of the screen covered by the header, the sheet and a side panel. */
+    function setViewInsets({ top = 0, bottom = 0, left = 0, right = 0 } = {}) {
+        offsetTarget = { x: Math.round((right - left) / 2), y: Math.round((bottom - top) / 2) };
         cancelAnimationFrame(offsetFrame);
         const from = { ...viewOffset }, start = performance.now();
         const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -414,7 +414,7 @@ export function createGlobe(container, onSelect, onManualInput, { lite = false, 
         diagnostics: () => {
             const tileColors = {};
             findGlobeGroup()?.traverse(o => { if (o.isMesh && o.material?.map && o.material.type === 'MeshLambertMaterial') { const k = o.material.color ? `#${o.material.color.getHexString()}` : 'none'; tileColors[k] = (tileColors[k] || 0) + 1; } });
-            return { ...navigation.getSnapshot(), points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, texture: current?.image ? texture(current.image) : null, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
+            return { ...navigation.getSnapshot(), viewOffset: { ...offsetTarget }, points: layer.items.length, dotSets: dotSets.length, pixelRatio, theme: themeId, texture: current?.image ? texture(current.image) : null, tiles: activeTiles ? activeTiles.split('/')[6] : null, tileColors, textured: Boolean(material.map), renderer: renderer.info?.render };
         },
         destroy() { abort.abort(); clearTimeout(hoverTimer); clearTimeout(pressTimer); clearInterval(tintTimer); resizeObserver.disconnect(); navigation.destroy(); world.pauseAnimation(); renderer.dispose(); },
         /** Frames drawn so far (diagnostics and tests of the idle loop). */

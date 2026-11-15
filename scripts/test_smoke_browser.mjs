@@ -7,7 +7,9 @@
 // News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
 // Loading: a compact row (the sheet only its title while a layer loads), transient failures retried with "Retrying
 // (n/3)", the error only after the last attempt. Search: the ✕ and the "no results" state. In the app: no page
-// player, the place's stations in its card, a station tapped goes to the app with its name and details.
+// player, the place's stations in its card, a station tapped goes to the app with its name and details; the app's
+// keyboard over the page: search results above it, no side panel when it shortens a page, a card's filter above it.
+// Landscape: the globe and its reticle centred in what the side panel leaves free, the whole width when it is collapsed.
 // The sheet under touch (real touch input through the browser, so touch-action and scrolling apply): its header
 // buttons take their taps, drags move it, the list scrolls only when it is full, rows still open their cards.
 // Run with Playwright installed:  node scripts/test_smoke_browser.mjs   (SMOKE_ONLY=app to run one variant)
@@ -464,6 +466,27 @@ try {
             const panel = await fresh.evaluate(() => { const r = document.getElementById('sheet').getBoundingClientRect(); return { w: r.width, h: r.height, left: r.left }; });
             assert.ok(panel.h > 220 && panel.w <= 400 && panel.left < 40, JSON.stringify(panel));
             assert.ok(await fresh.locator('#sheetList .dir-item').first().isVisible(), 'list rows visible in landscape');
+            // The globe, and the reticle marking its centre, sit in the middle of what the panel leaves free; a collapsed
+            // panel (its title bar only) leaves them the whole width.
+            const centred = () => fresh.evaluate(() => {
+                const r = document.querySelector('.reticle').getBoundingClientRect();
+                return { offset: QRadioGlobe.diagnostics().viewOffset.x, reticle: Math.round(r.left + r.width / 2), state: document.getElementById('sheet').dataset.sheet };
+            });
+            const expect = async (state, offset, reticle) => {
+                const deadline = Date.now() + 5000;
+                let now;
+                while (Date.now() < deadline) {
+                    now = await centred();
+                    if (now.state === state && Math.abs(now.offset - offset) <= 1 && Math.abs(now.reticle - reticle) <= 2) return;
+                    await fresh.waitForTimeout(100);
+                }
+                assert.fail(`${state} panel: ${JSON.stringify(now)}, expected offset ${offset}, reticle at ${reticle}`);
+            };
+            const panelRight = panel.left + panel.w, width = 890;
+            await expect('half', -panelRight / 2, (panelRight + width) / 2);
+            await fresh.click('#sheetToggle');
+            await expect('peek', 0, width / 2);
+            await fresh.click('#sheetToggle');
             await fresh.goto(`${server.origin}/?hl=en#layer=sdr`);
             await ready(fresh);
             assert.equal(await fresh.evaluate(() => document.documentElement.lang), 'en');
@@ -601,6 +624,39 @@ try {
                 }
                 await ctx.close();
             }
+        });
+        // The app's keyboard comes over the page (it sends ime, nothing is resized): the search results end above it, a
+        // page shortened by a keyboard (an in-app browser) keeps its bottom sheet, and a card's station filter rides up.
+        if (variant === 'app') await step('keyboard: results above it, the sheet stays a sheet, a card\'s filter rides above it', async () => {
+            const p = await context.newPage();
+            p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+            const ime = v => p.evaluate(px => qglobeApp.setInsets({ v: 1, top: 0, right: 0, bottom: 0, left: 0, ime: px }), v);
+            await p.goto(`${server.origin}/?app=1&hl=en#layer=radio&view=41.900,12.500,0.50`);
+            await ready(p);
+            await p.locator('#searchInput').fill('Rom');
+            await p.locator('#searchResults .search-item').first().waitFor({ timeout: 20000 });
+            await ime(320);
+            await p.waitForTimeout(300);
+            const results = await p.evaluate(() => { const r = document.getElementById('searchResults').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: innerHeight }; });
+            assert.ok(results.bottom <= results.h - 320 && results.bottom - results.top >= 200, `results above the keyboard: ${JSON.stringify(results)}`);
+            await p.setViewportSize({ width: 412, height: 400 });
+            await p.waitForTimeout(400);
+            const sheet = await p.evaluate(() => { const r = document.getElementById('sheet').getBoundingClientRect(); return { left: r.left, width: r.width }; });
+            assert.deepEqual(sheet, { left: 0, width: 412 }, 'a page shortened by a keyboard keeps its bottom sheet');
+            await p.setViewportSize({ width: 412, height: 860 });
+            await ime(0);
+            await p.locator('#searchInput').press('Escape');
+            await p.locator('#sheetList').getByText('Rome', { exact: true }).first().click();
+            const filter = p.locator('.station-filter').first();
+            await filter.click();
+            await filter.fill('rad');
+            await ime(320);
+            await p.waitForFunction(() => { const r = document.querySelector('.station-filter').getBoundingClientRect(); return r.bottom <= innerHeight - 320 - 100; }, null, { timeout: 5000 })
+                .catch(async () => assert.fail(`the filter under the keyboard: ${JSON.stringify(await filter.boundingBox())}`));
+            const head = await p.evaluate(() => document.getElementById('sheetHead').getBoundingClientRect().top >= parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--chrome-bottom')));
+            assert.ok(head, 'the sheet\'s title stays under the chips');
+            await ime(0);
+            await p.close();
         });
         await step('no page or console errors', () => assert.deepEqual(errors, []));
         await step('third parties: only the automatic data requests, all blocked; no media', () => {
