@@ -25,12 +25,31 @@ export function indexItems(def, items) {
 /** Loads a mode's data once; def.prepare(json) returns the items, each with lat and lng. A mode with no bundled file
  * (news) gives def.loadItems({ signal }) instead: live data, so a finished load is reused only for a minute (the
  * page's first layer starts loading before the layer is shown), never as a stale copy later. */
-export function loadDirectory(def, { onProgress = null, signal = null } = {}) {
+export function loadDirectory(def, { onProgress = null, signal = null, onRetry = null } = {}) {
     if (def.loadItems && def.loadedAt && Date.now() - def.loadedAt > 60000) def.loading = null;
-    def.loading ??= (def.loadItems ? def.loadItems({ signal, onProgress }) : loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout, onProgress, signal }).then(def.prepare))
-        .then(items => { def.loadedAt = Date.now(); return items.filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)); })
-        .catch(e => { def.loading = null; throw e; });
-    return def.loading;
+    // Progress and retries reach every caller waiting for the same load (the page's first layer starts loading before
+    // the layer is shown, without a progress row).
+    if (!def.loading) {
+        const progress = def.progress = relay(), retries = def.retries = relay();
+        def.loading = (def.loadItems ? def.loadItems({ signal, onProgress: progress.emit, onRetry: retries.emit })
+            : loadJSON(def.dataUrl, undefined, { timeout: def.loadTimeout, onProgress: progress.emit, onRetry: retries.emit, signal }).then(def.prepare))
+            .then(items => { def.loadedAt = Date.now(); return items.filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng)); })
+            .catch(e => { def.loading = null; throw e; });
+    }
+    const { progress, retries, loading } = def;
+    progress.add(onProgress); retries.add(onRetry);
+    loading.catch(() => {}).finally(() => { progress.remove(onProgress); retries.remove(onRetry); });
+    return loading;
+}
+/** Listeners of a shared load's events; one that joins late hears the latest event at once. */
+export function relay() {
+    const listeners = new Set();
+    let last = null;
+    return {
+        add(fn) { if (!fn) return; listeners.add(fn); if (last) fn(last); },
+        remove(fn) { listeners.delete(fn); },
+        emit(event) { last = event; for (const fn of listeners) fn(event); }
+    };
 }
 export const initialValues = def => Object.fromEntries(def.filters.map(f => [f.key, 'all']));
 export const applyFilters = (def, items, values) => items.filter(it => def.filters.every(f => values[f.key] === 'all' || f.test(it, values[f.key])));
@@ -98,7 +117,7 @@ export const countText = (def, n) => def.countOf ? def.countOf(n) : `${num(n)} $
  * sections, with a footer for sources. Card: one item, the main action pinned at the bottom, three key facts, the rest
  * folded under "Details" and "Source & licence"; its back button returns to the list.
  */
-export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, onPick, onShare, onView }) {
+export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, onPick, onShare, onView, onSaveNote = null }) {
     let def = null, items = [], values = {}, selected = null, more = null, center = null, distance = new Map();
     // "Show more" loads itself when it scrolls into view; the button stays for keyboards.
     const autoMore = new IntersectionObserver(entries => { if (entries.some(e => e.isIntersecting)) more?.click(); }, { root: list, rootMargin: '400px' });
@@ -167,6 +186,15 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
         if (def.featured?.(it)) { const star = node('span', 'dir-star'); star.append(icon('star'), t('dir.featured')); head.append(star); }
         const spacer = node('span'); spacer.style.flex = '1';
         head.append(spacer);
+        // In the app: keep the item in the app's notes (the app shows its own preview to confirm).
+        if (onSaveNote) {
+            const save = node('button', 'icon-btn');
+            Object.assign(save, { type: 'button', title: t('note.save') });
+            save.setAttribute('aria-label', t('note.save'));
+            save.append(icon('bookmark'));
+            save.onclick = () => onSaveNote(it);
+            head.append(save);
+        }
         if (onShare) {
             const share = node('button', 'icon-btn');
             Object.assign(share, { type: 'button', title: t('dir.share') });
@@ -188,6 +216,9 @@ export function createExplorer({ sheet, title, meta, list, cardBox, getCenter, o
         const rows = def.facts(it).filter(([, v]) => v !== null && v !== undefined && v !== '' && v !== false);
         if (rows.length) body.append(facts(rows.slice(0, 3)));
         if (rows.length > 3) { const d = fold(t('dir.details')); d.append(facts(rows.slice(3))); body.append(d); }
+        // A mode's own part of the card (radio in the app: the place's stations).
+        const extra = def.extra?.(it);
+        if (extra) body.append(extra);
         const here = shown().filter(x => x !== it && Math.abs(x.lat - it.lat) < 1e-3 && Math.abs(x.lng - it.lng) < 1e-3);
         if (here.length) {
             const d = fold(t('dir.alsoHere', { n: here.length }));

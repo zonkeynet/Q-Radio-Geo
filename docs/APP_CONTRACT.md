@@ -1,4 +1,4 @@
-# Q-Globe app ↔ page contract, v1.1 (2026-11-15)
+# Q-Globe app ↔ page contract, v1.2 (2026-11-15)
 
 The only interface between the Q-P1NG app (QGlobeActivity, Android) and the Q-Globe page in app mode.
 Both sides implement exactly this; any change bumps `v` and is agreed on both sides.
@@ -12,7 +12,7 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
   - The page defines `window.qglobeApp` only in app mode (`?app=1`).
   - Calls that arrive before the page is ready are queued by the app and re-sent after `ready`.
 - Every message carries `v: 1`. Unknown types and unknown fields are ignored on both sides (v1.1 only adds optional
-  `setTheme` fields, see below).
+  `setTheme` fields, v1.2 the optional `saveNote` message; see below).
 
 ## Load URL
 `https://globe.qp1ng.com/?app=1&hl=<lang>&mode=<dark|light>`, plus the existing parameters such as the pick mode.
@@ -33,11 +33,12 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
 |---|---|---|
 | `ready` | `{v, type, layer}` | hides the native loading view (one continuous loading state); flushes queued calls |
 | `state` | `{v, type, canGoBack, layer, playing}` | enables or disables its OnBackPressedCallback, so predictive back shows the right preview; `canGoBack` means `back()` would consume |
-| `loading` | `{v, type, what, progress?}` | `what` is `layer` / `area` / `catalog`; the app may show nothing (the page shows its own indicator); for diagnostics only |
+| `loading` | `{v, type, what, progress?}` | `what` is `layer` / `area` / `catalog`. Before `ready` the app's loading view shows the data step and `progress` (0..1, the share of the first layer's data, when the page knows the size); after `ready` diagnostics only (the page shows its own indicator) |
 | `error` | `{v, type, kind, retry}` | `kind` is `network` / `data` / `fatal`. For `fatal` (the page cannot draw) the app shows its native error state with Retry; other errors stay in the page |
 | `openExternal` | `{v, type, url, title}` | asks for confirmation in plain words ("Opens outside Q-P1NG: the site will see your connection"), then hands the URL to the system browser; only `https:` URLs, policy permitting |
 | `share` | `{v, type, url, title}` | the existing share flow (QGlobeShare) |
 | `haptic` | `{v, type, kind}` | `kind` is `tick` / `confirm`; light haptic feedback if the user's settings allow it |
+| `saveNote` | `{v, type, kind, title, text, url, source, published, place}` | v1.2: opens the app's own note preview with these fields; the user confirms there. The app answers nothing; an older app ignores it (below) |
 
 ## Rules
 - The page never assumes the app: every app-mode feature checks `window.qglobeNative` first.
@@ -49,6 +50,25 @@ Both sides implement exactly this; any change bumps `v` and is agreed on both si
   3. the page, through `back()` when `canGoBack`;
   4. exit.
 - Fullscreen of an embedded player (YouTube or the owner's player) goes through `WebChromeClient.onShowCustomView`; Back leaves fullscreen first.
+
+## saveNote v1.2 (2026-11-15)
+Page → app, optional: an older app ignores the type, and messages still carry `v: 1`. Sent only inside the app with the
+channel (`window.qglobeNative`), from the "Save to notes" button of a card (news, webcams, a place or the station chosen
+in its card, and every layer's item with a title); the website shows nothing new. All fields are plain text, trimmed,
+no HTML:
+
+| Field | Value |
+|---|---|
+| `kind` | `news` / `webcam` / `station` / `place` / the layer id (`sdr`, `aviation`, …) |
+| `title` | ≤ 200 characters, one line (never empty: no title, no message) |
+| `text` | a short summary, ≤ 2000 characters, lines kept: the news summary, a camera's details, a station's codec, bitrate and genre |
+| `url` | the item's own `https:` link (article, owner's page, station homepage), ≤ 2048, no credentials; else `""` |
+| `source` | publisher or owner, ≤ 120; else `""` |
+| `published` | ISO 8601 (news), else `""` |
+| `place` | "City, Country" or "lat, lng", ≤ 120; else `""` |
+
+The page sends a `haptic` tick with it and at most one `saveNote` a second (`js/app-bridge.mjs` `noteMessage`,
+`saveNote`; tests in `scripts/test_app_bridge.mjs`).
 
 ## setTheme v1.1 (2026-11-15)
 v1.1 only adds optional fields to `setTheme`; messages still carry `v: 1`, and a page that does not know them ignores
@@ -120,7 +140,10 @@ continents (in the app's colour). The website keeps its themes and loads no app 
   guide, `rotate` toggles rotation, `random` picks something at random in the layer, `lite` reloads with `lite=1`
   switched (same view).
 - `setLocale` with a different language reloads the page with the new `hl`; the address keeps the layer, view and card.
-- `loading` is sent with `what: layer` or `catalog` when a layer's data starts loading, with `progress` while it streams.
+- `loading` is sent with `what: layer` or `catalog` when a layer's data starts loading, with `progress` while it
+  streams. The page knows the size of its own files from sw-manifest.json (the exact, uncompressed size: the viewer
+  passes bodies decompressed and without Content-Length), so `progress` comes for every file of the site, from the
+  first layer on.
 - `error` is sent with `network` or `data` for a layer that could not load (the page shows Retry), and `fatal` when
   the page cannot draw at all.
 - `setTheme` v1.1: `--app-*` variables from the palette (`[data-theme="app"]` in `assets/app.css`; `--primary-text` and

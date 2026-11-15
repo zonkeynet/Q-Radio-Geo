@@ -9,7 +9,7 @@ import test from 'node:test';
 import { execFileSync } from 'node:child_process';
 
 const bridge = new URL('../js/app-bridge.mjs', import.meta.url).href;
-const { parseTheme, paletteTokens, contrast, titleSize, fallbackDescriptors, textTone, oklch, mix, textAdvance, TITLE_FONTS, TITLE_SAMPLE, PALETTE_ROLES } = await import(new URL('../js/app-theme.mjs', import.meta.url).href);
+const { parseTheme, paletteTokens, contrast, titleSize, fallbackDescriptors, textTone, oklch, fromOklch, onColor, mix, textAdvance, TITLE_FONTS, TITLE_SAMPLE, PALETTE_ROLES } = await import(new URL('../js/app-theme.mjs', import.meta.url).href);
 /** Runs `body` in a fresh process with location.search = search and an optional app channel; returns its JSON. */
 function run(search, body, { native = true } = {}) {
     const script = `
@@ -171,6 +171,78 @@ test('every built-in app theme keeps its exact colours on opaque panels: text 4.
         assert.ok(contrast(t['--app-on-surface'], mix(p.surface, p.primary, .16)) >= 4.5, `${id} text on the selected row`);
     }
     assert.deepEqual(toned, [], 'no built-in theme needs a text-only tone');
+});
+// ---------- v1.2: save to notes ----------
+test('saveNote (v1.2): plain text within the limits, https links only, ISO dates; one a second, with a tick; only with the channel', async () => {
+    const { noteMessage } = await import(bridge);
+    const long = 'x'.repeat(5000);
+    const n = noteMessage({ kind: 'news', title: `  <b>Big</b>\n news\u0007 ${long}`, text: `Line one <a href="x">here</a>\n\n  line   two \u0000${long}`,
+        url: 'https://example.org/story?id=1', source: ` Example ${long}`, published: '2026-11-15T05:24:00Z', place: `Rome, Italy ${long}` });
+    assert.equal(n.kind, 'news');
+    assert.ok(n.title.startsWith('Big news x') && n.title.length <= 200 && !/[<>\n]/.test(n.title), n.title.slice(0, 40));
+    assert.ok(n.text.startsWith('Line one here\nline two x') && n.text.length <= 2000 && !/[<>\u0000]/.test(n.text), n.text.slice(0, 40));
+    assert.equal(n.url, 'https://example.org/story?id=1');
+    assert.ok(n.source.length <= 120 && n.place.length <= 120 && n.source.startsWith('Example'));
+    assert.equal(n.published, '2026-11-15T05:24:00.000Z');
+    for (const url of ['http://example.org/', 'javascript:alert(1)', 'https://user:pw@example.org/', `https://example.org/${'a'.repeat(2100)}`, 'not a url'])
+        assert.equal(noteMessage({ title: 'T', url }).url, '', url.slice(0, 30));
+    assert.equal(noteMessage({ title: 'T', published: 'yesterday' }).published, '');
+    assert.equal(noteMessage({ title: 'T', kind: 'Bad Kind!' }).kind, 'item');
+    assert.equal(noteMessage({ title: '   ' }), null, 'no title, no note');
+    const r = run('?app=1', `
+        const a = B.saveNote({ kind: 'webcam', title: 'Harbour', url: 'https://port.example.org/live' }, 10000);
+        const b = B.saveNote({ kind: 'webcam', title: 'Again' }, 10500);
+        const c = B.saveNote({ kind: 'station', title: 'Radio', text: 'MP3 · 128 kbps' }, 11100);
+        return [a, b, c];`);
+    assert.deepEqual(r.out, [true, false, true], 'one a second');
+    const notes = r.sent.filter(m => m.type === 'saveNote');
+    assert.deepEqual(notes[0], { v: 1, type: 'saveNote', kind: 'webcam', title: 'Harbour', text: '', url: 'https://port.example.org/live', source: '', published: '', place: '' });
+    assert.equal(notes.length, 2);
+    assert.equal(r.sent.filter(m => m.type === 'haptic').length, 2, 'a tick for each');
+    assert.deepEqual(run('?app=1', 'return B.saveNote({ title: "T" }, 1);', { native: false }).out, false, 'nothing without the app');
+    assert.deepEqual(run('', 'return B.saveNote({ title: "T" }, 1);').out, false, 'nothing on the website');
+});
+
+// ---------- selected pills, chips and rows ----------
+const CSS = (await import('node:fs')).readFileSync(new URL('../assets/app.css', import.meta.url), 'utf8')
+    + (await import('node:fs')).readFileSync(new URL('../assets/native-app.css', import.meta.url), 'utf8');
+/** What a selected state draws: a filled pill (chip, station, tab, segment) and a tinted row (menu, filter, list). */
+function selectedReads({ fill, onFill, surface, text, label }) {
+    assert.ok(contrast(onFill, fill) >= 4.5, `${label}: text ${onFill} on the selected fill ${fill}: ${contrast(onFill, fill).toFixed(2)}`);
+    const tint = mix(surface, fill, .16);
+    assert.ok(contrast(text, tint) >= 4.5, `${label}: text ${text} on a selected row ${tint}: ${contrast(text, tint).toFixed(2)}`);
+}
+test('selected pills and rows read at 4.5:1 in every app theme, with any custom accent, and in every website theme', () => {
+    // The 17 app palettes, and each with custom accents across hues and lightness (the app's accent picker).
+    const accents = [];
+    for (let h = 0; h < 360; h += 30) for (const L of [.3, .5, .7, .9]) accents.push(fromOklch(L, .14, h));
+    for (const id of Object.keys(APP_THEMES)) {
+        for (const primary of [paletteOf(id).primary, ...accents]) {
+            const p = { ...paletteOf(id), primary }, tk = paletteTokens(p, modeOf(id));
+            selectedReads({ fill: tk['--app-primary'], onFill: tk['--app-on-primary'], surface: tk['--app-surface'], text: tk['--app-on-surface'], label: `${id} ${primary}` });
+        }
+    }
+    // v1 (an older app sending single roles): the text on any accent fill is computed.
+    for (const fill of accents) assert.ok(contrast(onColor(fill, ['#0a0f0b']), fill) >= 4.5, `v1 ${fill}`);
+    // The website themes, from app.css: accent and on-accent; rows on the raised surface (93 % panel, 7 % white; white in daylight).
+    const block = sel => CSS.slice(CSS.indexOf(sel)).split('}')[0];
+    const value = (text, name) => text.match(new RegExp(`${name}:\\s*(#[0-9a-f]{6})`, 'i'))?.[1];
+    const base = block(':root {');
+    for (const theme of ['tactical', 'satellite', 'neon', 'synthwave', 'netrunner', 'replicant', 'daylight']) {
+        const b = theme === 'tactical' ? base : block(`:root[data-theme="${theme}"]`);
+        const light = theme === 'daylight', panel = value(b, '--panel-solid');
+        selectedReads({ fill: value(b, '--accent'), onFill: value(b, '--on-accent'), surface: light ? '#ffffff' : mix(panel, '#ffffff', .07),
+            text: light ? value(b, '--on-surface') : value(base, '--on-surface'), label: theme });
+    }
+    // Every selected state with the accent fill writes on-primary on it; selected rows keep secondary text at full contrast.
+    const rules = [...CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, sel, body]) => [sel.trim(), body]);
+    const selected = /aria-(pressed|checked|selected)="true"|\.(active|chosen|playing)\b/;
+    const filled = rules.filter(([sel, body]) => selected.test(sel) && /background:\s*var\(--primary\)/.test(body));
+    assert.ok(filled.length >= 6, filled.map(r => r[0]).join(' | '));
+    for (const [sel, body] of filled) assert.match(body, /color:\s*var\(--on-primary\)/, sel);
+    const rowText = rules.find(([sel]) => sel.includes('.dir-item.active') && sel.includes('.dir-item-sub'));
+    assert.ok(rowText && /color:\s*var\(--on-surface\)/.test(rowText[1]), 'secondary text of selected rows');
+    for (const row of ['.menu-item[aria-checked="true"]', '.filter-option[aria-checked="true"]', '.station-row.chosen']) assert.ok(rowText[0].includes(row), row);
 });
 test('a colour that does not read gets a text-only tone of the same hue, the least shift that reaches 4.5:1', () => {
     // Gameboy's primary on a lighter panel (what the page used to draw): 3.8:1.

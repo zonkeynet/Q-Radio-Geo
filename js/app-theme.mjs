@@ -105,6 +105,13 @@ export function parseTheme(o, v1Roles = []) {
     return { mode, roles, theme, palette, fonts, hasFonts: Boolean(o?.fonts && typeof o.fonts === 'object') };
 }
 
+/** Text on a fill (a selected chip, a filled button): the first of `prefer`, black or white that reads at 4.5:1; else the
+ * better of black and white (one of them always reaches 4.58:1). */
+export function onColor(fill, prefer = []) {
+    return [...prefer, '#000000', '#ffffff'].find(c => HEX.test(c || '') && contrast(c, fill) >= 4.5)
+        || (contrast('#000000', fill) >= contrast('#ffffff', fill) ? '#000000' : '#ffffff');
+}
+
 /**
  * The page's colour tokens (`--app-*`, read by [data-theme="app"] in app.css) for an app palette: the exact app
  * colours, panels opaque on the app's surface. `*-text` tokens are the text tones ([textTone]); the exact primary and
@@ -121,8 +128,7 @@ export function paletteTokens(p, mode) {
         const c = mix(surface, p.text, t);
         if (inks.every(i => contrast(i, c) >= 4.5)) { hover = c; break; }
     }
-    const onPrimary = [p.background, '#000000', '#ffffff'].find(c => contrast(c, p.primary) >= 4.5)
-        || (contrast('#000000', p.primary) >= contrast('#ffffff', p.primary) ? '#000000' : '#ffffff');
+    const onPrimary = onColor(p.primary, [p.background]);
     const glow = mix(p.background, mode === 'light' ? '#ffffff' : p.text, mode === 'light' ? .5 : .06);
     return {
         '--app-bg': p.background, '--app-surface': surface, '--app-surface-2': surface, '--app-surface-3': hover, '--app-glass': surface,

@@ -5,7 +5,8 @@ import { normalize, safeLinkURL } from './core.mjs';
 import { RadioPlayer, stateLabel } from './player.mjs';
 import { createGlobe } from './globe.mjs';
 import { THEMES, GLOBE_STYLES, themeById, savedThemeId, applyThemeCss, globeSettings, globeStyleById, savedGlobeStyleId, saveGlobeStyle } from './themes.mjs';
-import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory, countText } from './directory.mjs';
+import { createExplorer, loadDirectory, initialValues, applyFilters, optionCount, searchDirectory, countText, relay } from './directory.mjs';
+import { knownSize } from './net.mjs';
 import { SDR } from './sdr.mjs';
 import { REPEATERS } from './repeaters.mjs';
 import { AVIATION } from './aviation.mjs';
@@ -19,7 +20,7 @@ import { createGuide } from './guide.mjs';
 import { QCAST } from './qcast.mjs';
 import { WEBCAMS, WEBCAM_DB, closeWebcamPlayer } from './webcams.mjs';
 import { webEndpoints } from './qcast-protocol.mjs';
-import { hasNative, post, postState, postLoading, postError, onApp, shareNative, openExternal, haptic } from './app-bridge.mjs';
+import { hasNative, post, postState, postLoading, postError, onApp, shareNative, openExternal, haptic, saveNote } from './app-bridge.mjs';
 import { node, iconButton, showAddress } from './ui.mjs';
 import { t, tn, num, region, countryName } from './i18n.mjs';
 // Modes besides radio: each is a directory definition (data, filters, card). User radio (Q-Cast) on the web, and in
@@ -87,6 +88,7 @@ const RADIO_DIR = {
     subOf: p => [radioCountry ? null : countryLabel(p.country), tn('radio.stations', p.count), p.loc ? approxLabel(p) : null].filter(Boolean).join(' · '),
     countOf: n => tn('radio.places', n), badgeOf: () => t('radio.place'), facts: () => [], actions: () => [],
     titleOf: () => radioCountry ? countryLabel(radioCountry) : t('radio.title'),
+    extra: p => stationList(p),
     get listOrder() { return radioCountry ? (a, b) => Boolean(a.loc) - Boolean(b.loc) || b.count - a.count : null; },
     links: [], note: t('radio.legend'), credit: t('radio.credit')
 };
@@ -123,7 +125,9 @@ function markState({ state, detail, station }) {
 function updatePlayer() {
     const p = $('bottomPlayer'), chosen = p.dataset.station === '1';
     const playing = ['playing', 'buffering'].includes(player?.state);
-    p.hidden = !chosen || (mode !== 'radio' && (APP_MODE || !playing));
+    // In the app, the app's own player is the only one: a station tapped goes to it (tune), the page never shows its bar.
+    p.hidden = APP_MODE || !chosen || (mode !== 'radio' && !playing);
+    markStationRows();
     const expanded = playerExpanded ?? (mode === 'radio' && cityStations.length > 1);
     p.classList.toggle('expanded', expanded);
     const b = $('btnPlayerSize');
@@ -219,8 +223,70 @@ async function selectPlace(place, stationId = null, { fly = true } = {}) {
     renderStationChips();
     $('btnPrevStation').disabled = $('btnNextStation').disabled = cityStations.length < 2;
     playerExpanded = null;
+    if (APP_MODE) {
+        // The app: the place's stations in the sheet; a station tapped (here, in the search or a single one) goes to the
+        // app's player at once, which asks how to play it. A place with several stations waits for the choice.
+        if (stationId !== null || cityStations.length === 1) tune(cityStations[currentIndex]); else currentIndex = -1;
+        explorer.select(currentPlace);
+        if (sheetState() === 'peek') setSheet('half');
+        return;
+    }
     tune(cityStations[currentIndex]);
     if (fly && sheetState() !== 'peek') setSheet('peek'); // the globe and the player in view
+}
+/** The stations of a place, in its card (the app: there is no page player to choose them in). Large places get a
+ * filter and pages; the station the app plays is marked while it plays (data-native-playback). */
+const STATION_PAGE = 40;
+function stationList(place) {
+    if (!APP_MODE || place !== currentPlace) return null;
+    const box = node('section', 'station-list');
+    box.setAttribute('aria-label', t('player.stationsHere'));
+    const rows = node('div', 'station-rows');
+    let filter = null;
+    const draw = (max = STATION_PAGE) => {
+        const q = normalize(filter?.value || '');
+        const matches = [];
+        cityStations.forEach((s, index) => { if (!q || normalize(s.title).includes(q)) matches.push({ s, index }); });
+        rows.replaceChildren();
+        for (const { s, index } of matches.slice(0, max)) {
+            const row = node('button', 'station-row');
+            row.type = 'button'; row.dataset.index = index;
+            const text = node('span', 'station-row-text');
+            text.append(node('span', 'station-row-name', s.title),
+                node('span', 'station-row-sub', [s.codec, s.bitrate && `${num(s.bitrate)} kbps`, s.hls && 'HLS'].filter(Boolean).join(' · ') || t('player.stream')));
+            const mark = node('span', 'station-row-mark'); mark.append(icon('play'));
+            row.append(text, mark);
+            row.onclick = () => { currentIndex = index; tune(s); haptic('tick'); markStationRows(); };
+            rows.append(row);
+        }
+        if (matches.length > max) {
+            const more = node('button', 'btn btn-text station-more', t('player.moreStations', { n: matches.length - max }));
+            more.type = 'button'; more.onclick = () => draw(max + STATION_PAGE); rows.append(more);
+        }
+        if (!matches.length) rows.append(node('p', 'station-empty', t('player.noMatch')));
+        markStationRows();
+    };
+    box.append(node('h4', 'station-list-title', tn('radio.stations', cityStations.length)));
+    if (cityStations.length > 12) {
+        filter = node('input', 'station-filter');
+        Object.assign(filter, { type: 'search', placeholder: t('player.filterStations', { n: cityStations.length }), autocomplete: 'off' });
+        filter.setAttribute('aria-label', t('player.filterLabel'));
+        filter.oninput = () => draw();
+        box.append(filter);
+    }
+    box.append(rows);
+    draw();
+    return box;
+}
+/** The station sent to the app: chosen, and marked as playing while the app plays. */
+function markStationRows() {
+    const playing = Boolean(document.documentElement.dataset.nativePlayback);
+    for (const row of document.querySelectorAll('.station-row')) {
+        const on = Number(row.dataset.index) === currentIndex;
+        row.classList.toggle('chosen', on);
+        row.classList.toggle('playing', on && playing);
+        if (on && playing) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
+    }
 }
 function selectCountry(country) {
     globe?.navigation.flyTo({ lat: country.lat, lng: country.lng, altitude: 1.2 }, 650);
@@ -237,6 +303,12 @@ function hideSearch() {
     $('searchInput').setAttribute('aria-expanded', 'false');
     $('searchInput').removeAttribute('aria-activedescendant');
 }
+/** Nothing found: what was searched, and what to try. */
+function noResults(target) {
+    const box = node('div', 'search-empty');
+    box.append(icon('search'), node('b', '', t('search.noneFor', { q: $('searchInput').value.trim().slice(0, 60) })), node('span', '', t('search.noneHint')));
+    target.appendChild(box);
+}
 function showResults(total) {
     $('searchResults').hidden = false;
     $('searchInput').setAttribute('aria-expanded', 'true');
@@ -252,11 +324,14 @@ function resultItem(id, title, sub, trailing, color, onPick) {
     info.append(node('span', 'search-item-city', title), node('span', 'search-item-country', sub));
     item.append(dot, info);
     if (trailing) item.append(node('span', 'search-item-badge', trailing));
+    if (title) item.title = [title, sub].filter(Boolean).join(' · ');
     item.onclick = () => { closeSearch(); onPick(); };
     return item;
 }
 /** After a pick: the field empties and loses focus, so the phone's keyboard leaves the result in view. */
-function closeSearch() { hideSearch(); $('searchInput').value = ''; $('searchInput').blur(); }
+function closeSearch() { hideSearch(); $('searchInput').value = ''; $('searchInput').blur(); syncClear(); }
+/** The ✕ shows once there is text. */
+const syncClear = () => { const c = $('searchClear'); if (c) c.hidden = !$('searchInput').value; };
 function scopeChips() {
     const row = node('div', 'search-scopes');
     row.setAttribute('role', 'group');
@@ -289,14 +364,14 @@ function renderSearch(result) {
             }));
         }
     }
-    if (!total) target.appendChild(node('p', 'search-empty', t('search.none')));
+    if (!total) noResults(target);
     showResults(total);
 }
 function renderDirSearch(results) {
     const d = dir(), target = $('searchResults'); target.replaceChildren();
     if (results.length) target.appendChild(node('div', 'search-cat-header', countText(d, results.length)));
     results.forEach((it, i) => target.appendChild(resultItem(i, d.nameOf(it), d.subOf(it), '', d.colorOf(it), () => selectDir(it))));
-    if (!results.length) target.appendChild(node('p', 'search-empty', t('search.none')));
+    if (!results.length) noResults(target);
     showResults(results.length);
 }
 function triggerSearch() {
@@ -312,7 +387,16 @@ function triggerSearch() {
 }
 function initSearch() {
     const input = $('searchInput');
-    input.oninput = triggerSearch;
+    input.oninput = () => { syncClear(); triggerSearch(); };
+    // Clear (✕): empties the field and keeps the keyboard, for the next query.
+    const clear = iconButton('close', t('search.clear'), 'icon-btn search-clear');
+    clear.id = 'searchClear'; clear.hidden = true;
+    clear.onclick = () => { input.value = ''; hideSearch(); syncClear(); input.focus(); };
+    input.after(clear);
+    // The results stop above the keyboard: the browser's (the visual viewport shrinks) or the app's (--qg-inset-ime).
+    const vv = globalThis.visualViewport;
+    const fit = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop))}px`);
+    if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
     input.addEventListener('keydown', e => {
         const options = [...$('searchResults').querySelectorAll('[role="option"]')];
         if (e.key === 'Escape') { closeSearch(); return; }
@@ -685,27 +769,33 @@ function selectDir(it, { fly = true } = {}) {
 }
 
 /* ---------- Loading and errors: one component in the sheet ---------- */
-const MB = bytes => num(Math.round(bytes / 1e5) / 10);
+const MB = bytes => num(Math.round(bytes / 1e5) / 10, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** One compact row at the bottom of the sheet: icon, words, the numbers ("3.2 / 8.4 MB · 38%", "Retrying (2/3)…"),
+ * Cancel or Retry and ✕, with a thin progress line along its bottom edge (determinate when the size is known). An
+ * error's hint is read by screen readers; the words say enough on screen. */
 function showStatus({ kind, text, detail = '', progress = null, onRetry = null, onCancel = null, onDismiss = null }) {
     const box = $('sheetStatus');
     box.className = `sheet-status ${kind}`;
     box.setAttribute('role', kind === 'error' ? 'alert' : 'status');
-    const row = node('div', 'status-row'), words = node('p', 'status-text', text);
-    if (detail) words.append(node('small', '', detail));
-    row.append(icon(kind === 'error' ? 'alert' : 'refresh'), words);
-    if (onDismiss) { const x = iconButton('close', t('common.close')); x.onclick = onDismiss; row.append(x); }
-    box.replaceChildren(row);
-    if (kind === 'loading') {
-        const bar = node('div', 'progress'); bar.append(node('i'));
-        if (Number.isFinite(progress)) { bar.dataset.value = ''; bar.style.setProperty('--value', `${Math.round(progress * 100)}%`); }
-        box.append(bar);
-    }
-    const actions = node('div', 'status-actions');
-    if (onCancel) { const b = node('button', 'btn btn-text', t('common.cancel')); b.type = 'button'; b.onclick = onCancel; actions.append(b); }
-    if (onRetry) { const b = node('button', 'btn btn-tonal', t('common.retry')); b.type = 'button'; b.onclick = onRetry; actions.append(b); }
-    if (actions.children.length) box.append(actions);
+    const words = node('p', 'status-text', text);
+    words.title = text;
+    if (kind === 'error' && detail) words.append(node('span', 'visually-hidden', ` ${detail}`));
+    box.replaceChildren(icon(kind === 'error' ? 'alert' : 'refresh'), words);
+    if (kind !== 'error') box.append(node('span', 'status-num', detail));
+    if (onCancel) { const b = node('button', 'btn btn-text', t('common.cancel')); b.type = 'button'; b.onclick = onCancel; box.append(b); }
+    if (onRetry) { const b = node('button', 'btn btn-tonal', t('common.retry')); b.type = 'button'; b.onclick = onRetry; box.append(b); }
+    if (onDismiss) { const x = iconButton('close', t('common.close')); x.onclick = onDismiss; box.append(x); }
+    if (kind === 'loading') { const bar = node('div', 'progress'); bar.append(node('i')); box.append(bar); setProgress(detail, progress); }
     box.hidden = false;
     syncLayout();
+}
+/** The numbers and the bar of the loading row, in place (no rebuild: Cancel keeps its focus). */
+function setProgress(detail, progress) {
+    const box = $('sheetStatus'), bar = box.querySelector('.progress'), num_ = box.querySelector('.status-num');
+    if (num_ && num_.textContent !== detail) num_.textContent = detail;
+    if (!bar) return;
+    if (Number.isFinite(progress)) { bar.dataset.value = ''; bar.style.setProperty('--value', `${Math.round(Math.min(1, progress) * 1000) / 10}%`); }
+    else { delete bar.dataset.value; bar.style.removeProperty('--value'); }
 }
 function clearStatus() { $('sheetStatus').hidden = true; $('sheetStatus').replaceChildren(); syncLayout(); }
 /** A mode's own problem once it is shown (news: the headlines did not arrive, the rest did): plain words and Retry. */
@@ -723,10 +813,10 @@ function loadingSkeleton() {
 }
 const offline = () => navigator.onLine === false;
 const layerName = id => (DIRECTORIES[id] || RADIO_MODE).label;
-function layerError(id, retry) {
+function layerError(id, retry, sheetBefore = null) {
     const network = offline();
     showStatus({ kind: 'error', text: !network && DIRECTORIES[id]?.errorText || t(network ? 'error.offline' : 'error.layer', { layer: layerName(id) }), detail: t(network ? 'error.offlineHint' : 'error.layerHint'),
-        onRetry: retry, onDismiss: () => { clearStatus(); markMode(); restoreSheet(mode); renderChips(); } }); // ✕: back to the layer shown
+        onRetry: retry, onDismiss: () => { clearStatus(); markMode(); restoreSheet(mode); renderChips(); if (sheetBefore && layerShown) setSheet(sheetBefore); } }); // ✕: back to the layer shown
     postError(network ? 'network' : 'data', true);
 }
 
@@ -749,37 +839,53 @@ async function setMode(next, { remember = true } = {}) {
         $('sheetMeta').textContent = '';
         $('chipsTrack').replaceChildren(); $('chipsRow').hidden = true; // the chips come with the layer
         loadingSkeleton();
-        let lastText = '';
+        // While it loads the sheet is only its title and the loading row, at the bottom: the globe stays in view.
+        run.sheetBefore = sheetState();
+        $('sheet').dataset.loading = '';
+        if (!panelMode.matches) setSheet('peek');
+        let retrying = '';
         const onProgress = ({ loaded, total }) => {
             if (run.signal.aborted || switching !== run) return; // done, failed or replaced: a late chunk changes nothing
-            const fraction = total ? loaded / total : null, text = total ? '' : t('app.loadedMb', { mb: MB(loaded) });
-            if (text === lastText && !fraction) return;
-            lastText = text;
-            onProgress.show?.({ detail: text, progress: fraction });
+            // The size when known (the site's own files: sw-manifest.json), else the megabytes received. A file larger
+            // than its listed size (a newer copy) shows what arrived.
+            const known = total > 0 && loaded <= total * 1.02, fraction = known ? Math.min(1, loaded / total) : null;
+            const text = known ? t('app.progress', { got: MB(Math.min(loaded, total)), total: MB(total), pct: num(Math.floor(fraction * 100)) })
+                : loaded ? t('app.progressMb', { mb: MB(loaded) }) : retrying;
+            if (loaded) retrying = '';
+            setProgress(text, fraction);
             postLoading(def ? 'layer' : 'catalog', fraction);
+        };
+        // A transient failure is tried again; the row says so, and only the last attempt shows the error.
+        const onRetry = ({ attempt, of }) => {
+            if (run.signal.aborted || switching !== run) return;
+            retrying = t('app.retrying', { n: attempt, of });
+            setProgress(retrying, null);
         };
         // Cancel goes back to the layer shown before; the first layer of the page has none to go back to.
         const cancellable = layerShown;
-        const status = p => showStatus({ kind: 'loading', text: def?.loadingText || t('app.loadingLayer', { layer: layerName(next) }), detail: p.detail || '',
-            progress: p.progress ?? null, onCancel: cancellable ? () => { run.byUser = true; run.abort(); } : null });
-        onProgress.show = status;
-        onProgress({ loaded: 0, total: 0 });
+        showStatus({ kind: 'loading', text: def?.loadingText || t('app.loadingLayer', { layer: layerName(next) }),
+            onCancel: cancellable ? () => { run.byUser = true; run.abort(); } : null });
         const cancelled = new Promise((_, reject) => run.signal.addEventListener('abort', () => reject(new DOMException('Cancelled', 'AbortError')), { once: true }));
         cancelled.catch(() => { /* handled below */ });
         try {
             // A live mode's first load is its first refresh too (liveAt): the next one comes after def.live.every.
-            if (def) { const items = await Promise.race([loadDirectory(def, { onProgress, signal: run.signal }), cancelled]); dirState[next] ??= { base: items, items, values: initialValues(def), liveAt: def.loadItems ? def.loadedAt : 0,
+            if (def) { const items = await Promise.race([loadDirectory(def, { onProgress, onRetry, signal: run.signal }), cancelled]); dirState[next] ??= { base: items, items, values: initialValues(def), liveAt: def.loadItems ? def.loadedAt : 0,
                 liveStatus: def.loadItems && def.live?.statusText ? def.live.statusText({ note: def.loadNote || '' }) : '' }; }
-            else await Promise.race([loadCatalog({ onProgress, signal: run.signal }), cancelled]);
+            else await Promise.race([loadCatalog({ onProgress, onRetry, signal: run.signal }), cancelled]);
         } catch (e) {
             if (switching !== run) return false; // a newer switch took over
             switching = null;
-            if (!run.signal.aborted) { run.abort(); } else if (cancelledByUser(run)) { clearStatus(); markMode(); restoreSheet(previous); renderChips(); return false; }
+            delete $('sheet').dataset.loading;
+            if (!run.signal.aborted) { run.abort(); } else if (cancelledByUser(run)) { clearStatus(); markMode(); restoreSheet(previous); renderChips(); setSheet(run.sheetBefore); return false; }
             loadingSkeleton(); $('sheetList').replaceChildren();
-            layerError(next, () => setMode(next, { remember }));
+            // The error stays a compact row; ✕ goes back to the layer shown, at the size it had.
+            layerError(next, () => setMode(next, { remember }), run.sheetBefore);
             return false;
         }
         if (switching !== run) return false;
+        delete $('sheet').dataset.loading;
+        // Back to the size it had (a sheet that was only a title opens to half: the new layer's list).
+        if (!panelMode.matches) setSheet(run.sheetBefore === 'peek' ? (PICK_MODE ? 'peek' : 'half') : run.sheetBefore);
     }
     switching = null;
     const wasShown = layerShown;
@@ -793,7 +899,7 @@ async function setMode(next, { remember = true } = {}) {
     if (!PICK_MODE && remember) try { localStorage.setItem('qradio.mode', mode); } catch { /* not remembered */ }
     markMode();
     pendingPick = null;
-    hideSearch(); $('searchInput').value = '';
+    hideSearch(); $('searchInput').value = ''; syncClear();
     liveNoteOpen = false;
     if (def) { explorer.use(def, state().items, state().values); explorer.open(); modeStatus(def); }
     else showRadioList();
@@ -814,9 +920,21 @@ function restoreSheet(id) {
 let catalogLoading = null;
 /** The radio catalogue (places, stations, countries), loaded when the radio layer is first shown: a link to another
  * layer starts without it. The search index is built in its worker meanwhile. Progress: the stations file. */
-function loadCatalog({ onProgress, signal } = {}) {
-    catalogLoading ??= Promise.all(['data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json']
-        .map(p => loadJSON(p, undefined, { onProgress: p === 'data/stations.json' ? onProgress : null, signal })))
+const CATALOG_FILES = ['data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json'];
+let catalogProgress = relay(), catalogRetries = relay();
+function loadCatalog({ onProgress = null, onRetry = null, signal } = {}) {
+    if (!catalogLoading) { catalogProgress = relay(); catalogRetries = relay(); }
+    const progress = catalogProgress, retries = catalogRetries;
+    progress.add(onProgress); retries.add(onRetry);
+    const got = new Map();
+    // Progress over the four files: their sizes when the manifest has them all, else the megabytes received.
+    const report = (p, { loaded }) => {
+        got.set(p, loaded);
+        const sizes = CATALOG_FILES.map(f => knownSize(new URL(f, document.baseURI).href));
+        progress.emit({ loaded: [...got.values()].reduce((a, b) => a + b, 0), total: sizes.every(Boolean) ? sizes.reduce((a, b) => a + b, 0) : 0 });
+    };
+    catalogLoading ??= Promise.all(CATALOG_FILES
+        .map(p => loadJSON(p, undefined, { onProgress: e => report(p, e), onRetry: retries.emit, signal })))
         .then(([places, stationData, countries, summary]) => {
             const stations = expandStations(stationData);
             if (![places, stations, countries].every(Array.isArray)) throw new Error('Invalid catalog or configuration');
@@ -825,6 +943,7 @@ function loadCatalog({ onProgress, signal } = {}) {
             return catalog;
         })
         .catch(e => { catalogLoading = null; throw e; });
+    catalogLoading.catch(() => {}).finally(() => { progress.remove(onProgress); retries.remove(onRetry); });
     return catalogLoading;
 }
 
@@ -845,10 +964,15 @@ function linkParams() {
     if (pov) p.set('view', viewText(pov.lat, pov.lng, pov.altitude));
     return p;
 }
+let ownHash = null; // the address the page wrote last
 function syncLink() {
     if (!linked) return;
+    // A hash the page did not write (a link opened, the address edited) waits for its hashchange: written over in the
+    // meantime, the new link was lost (the smoke test's #layer=webcams, now and then).
+    if (ownHash !== null && location.hash !== ownHash) return;
     const hash = `#${linkText(linkParams())}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
+    ownHash = location.hash; // as the browser keeps it (it may encode what was written)
 }
 const readLink = () => { const p = new URLSearchParams(location.hash.slice(1)); return p.has('layer') || p.has('view') ? p : null; };
 /** Opens what a link describes: the layer, the view, the filters, then the card or station. Unknown values are ignored.
@@ -903,8 +1027,26 @@ function shareItem(it) {
     const p = linkParams();
     p.set('id', it.id);
     p.set('view', viewText(it.lat, it.lng, Math.min(globe?.world.pointOfView().altitude ?? .5, .5)));
-    shareLink(p, `${dir().nameOf(it)} · Q-P1NG Globe`);
+    shareLink(p, `${(dir() || RADIO_DIR).nameOf(it)} · Q-P1NG Globe`);
 }
+/** An item for the app's notes (v1.2 saveNote): a place, or the station chosen in its card; a headline, a camera, any
+ * layer's item, from what its card shows. */
+const NOTE_KIND = { news: 'news', webcams: 'webcam', radio: 'place' };
+function itemNote(it) {
+    if (mode === 'radio') {
+        const where = [placeLabel(it.city), countryLabel(it.country)].filter(Boolean).join(', ');
+        const s = it === currentPlace && currentIndex >= 0 ? cityStations[currentIndex] : null;
+        if (s) return { kind: 'station', title: s.title, text: [s.codec, s.bitrate && `${num(s.bitrate)} kbps`, s.hls && 'HLS', s.tags, s.language].filter(Boolean).join(' · '),
+            url: s.homepage || '', place: where };
+        return { kind: 'place', title: placeLabel(it.city), text: tn('radio.stations', it.count || cityStations.length), place: where || `${it.lat.toFixed(4)}, ${it.lng.toFixed(4)}` };
+    }
+    const d = dir(), snippet = d.snippetOf?.(it) || '';
+    const facts = (d.facts?.(it) || []).filter(([, v]) => v !== null && v !== undefined && v !== '' && v !== false && String(v) !== snippet).slice(0, 6).map(([k, v]) => `${k}: ${v}`);
+    return { kind: NOTE_KIND[d.id] || d.id, title: d.nameOf(it), text: [snippet, ...facts].filter(Boolean).join('\n'),
+        url: (d.actions?.(it) || []).find(x => /^https:\/\//.test(x.href || ''))?.href || '', source: it.source || it.provider || it.operator || '',
+        published: /^\d{4}-\d\d-\d\d/.test(String(it.ts || '')) ? it.ts : '', place: d.placeOf?.(it) || (placed(it) ? `${it.lat.toFixed(4)}, ${it.lng.toFixed(4)}` : '') };
+}
+const saveItemNote = it => saveNote(itemNote(it));
 /** A message about the whole page under the header, with an action. */
 function pageNotice(text, actions = []) {
     const box = $('globeNotice');
@@ -1308,7 +1450,7 @@ async function start() {
     explorer = createExplorer({
         sheet: $('sheet'), title: $('sheetTitle'), meta: $('sheetMeta'), list: $('sheetList'), cardBox: $('sheetCard'),
         getCenter: () => globe ? globe.world.pointOfView() : { lat: 41.9, lng: 12.5 },
-        onPick: it => mode === 'radio' ? selectPlace(it) : selectDir(it), onShare: shareItem,
+        onPick: it => mode === 'radio' ? selectPlace(it) : selectDir(it), onShare: shareItem, onSaveNote: hasNative() ? saveItemNote : null,
         onView: () => { syncLayout(); syncAppState(); }
     });
     initSheet();
@@ -1377,7 +1519,7 @@ async function start() {
     linked = true;
     post('ready', { layer: mode });
     syncAppState();
-    window.addEventListener('hashchange', () => { const p = readLink(); if (p) applyLink(p); });
+    window.addEventListener('hashchange', () => { const p = readLink(); ownHash = null; if (p) applyLink(p); });
     globalThis.QRadioGlobe = Object.freeze({
         diagnostics: () => ({ ready, mode: config?.streamMode, places: catalog?.places.length || 0, stations: catalog?.stations.length || 0, worker: Boolean(catalog?.worker), playerState: player.state, ...globe?.diagnostics() }),
         // The area in view, as the live loads compute it and as globe.gl's raycast does (tests compare them).

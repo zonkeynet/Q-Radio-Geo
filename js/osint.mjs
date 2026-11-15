@@ -3,6 +3,7 @@
 // loads (hospitals via Overpass, outages via IODA) only run when the user asks, because those servers see the
 // user's IP address and the area or country requested.
 import { loadJSON } from './catalog.mjs';
+import { getJSON } from './net.mjs';
 import { t, tn, num, date, region, countryName } from './i18n.mjs';
 // Country names in the UI language from their codes; the data's (English) name when there is no code.
 const country = cc => cc ? region(cc) : '';
@@ -17,22 +18,20 @@ const OPEN_OSM = t('osint.openOsm');
 // requests (HTTP 406, without CORS headers). Instances run on infrastructure of governments that target
 // journalists are deliberately left out.
 const OVERPASS = ['https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter'];
-const OVERPASS_WAIT_MS = 40000; // per server: public instances can queue a request for a long time
+const OVERPASS_WAIT_MS = 40000; // per server, to the first byte: public instances can queue a request for a long time
 const OVERPASS_NOTE = t('osint.overpassNote');
 async function overpass(query, signal) {
     let last = null;
     for (const url of OVERPASS) {
-        const attempt = new AbortController(), stop = () => attempt.abort(), timer = setTimeout(stop, OVERPASS_WAIT_MS);
-        signal?.addEventListener('abort', stop, { once: true });
         try {
-            const res = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: query }), signal: attempt.signal });
-            if (res.ok) return (await res.json()).elements || [];
-            last = res.status === 429 ? t('osint.overpass.tooMany') : t('osint.overpass.status', { status: String(res.status) });
+            const json = await getJSON(url, { signal, retries: 0, firstByteMs: OVERPASS_WAIT_MS, init: { method: 'POST', body: new URLSearchParams({ data: query }) } });
+            return json.elements || [];
         } catch (e) {
-            if (signal?.aborted) throw e;
+            if (signal?.aborted || e.name === 'AbortError') throw e;
             // Overloaded servers often answer without CORS headers, which the browser reports as a network error.
-            last = attempt.signal.aborted ? t('osint.overpass.slow') : t('osint.overpass.noAnswer');
-        } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
+            last = e.status === 429 ? t('osint.overpass.tooMany') : e.status ? t('osint.overpass.status', { status: String(e.status) })
+                : e.stalled ? t('osint.overpass.slow') : t('osint.overpass.noAnswer');
+        }
     }
     throw new Error(t('osint.overpass.unavailable', { reason: last }));
 }
@@ -377,9 +376,9 @@ export const INTERNET = {
         needsView: false,
         async load(_b, base, signal) {
             const until = Math.floor(Date.now() / 1000), from = until - 86400;
-            const res = await fetch(`https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts?from=${from}&until=${until}&entityType=country`, { signal });
-            if (!res.ok) throw new Error(t('osint.internet.error', { status: String(res.status) }));
-            const alerts = ((await res.json()).data || []).filter(a => a.level === 'critical' || a.level === 'warning');
+            const json = await getJSON(`https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts?from=${from}&until=${until}&entityType=country`, { signal })
+                .catch(e => { throw e.status ? new Error(t('osint.internet.error', { status: String(e.status) })) : e; });
+            const alerts = (json.data || []).filter(a => a.level === 'critical' || a.level === 'warning');
             const byCc = new Map();
             for (const a of alerts) {
                 const cc = a.entity?.code; if (!cc) continue;

@@ -5,6 +5,9 @@
 // Then the interface: the app contract (messages, back(), commands, insets), Italian and English, a right-to-left
 // sanity check, landscape (side panel), a 320 px phone and 130 % page zoom (no header overlap, nothing cut off).
 // News with a mocked live file: loading, fresh, stale, failed and partly failed, Retry; nothing bundled is shown.
+// Loading: a compact row (the sheet only its title while a layer loads), transient failures retried with "Retrying
+// (n/3)", the error only after the last attempt. Search: the ✕ and the "no results" state. In the app: no page
+// player, the place's stations in its card, a station tapped goes to the app with its name and details.
 // The sheet under touch (real touch input through the browser, so touch-action and scrolling apply): its header
 // buttons take their taps, drags move it, the list scrolls only when it is full, rows still open their cards.
 // Run with Playwright installed:  node scripts/test_smoke_browser.mjs   (SMOKE_ONLY=app to run one variant)
@@ -93,7 +96,13 @@ try {
             // which carries no user gesture, so nothing leaves the page.
             if (variant === 'app') await page.evaluate(() => [...document.querySelectorAll('#searchResults .search-item')].find(b => b.textContent.includes('Rome')).click());
             else await page.locator('#searchResults .search-item').filter({ hasText: 'Rome' }).first().click();
-            await page.waitForFunction(() => document.getElementById('playerTitle').textContent.trim() && !document.getElementById('bottomPlayer').hidden, null, { timeout: 10000 });
+            // The website: the page's player with the place's first station. The app: no page player (the app's own is the
+            // only one), the place's stations in its card.
+            if (variant === 'app') {
+                await page.locator('#sheetCard .station-row').first().waitFor({ timeout: 10000 });
+                assert.equal(await page.evaluate(() => document.getElementById('bottomPlayer').hidden), true, 'no page player in the app');
+                await page.locator('#sheetCard .card-head .icon-btn').first().click(); // back to the places
+            } else await page.waitForFunction(() => document.getElementById('playerTitle').textContent.trim() && !document.getElementById('bottomPlayer').hidden, null, { timeout: 10000 });
             assert.equal(await page.evaluate(() => document.activeElement === document.getElementById('searchInput')), false, 'the search field lets go after a pick');
             assert.equal(await page.locator('audio').count(), 0, 'nothing plays');
         });
@@ -212,6 +221,91 @@ try {
             assert.equal(s.status, '');
             await q.close();
         });
+        if (variant === 'site') await step('loading: compact row, retries with "Retrying (n/3)", the error only after the last attempt; search ✕ and no results', async () => {
+            // Its own context without the service worker, which would answer from its cache instead of the routes below.
+            const ctx = await browser.newContext({ viewport: { width: 412, height: 860 }, isMobile: true, hasTouch: true, locale: 'en-US', serviceWorkers: 'block' });
+            await ctx.route(u => !u.href.startsWith(server.origin), r => r.abort());
+            const p = await ctx.newPage();
+            p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+            const asked = { sdr: 0, repeaters: 0 };
+            // SDR: two 503s, then the file. Repeaters: always 503.
+            await p.route(u => u.pathname.endsWith('/data/sdr.json'), r => ++asked.sdr <= 2 ? r.fulfill({ status: 503, body: '' }) : r.continue());
+            await p.route(u => u.pathname.endsWith('/data/repeaters.json'), r => { asked.repeaters++; r.fulfill({ status: 503, body: '' }); });
+            await p.goto(`${server.origin}/?hl=en#layer=sdr`);
+            const seen = new Set();
+            const watch = async until => {
+                for (let i = 0; i < 200 && !(await until()); i++) {
+                    const s = await p.evaluate(() => { const st = document.getElementById('sheetStatus'), sh = document.getElementById('sheet');
+                        return { text: st.hidden ? '' : st.innerText, loading: 'loading' in sh.dataset, sheet: sh.dataset.sheet, h: st.hidden ? 0 : st.getBoundingClientRect().height,
+                            body: getComputedStyle(document.getElementById('sheetBody')).visibility }; });
+                    if (s.loading) {
+                        assert.equal(s.sheet, 'peek', 'only the title and the row while loading');
+                        assert.equal(s.body, 'hidden', 'no list or skeleton area under the row');
+                        assert.ok(s.h <= 64, `one compact row: ${s.h}px`);
+                    }
+                    if (s.text) seen.add(s.text.replace(/\s+/g, ' '));
+                    await p.waitForTimeout(100);
+                }
+            };
+            await watch(() => p.evaluate(() => document.documentElement.dataset.mode === 'sdr'));
+            assert.equal(asked.sdr, 3);
+            assert.ok([...seen].some(t => /Retrying \(2\/3\)/.test(t)) && [...seen].some(t => /Retrying \(3\/3\)/.test(t)), [...seen].join(' | '));
+            assert.ok(![...seen].some(t => /Couldn’t load/.test(t)), 'no error while attempts remain');
+            assert.notEqual(await p.evaluate(() => document.getElementById('sheet').dataset.sheet), 'peek', 'the list opens once loaded');
+            await p.locator('#sheetList .dir-item').first().click();
+            await p.locator('#sheetCard .dir-card').waitFor();
+            assert.equal(await p.getByRole('button', { name: 'Save to notes' }).count(), 0, 'the website has no notes');
+            await p.getByRole('button', { name: 'Back to the list' }).click();
+            // Repeaters: the error with Retry only after the third attempt; ✕ goes back to SDR at the size it had.
+            seen.clear();
+            await p.evaluate(() => { location.hash = '#layer=repeaters'; });
+            await watch(() => p.evaluate(() => document.getElementById('sheetStatus').classList.contains('error')));
+            assert.equal(asked.repeaters, 3);
+            assert.match(await p.locator('#sheetStatus').innerText(), /Couldn’t load Repeaters[\s\S]*Retry/);
+            await p.locator('#sheetStatus .icon-btn').click();
+            assert.equal(await p.evaluate(() => [document.documentElement.dataset.mode, document.getElementById('sheet').dataset.sheet].join()), 'sdr,half');
+            // Search: the ✕ shows with text and clears it; nothing found says what was searched.
+            const input = p.locator('#searchInput'), clear = p.locator('#searchClear');
+            assert.equal(await clear.isVisible(), false);
+            await input.fill('zzqqxx');
+            await p.locator('#searchResults .search-empty').waitFor();
+            assert.match(await p.locator('#searchResults').innerText(), /No results for “zzqqxx”/);
+            const box = await clear.boundingBox();
+            assert.ok(box.width >= 48 && box.height >= 48, `✕ 48 px: ${box.width}×${box.height}`);
+            await clear.click();
+            assert.equal(await input.inputValue(), '');
+            assert.equal(await clear.isVisible(), false);
+            assert.equal(await p.locator('#searchResults').isVisible(), false);
+            await ctx.close();
+        });
+        if (variant === 'app') await step('app: a station tapped in the place\'s card goes to the app with its name and details; marked while the app plays', async () => {
+            const p = await context.newPage();
+            p.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
+            await p.addInitScript(() => { window.__handoffs = []; addEventListener('qglobe:handoff', e => window.__handoffs.push(e.detail)); });
+            const handoffs = () => p.evaluate(() => window.__handoffs);
+            await p.goto(`${server.origin}/?app=1&hl=en#layer=radio&view=41.900,12.500,0.50`);
+            await p.waitForFunction(() => /stations/.test(document.getElementById('sheetMeta').textContent), null, { timeout: 30000 });
+            await p.locator('#sheetList .dir-item', { hasText: 'Rome' }).first().click();
+            const row = p.locator('#sheetCard .station-row').nth(1);
+            await row.waitFor();
+            assert.equal((await handoffs()).length, 0, 'a place with several stations waits for the choice');
+            assert.equal(await p.evaluate(() => document.getElementById('bottomPlayer').hidden), true);
+            const name = (await row.locator('.station-row-name').innerText()).trim();
+            await row.click();
+            await p.waitForTimeout(500);
+            const sent = await handoffs();
+            assert.equal(sent.length, 1, sent.join(' '));
+            assert.match(sent[0], /^qp1ng-media:\/\/play\?/);
+            const q = new URL(sent[0].replace('qp1ng-media://', 'https://x/')).searchParams;
+            assert.equal(q.get('name'), name);
+            assert.match(q.get('info') || '', /^Rome, Italy/);
+            assert.ok(q.get('info').length <= 160);
+            assert.equal(await p.evaluate(() => document.getElementById('bottomPlayer').hidden), true, 'still no page player');
+            await p.evaluate(() => { document.documentElement.dataset.nativePlayback = 'radio'; });
+            await p.waitForFunction(() => document.querySelector('#sheetCard .station-row.playing')?.getAttribute('aria-current') === 'true');
+            assert.equal((await p.locator('#sheetCard .station-row.playing .station-row-name').innerText()).trim(), name);
+            await p.close();
+        });
         await step('webcams card (no media loaded)', async () => {
             await page.evaluate(() => { location.hash = '#layer=webcams'; });
             await page.waitForFunction(() => document.documentElement.dataset.mode === 'webcams');
@@ -293,6 +387,12 @@ try {
             assert.equal(await fresh.evaluate(() => qglobeApp.back()), false);
             await fresh.locator('#sheetList .dir-item').first().click();
             await fresh.locator('#sheetCard .dir-card').waitFor();
+            // v1.2: Save to notes hands the card's item to the app (plain text, the layer as its kind).
+            await fresh.getByRole('button', { name: 'Save to notes' }).click();
+            const note = await fresh.evaluate(() => window.__msgs.filter(m => m.type === 'saveNote').at(-1));
+            assert.equal(note?.kind, 'sdr');
+            assert.equal(note.title, (await fresh.locator('#cardTitle').innerText()).trim());
+            assert.ok(typeof note.text === 'string' && note.text.length <= 2000 && (!note.url || note.url.startsWith('https://')), JSON.stringify(note));
             await fresh.waitForFunction(() => window.__msgs.filter(m => m.type === 'state').at(-1)?.canGoBack === true);
             assert.equal(await fresh.evaluate(() => qglobeApp.back()), true);
             assert.equal(await fresh.evaluate(() => document.getElementById('sheet').dataset.view), 'list');
@@ -391,8 +491,10 @@ try {
             // Taps through the same touch channel as the drags (mixed with Playwright's own, a tap after a drag made no click).
             const tap = async sel => { const b = await box(sel); await touch('touchStart', b.x, b.y); await touch('touchEnd'); await p.waitForTimeout(500); };
             assert.equal(await sheetState(), 'half');
-            // A tap on a row opens its card (the list takes vertical drags now; taps stay taps).
+            // A tap on a row opens its card (the list takes vertical drags now; taps stay taps). A synthetic tap is
+            // sometimes lost by this headless browser when it is busy: one more before failing.
             await tap('#sheetList .dir-item');
+            if (!await p.locator('#sheetCard .dir-card').waitFor({ timeout: 3000 }).then(() => true, () => false)) await tap('#sheetList .dir-item');
             await p.locator('#sheetCard .dir-card').waitFor({ timeout: 5000 });
             await p.getByRole('button', { name: 'Back to the list' }).click();
             await p.locator('#sheetList .dir-item').first().waitFor();

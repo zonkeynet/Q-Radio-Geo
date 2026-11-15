@@ -1,5 +1,6 @@
 // Connectivity layers: Tor relays (Tor Metrics Onionoo) and places offering Wi-Fi to the public (OpenStreetMap).
 import { t, tn, num, date, ago, region, has } from './i18n.mjs';
+import { getJSON } from './net.mjs';
 
 const country = cc => region(cc);
 const digits = d => ({ minimumFractionDigits: d, maximumFractionDigits: d });
@@ -85,9 +86,9 @@ export const TOR = {
         note: t('connectivity.tor.live.note'),
         needsView: false, slow: true,
         async load(_b, _base, signal) {
-            const res = await fetch(`https://onionoo.torproject.org/details?running=true&type=relay&fields=${TOR_FIELDS}`, { signal });
-            if (!res.ok) throw new Error(t('connectivity.tor.live.error', { status: String(res.status) }));
-            const json = await res.json(), published = publishedAt(json.relays_published);
+            const json = await getJSON(`https://onionoo.torproject.org/details?running=true&type=relay&fields=${TOR_FIELDS}`, { signal })
+                .catch(e => { throw e.status ? new Error(t('connectivity.tor.live.error', { status: String(e.status) })) : e; });
+            const published = publishedAt(json.relays_published);
             if (Number.isFinite(published)) torPublished = published;
             return { items: torItems(json.relays || []), note: Number.isFinite(published) ? t('connectivity.tor.live.published', { when: ago(published) }) : '' };
         }

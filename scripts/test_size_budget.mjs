@@ -15,10 +15,11 @@ const text = p => read(p).toString('utf8').replace(/\r\n/g, '\n');
 const html = text('index.html');
 // What the page itself references (styles, scripts, preloaded modules, icons, manifest) and the entry module.
 const PAGE = ['index.html', 'js/app.mjs', ...[...html.matchAll(/<(?:link|script)\b[^>]*?(?:href|src)="\.\/([^"#?]+)"/g)].map(m => m[1])];
-// The data each first view loads (js/app.mjs loadCatalog() for radio, the layer's dataUrl otherwise).
+// The data each first view loads (js/app.mjs loadCatalog() for radio, the layer's dataUrl otherwise), and the file sizes
+// for the loading row's numbers (sw-manifest.json, read once by js/net.mjs).
 const VIEWS = {
-    default: ['app-config.json', 'data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json'],
-    webcams: ['app-config.json', 'data/webcams-live.json']
+    default: ['app-config.json', 'sw-manifest.json', 'data/places.json', 'data/stations.json', 'data/countries.json', 'data/summary.json'],
+    webcams: ['app-config.json', 'sw-manifest.json', 'data/webcams-live.json']
 };
 // Budgets: about 10% over the figures of 2026-11-14 (gzip level 6, like GitHub Pages): default view 42 files,
 // 2.68 MB; #layer=webcams 39 files, 1.42 MB; default texture 297 kB. Before this work: 41 files, 2.97 MB; 42 files,
@@ -38,6 +39,7 @@ test('the data lists match what js/app.mjs loads', () => {
     const app = text('js/app.mjs');
     for (const p of VIEWS.default.filter(p => p.startsWith('data/'))) assert.ok(app.includes(`'${p}'`), p);
     assert.ok(app.includes("loadJSON('app-config.json')"));
+    assert.match(text('js/net.mjs'), /new URL\('sw-manifest\.json'/);
     assert.match(text('js/webcams.mjs'), /data\/webcams-live\.json/);
 });
 

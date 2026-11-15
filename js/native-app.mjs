@@ -60,7 +60,10 @@ const userGesture = () => globalThis.navigator?.userActivation?.isActive !== fal
 
 export function requestNativeMedia(item) {
     if (!APP_MODE || !userGesture()) return false;
-    globalThis.location.href = mediaLink(item);
+    const link = mediaLink(item);
+    // Observable (tests, diagnostics): a browser that cannot open the link says nothing.
+    globalThis.dispatchEvent?.(new CustomEvent('qglobe:handoff', { detail: link }));
+    globalThis.location.href = link;
     return true;
 }
 

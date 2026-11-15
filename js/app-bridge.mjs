@@ -5,7 +5,7 @@
 // Nothing here assumes the app: every call checks window.qglobeNative first, and the website never sees either object.
 import { APP_MODE } from './native-app.mjs';
 import { LANG, supported } from './i18n.mjs';
-import { parseTheme, paletteTokens, applyTitleFont } from './app-theme.mjs';
+import { parseTheme, paletteTokens, applyTitleFont, onColor, contrast, textTone } from './app-theme.mjs';
 
 export const CONTRACT_VERSION = 1;
 const nativeObject = () => {
@@ -34,6 +34,36 @@ export function postState({ canGoBack, layer, playing }) {
 export function postLoading(what, progress) {
     post('loading', Number.isFinite(progress) ? { what, progress: Math.round(Math.min(1, Math.max(0, progress)) * 100) / 100 } : { what });
 }
+// ---------- v1.2: save to notes ----------
+const text = v => String(v ?? '').replace(/<[^>]*>/g, ' ').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, ' ');
+const line = (v, n) => text(v).replace(/\s+/g, ' ').trim().slice(0, n).trim();
+const KIND = /^[a-z][a-z0-9-]{0,39}$/;
+/**
+ * A note for the app (saveNote, contract v1.2), plain text and trimmed: kind (news, webcam, station, place or the layer
+ * id), title ≤ 200, text ≤ 2000 (lines kept), url (https only, ≤ 2048, no credentials) or '', source ≤ 120,
+ * published (ISO 8601) or '', place ≤ 120 ("City, Country" or "lat, lng"). Null without a title.
+ */
+export function noteMessage({ kind = '', title = '', text: body = '', url = '', source = '', published = '', place = '' } = {}) {
+    const t = line(title, 200);
+    if (!t) return null;
+    let link = '';
+    try { const u = new URL(String(url)); if (u.protocol === 'https:' && !u.username && !u.password && u.href.length <= 2048) link = u.href; } catch { /* none */ }
+    const when = published ? Date.parse(published) : NaN;
+    return { kind: KIND.test(String(kind)) ? String(kind) : 'item', title: t,
+        text: text(body).split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n').slice(0, 2000).trim(),
+        url: link, source: line(source, 120), published: Number.isFinite(when) ? new Date(when).toISOString() : '', place: line(place, 120) };
+}
+let lastNote = -Infinity;
+/** Hands a note to the app, which shows its own preview to confirm: a tick here, at most one note a second. */
+export function saveNote(fields, now = Date.now()) {
+    const note = noteMessage(fields);
+    if (!note || !hasNative() || now - lastNote < 1000) return false;
+    if (!post('saveNote', note)) return false;
+    lastNote = now;
+    haptic('tick');
+    return true;
+}
+
 /** error: kind network / data / fatal; retry: whether the page offers a retry. */
 export const postError = (kind, retry = true) => post('error', { kind, retry: Boolean(retry) });
 export const haptic = kind => post('haptic', { kind });
@@ -76,6 +106,12 @@ function setTheme(o) {
     root.dataset.appScheme = theme.mode;
     const vars = theme.palette ? paletteTokens(theme.palette, theme.mode)
         : Object.fromEntries(Object.entries(theme.roles).map(([role, value]) => [ROLES[role], value]));
+    // v1 (single roles, any accent): text on the accent fill and the accent as text must still read.
+    const fill = vars['--app-primary'];
+    if (!theme.palette && fill) {
+        if (!vars['--app-on-primary'] || contrast(vars['--app-on-primary'], fill) < 4.5) vars['--app-on-primary'] = onColor(fill, [vars['--app-surface']]);
+        if (vars['--app-surface']) vars['--app-primary-text'] = textTone(fill, vars['--app-surface']);
+    }
     for (const [variable, value] of Object.entries(vars)) root.style.setProperty(variable, value);
     // Only the title font is used; body and mono stay the page's own (system sans and mono).
     if (theme.hasFonts) applyTitleFont(theme.fonts.title).catch(() => { /* the headings keep the system font */ });

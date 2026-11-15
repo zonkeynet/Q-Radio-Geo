@@ -4,6 +4,7 @@
 // site: the layer shows what these sources say now, with the headlines' own time in the header, or says plainly that
 // they did not load. An old snapshot shown as if current was worse than nothing (the October file, a month later).
 import { t, tn, num, date, ago as relativeTime, list, has } from './i18n.mjs';
+import { getJSON as read } from './net.mjs';
 
 const HEADLINES_URL = 'https://raw.githubusercontent.com/zonkeynet/Q-Radio-Geo/news-data/news.json';
 // Headlines older than 72 hours are dropped here. build_news.mjs keeps 48 h; the margin lets a file whose publisher
@@ -12,8 +13,9 @@ const HEADLINES_URL = 'https://raw.githubusercontent.com/zonkeynet/Q-Radio-Geo/n
 export const HEADLINE_WINDOW_MS = 72 * 36e5;
 // Past 2 hours (or the file's own stale_after) the header shows its age as a warning: it should be rebuilt every 10 minutes.
 export const STALE_MS = 2 * 36e5;
-// Each source may take this long: enough for Tor in the app. The loading state has Cancel, a failure Retry.
-const TIMEOUT_MS = 45000;
+// Once the headlines are in (or have failed), the events get this much longer: a slow events server (GDACS and NASA
+// over Tor answer late or never) must not hold the headlines back. They are tried again at the next refresh.
+const EVENTS_GRACE_MS = 8000;
 // Refreshed while the layer is shown and the page visible, at most this often (the file changes every 10 minutes at best).
 const REFRESH_MS = 600000;
 const SOURCES = {
@@ -69,28 +71,31 @@ const nature = json => (json.events || []).map(e => {
         topic: 'disaster', category: eonetCategory(e.categories?.[0]), size: g.magnitudeValue ? `${num(g.magnitudeValue)} ${g.magnitudeUnit}` : null, place: e.description };
 }).filter(Boolean);
 
-async function getJSON(url, signal) {
-    const ctrl = new AbortController(), stop = () => ctrl.abort();
-    const timer = setTimeout(stop, TIMEOUT_MS);
-    signal?.addEventListener('abort', stop, { once: true });
-    try {
-        // no-cache: revalidated every time (raw.githubusercontent.com answers 304 when nothing changed).
-        const res = await fetch(url, { signal: ctrl.signal, cache: 'no-cache' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-    } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
+// js/net.mjs: a stall timeout and retries. no-cache: revalidated every time (raw.githubusercontent.com answers 304
+// when nothing changed). The events are tried twice, the headlines three times.
+const NO_CACHE = { cache: 'no-cache' };
+/** A source's outcome as it stands: pending until it settles. */
+function track(promise) {
+    const s = { status: 'pending' };
+    s.done = promise.then(value => Object.assign(s, { status: 'fulfilled', value }), reason => Object.assign(s, { status: 'rejected', reason }));
+    return s;
 }
 
 /** The headlines file last read (its items and time), and whether the last attempt failed. A failed refresh keeps the
  * last good file, whose time the header keeps showing; nothing older than HEADLINE_WINDOW_MS is shown. */
 export const feed = { at: 0, staleAt: 0, items: null, failed: false };
 /** Every source at once. Throws when none answers; otherwise the items of those that did, and a note on the others. */
-async function loadNews(signal) {
-    const [news, q, a, n] = await Promise.allSettled([getJSON(HEADLINES_URL, signal).then(readHeadlines), getJSON(SOURCES.quakes, signal).then(quakes),
-        getJSON(SOURCES.alerts, signal).then(alerts), getJSON(SOURCES.nature, signal).then(nature)]);
+async function loadNews(signal, onRetry = null) {
+    const events = (url, parse) => track(read(url, { signal, init: NO_CACHE, retries: 1 }).then(parse));
+    const sources = [track(read(HEADLINES_URL, { signal, init: NO_CACHE, onRetry }).then(readHeadlines)),
+        events(SOURCES.quakes, quakes), events(SOURCES.alerts, alerts), events(SOURCES.nature, nature)];
+    await sources[0].done;
+    const grace = new Promise(resolve => setTimeout(resolve, EVENTS_GRACE_MS));
+    await Promise.race([Promise.all(sources.map(s => s.done)), grace]);
     if (signal?.aborted) throw new DOMException('Replaced by a newer request', 'AbortError');
+    const [news, q, a, n] = sources;
     if (news.status === 'fulfilled') Object.assign(feed, news.value, { failed: false }); else feed.failed = true;
-    const failed = [['headlines', news], ['quakes', q], ['alerts', a], ['nature', n]].filter(([, r]) => r.status === 'rejected').map(([name]) => t(`news.live.src.${name}`));
+    const failed = [['headlines', news], ['quakes', q], ['alerts', a], ['nature', n]].filter(([, r]) => r.status !== 'fulfilled').map(([name]) => t(`news.live.src.${name}`));
     if (failed.length === 4) throw new Error(t('news.live.noSource'));
     const ok = r => r.status === 'fulfilled' ? r.value : [];
     const items = [...(feed.items || []), ...ok(q), ...ok(a), ...ok(n)].filter(it => Number.isFinite(it.lat) && Number.isFinite(it.lng) && it.ts && recent(it));
@@ -104,7 +109,7 @@ export const NEWS = {
     id: 'news', label: t('news.label'), group: 'live', noun: t('news.noun'), countOf: n => tn('news.count', n),
     sidebarTitle: t('news.sidebarTitle'), placeholder: t('news.placeholder'), randomTitle: t('news.random'),
     // No bundled file: the first load is the live one (js/directory.mjs loadDirectory), with its own words.
-    async loadItems({ signal }) { const { items, note } = await loadNews(signal); this.loadNote = note; return items; },
+    async loadItems({ signal, onRetry }) { const { items, note } = await loadNews(signal, onRetry); this.loadNote = note; return items; },
     loadingText: t('news.loading'), errorText: t('news.failed'),
     /** The header: how many stories, and when the headlines were built ("Updated 05:24 (12 minutes ago)"), as a
      * warning past STALE_MS; or that no headlines arrived. */

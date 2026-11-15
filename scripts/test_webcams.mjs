@@ -509,21 +509,23 @@ test('HLS playlists, segments and keys load only from the manifest host', () => 
     assert.equal(hlsRequestAllowed('https://wzmedia.example.gov/x.ts', 'https://cam.ddns.net/live.m3u8', 'caltrans'), false);
 });
 
-test('webcam files wait up to a minute (Tor), and the database is a release download with its licences', async () => {
+test('webcam files wait up to a minute (Tor) for the first byte and between chunks, and the database is a release download with its licences', async () => {
     const prior = { fetch: globalThis.fetch, document: globalThis.document, setTimeout: globalThis.setTimeout };
     const delays = [];
     globalThis.document = { baseURI: 'https://globe.qp1ng.com/' };
     globalThis.fetch = async () => ({ ok: true, json: async () => ({ schema_version: 2, items: [item()] }) });
     globalThis.setTimeout = (fn, ms, ...rest) => { delays.push(ms); return prior.setTimeout(fn, 0 * ms, ...rest); };
     try {
+        // js/net.mjs: a wait for the first byte, then one between chunks (no total timeout); each [first byte, stall].
+        globalThis.location = { hostname: 'globe.qp1ng.com', pathname: '/', protocol: 'https:' };
         await loadJSON('data/small.json');
         await loadJSON('data/webcams.json', undefined, { timeout: 5000 });
         await loadJSON('data/webcams.json', undefined, { timeout: 60000 });
-        assert.deepEqual(delays.splice(0), [120000, 120000, 120000], 'mirrors (any host but the main site) keep their longer wait');
-        globalThis.location = { hostname: 'globe.qp1ng.com' };
+        assert.deepEqual(delays.splice(0), [30000, 20000, 30000, 20000, 60000, 60000], 'the defaults, never shorter; a layer asks longer');
+        globalThis.location = { hostname: 'inbrowser.link', pathname: '/ipns/globe.qp1ng.com/', protocol: 'https:' };
         await loadJSON('data/small.json');
-        await loadJSON('data/webcams.json', undefined, { timeout: 5000 });
-        assert.deepEqual(delays.splice(0), [20000, 20000], 'never shorter than the default');
+        assert.deepEqual(delays.splice(0), [120000, 20000], 'IPFS mirrors wait longer for the first byte');
+        globalThis.location = { hostname: 'globe.qp1ng.com', pathname: '/', protocol: 'https:' };
         assert.equal(WEBCAMS.loadTimeout, 60000); assert.equal(WEBCAM_LOAD_TIMEOUT_MS, 60000);
         await loadDirectory({ ...WEBCAMS, loading: undefined });
         await WEBCAMS.live.load(undefined, []);
