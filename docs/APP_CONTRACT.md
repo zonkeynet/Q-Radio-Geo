@@ -72,15 +72,25 @@ them (it keeps using the v1 roles). An app that does not send them gets the v1 b
   completeness. **The page ignores them.**
 
 **The title font goes on large headings only.** The page applies `fonts.title` to its large headings (sheet title,
-card title, dialog titles, the guide's title and section headings), never below 18 px. Everything else (body text,
-list rows, subtitles, chips, buttons, small labels, numbers and distances) stays in the page's own readable system sans
-and its mono for numbers, identical for every theme apart from colours. The page loads the title font with the
-FontFace API and switches the headings only once it has loaded (system font until then, never invisible text); a font
-that fails to load leaves the system font.
+card title, dialog titles, the guide's title and section headings). Everything else (body text, list rows, subtitles,
+chips, buttons, small labels, numbers and distances) stays in the page's own readable system sans and its mono for
+numbers, identical for every theme apart from colours.
+- Sizes: a pixel font (Press Start 2P, Silkscreen, VT323, Pixelify Sans, Bitcount, the Matrix fonts) at an integer
+  multiple of its grid, the largest whose cap height stays within the system-sans heading's, at least 2× the grid
+  (VT323's fine 25 px grid: 1×): Press Start 2P and Silkscreen sections 16 px, Silkscreen titles 24, Bitcount and
+  Matrix 20, Pixelify 22, VT323 25. Other display fonts 18–22 px from their width, never below 18.
+- No synthesized bold or italic, no letter spacing, no forced capitals; balanced line breaks, no hyphenation, a word
+  broken only when it is wider than the whole line.
+- No layout shift: until the file has loaded, a fallback face (the local system sans, `size-adjust`ed so the sheet title
+  has the font's exact width, with the font's ascent, descent and line gap) holds the final box; the page keeps a small
+  table of each title font's metrics and character widths for this. A font that fails to load leaves the system font.
 
-**Colours.** The page maps the palette onto its own colour tokens and keeps every text colour (text, secondary text,
-primary as text, error) at 4.5:1 or more on each surface it is drawn on, moving a colour toward the text (or white or
-black) only as far as needed, as the app does for its secondary text. Its data colours (the layers' dots) stay its own.
+**Colours.** Text-bearing panels (sheet, card, dialogs, menus, search results) use the app's exact `surface`, opaque;
+the border token and a shadow separate them. Text keeps the app's exact colours where they reach 4.5:1 on that surface
+(all 17 built-in themes do); a colour that does not (a custom accent) gets a tone of the same hue (OKLCH lightness, the
+least shift) for text only, while fills, icons, indicators and borders keep the exact colour (3:1, WCAG 1.4.11). The
+hover layer steps toward the text only while every text colour still reads on it. The page's data colours (the layers'
+dots) stay its own.
 
 **Fonts are served by the app.** The viewer answers `GET https://globe.qp1ng.com/__qp1ng/fonts/<file>` itself from the
 APK's `res/font` files: a fixed allow-list (exact file name to resource), `font/ttf` or `font/otf`, `Cache-Control:
@@ -113,7 +123,9 @@ continents (in the app's colour). The website keeps its themes and loads no app 
 - `loading` is sent with `what: layer` or `catalog` when a layer's data starts loading, with `progress` while it streams.
 - `error` is sent with `network` or `data` for a layer that could not load (the page shows Retry), and `fatal` when
   the page cannot draw at all.
-- `setTheme` v1.1: `--app-*` variables from the palette (`[data-theme="app"]` in `assets/app.css`), the title font as
-  `--qg-font-title`, `--qg-title-size` (18, 20 or 22 px from the font's width) and `--qg-title-axes`, applied by
+- `setTheme` v1.1: `--app-*` variables from the palette (`[data-theme="app"]` in `assets/app.css`; `--primary-text` and
+  `--error-text` for those colours as text), the title font as `--qg-font-title`, `--qg-title-size`,
+  `--qg-heading-size` and `--qg-title-axes` (`data-title-font`, `data-title-pixel` on `<html>`), applied by
   `assets/native-app.css` to `.sheet-title`, `.dir-card-title`, `.sheet-dialog h2`, `.guide-head h2`, `.native-tv
-  header b` and `.guide-section h3` (18 px) only. The globe style is kept in `localStorage` (`qradio.globeStyle`).
+  header b` and `.guide-section h3` only. The metrics table is `TITLE_FONTS` in `js/app-theme.mjs` (from the font files
+  with fontTools). The globe style is kept in `localStorage` (`qradio.globeStyle`).

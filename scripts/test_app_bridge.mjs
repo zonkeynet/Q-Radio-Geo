@@ -1,14 +1,15 @@
 // The page side of the app ↔ page contract v1.1 (js/app-bridge.mjs, js/app-theme.mjs, docs/APP_CONTRACT.md), in a
 // minimal stand-in DOM: window.qglobeApp only in app mode, every message with v: 1, only https links handed to the app,
 // validated colours and insets, known commands only, Back answered with a boolean; setTheme v1.1 (palette with
-// readable text, the title font only, from the app's own font path, through a stand-in FontFace).
+// exact app colours on opaque panels, the title font only, from the app's own font path, through a stand-in FontFace,
+// behind a size-adjusted fallback face; pixel fonts at multiples of their grid).
 //   node --test scripts/test_app_bridge.mjs
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync } from 'node:child_process';
 
 const bridge = new URL('../js/app-bridge.mjs', import.meta.url).href;
-const { parseTheme, paletteTokens, contrast, titleSize, PALETTE_ROLES } = await import(new URL('../js/app-theme.mjs', import.meta.url).href);
+const { parseTheme, paletteTokens, contrast, titleSize, fallbackDescriptors, textTone, oklch, mix, textAdvance, TITLE_FONTS, TITLE_SAMPLE, PALETTE_ROLES } = await import(new URL('../js/app-theme.mjs', import.meta.url).href);
 /** Runs `body` in a fresh process with location.search = search and an optional app channel; returns its JSON. */
 function run(search, body, { native = true } = {}) {
     const script = `
@@ -121,8 +122,10 @@ const paletteOf = id => Object.fromEntries(PALETTE_ROLES.map((role, i) => [role,
 const modeOf = id => APP_THEMES[id][9] ? 'light' : 'dark';
 const PAPER = { v: 1, mode: 'light', surface: '#F4ECD8', accent: '#7A3E10', theme: 'paper', palette: paletteOf('paper'),
     fonts: { title: { family: 'Space Mono', url: '/__qp1ng/fonts/space_mono_bold.ttf' }, body: { family: 'sans-serif' }, mono: { family: 'monospace' } } };
-const FONT_FACE = `const made = []; globalThis.FontFace = class { constructor(family, source, descriptors) { this.family = family; made.push({ family, source, descriptors }); }
-    load() { return globalThis.failFonts ? Promise.reject(new Error('404')) : new Promise(r => setTimeout(() => r(this), globalThis.slow?.(this.family) || 0)); } };
+// A stand-in FontFace (failFonts: the app's file fails, local faces still load) and canvas (55 px per character at 100 px).
+const FONT_FACE = `const made = []; globalThis.FontFace = class { constructor(family, source, descriptors) { Object.assign(this, { family, source }); made.push({ family, source, descriptors }); }
+    load() { return globalThis.failFonts && this.source.startsWith('url(') ? Promise.reject(new Error('404')) : new Promise(r => setTimeout(() => r(this), globalThis.slow?.(this.family) || 0)); } };
+    document.createElement = () => ({ getContext: () => ({ font: '', measureText: t => ({ width: t.length * 55 }) }) });
     const settle = () => new Promise(r => setTimeout(r, 60));`;
 
 test('setTheme v1.1 parses the theme id, the whole palette and the fonts; anything invalid is dropped', () => {
@@ -146,49 +149,73 @@ test('setTheme v1.1 parses the theme id, the whole palette and the fonts; anythi
     }
     assert.equal(parseTheme({}).hasFonts, false);
 });
-test('every built-in app theme maps to page colours whose text reads at 4.5:1 on every surface', () => {
+test('every built-in app theme keeps its exact colours on opaque panels: text 4.5:1, fills and icons 3:1', () => {
+    const toned = [];
     for (const id of Object.keys(APP_THEMES)) {
-        const t = paletteTokens(paletteOf(id), modeOf(id));
-        const surfaces = ['--app-bg', '--app-surface', '--app-surface-2', '--app-surface-3'].map(k => t[k]);
-        for (const ink of ['--app-on-surface', '--app-on-surface-variant']) {
-            for (const s of surfaces) assert.ok(contrast(t[ink], s) >= 4.5, `${id} ${ink} ${t[ink]} on ${s}`);
+        const p = paletteOf(id), t = paletteTokens(p, modeOf(id));
+        // Text-bearing panels wear the exact app surface, opaque.
+        for (const k of ['--app-surface', '--app-surface-2', '--app-glass']) assert.equal(t[k], p.surface, `${id} ${k}`);
+        assert.equal(t['--app-bg'], p.background);
+        // Text roles on the surfaces they sit on: the panel and its hover layer.
+        const text = { text: '--app-on-surface', textDim: '--app-on-surface-variant', primary: '--app-primary-text', error: '--app-error-text' };
+        for (const [role, k] of Object.entries(text)) {
+            for (const s of [t['--app-surface'], t['--app-surface-3']]) assert.ok(contrast(t[k], s) >= 4.5, `${id} ${role} ${t[k]} on ${s}`);
+            if (contrast(p[role], p.surface) >= 4.5) assert.equal(t[k], p[role], `${id} ${role}: the exact app colour reads, kept`);
+            else toned.push(`${id} ${role} ${p[role]} → ${t[k]}`);
         }
-        for (const ink of ['--app-primary', '--app-error']) {
-            for (const s of [t['--app-surface-2'], t['--app-surface-3']]) assert.ok(contrast(t[ink], s) >= 4.5, `${id} ${ink} ${t[ink]} on ${s}`);
-        }
-        assert.ok(contrast(t['--app-on-primary'], t['--app-primary']) >= 4.5, `${id} on-primary`);
-        assert.equal(t['--app-bg'], paletteOf(id).background);
-        assert.equal(t['--app-outline'], paletteOf(id).border);
+        // Fills, icons and indicators keep the exact colour (3:1); text on the primary fill 4.5:1.
+        assert.equal(t['--app-primary'], p.primary); assert.equal(t['--app-error'], p.error); assert.equal(t['--app-outline'], p.border);
+        for (const role of ['primary', 'error']) assert.ok(contrast(p[role], p.surface) >= 3, `${id} ${role} as an icon`);
+        assert.ok(contrast(t['--app-on-primary'], p.primary) >= 4.5, `${id} on-primary`);
+        assert.ok(contrast(t['--app-outline-strong'], p.surface) >= 3, `${id} field outline`);
+        assert.ok(contrast(t['--app-on-surface'], mix(p.surface, p.primary, .16)) >= 4.5, `${id} text on the selected row`);
     }
-    // Colours that already read are kept exactly (Quantum's text, Paper's secondary text).
-    assert.equal(paletteTokens(paletteOf('quantum'), 'dark')['--app-on-surface'], '#e0e0e0');
-    assert.equal(paletteTokens(paletteOf('paper'), 'light')['--app-on-surface-variant'], '#66543f');
+    assert.deepEqual(toned, [], 'no built-in theme needs a text-only tone');
 });
-test('setTheme v1.1 sets the palette and loads only the title font, from the app path, as a swap face', () => {
+test('a colour that does not read gets a text-only tone of the same hue, the least shift that reaches 4.5:1', () => {
+    // Gameboy's primary on a lighter panel (what the page used to draw): 3.8:1.
+    const panel = '#2e4a2e', tone = textTone('#8bac0f', panel);
+    assert.ok(contrast('#8bac0f', panel) < 4.5);
+    assert.ok(contrast(tone, panel) >= 4.5 && contrast(tone, panel) < 4.75, `${tone} ${contrast(tone, panel)}`);
+    const [L0, , h0] = oklch('#8bac0f'), [L1, , h1] = oklch(tone);
+    assert.ok(L1 > L0 && Math.abs(h1 - h0) < .05, 'lighter, same hue');
+    assert.ok(oklch(textTone('#d0574d', '#ffffff'))[0] < oklch('#d0574d')[0], 'darker on a light panel');
+    assert.equal(textTone('#e0e0e0', '#0a0f0b'), '#e0e0e0');
+});
+test('setTheme v1.1 sets the palette and loads only the title font, from the app path, behind a size-adjusted fallback', () => {
     const r = run('?app=1', `${FONT_FACE}
         qglobeApp.setTheme(${JSON.stringify(PAPER)});
         await settle();
         return made;`);
     assert.equal(r.vars['--app-bg'], '#f4ecd8');
     assert.equal(r.vars['--app-surface'], '#fbf6ea');
+    assert.equal(r.vars['--app-glass'], '#fbf6ea');
     assert.equal(r.vars['--app-primary'], '#7a3e10');
     assert.equal(r.dataset.appScheme, 'light');
-    assert.equal(r.out.length, 1, 'body and mono are not loaded');
-    assert.deepEqual(r.out[0], { family: 'qp1ng-title-1', source: 'url("/__qp1ng/fonts/space_mono_bold.ttf")', descriptors: { weight: '100 900', style: 'normal', display: 'swap' } });
-    assert.deepEqual(r.fonts, ['+qp1ng-title-1']);
+    assert.deepEqual(r.out.map(f => f.family), ['qp1ng-sans-1', 'qp1ng-fallback-1', 'qp1ng-title-1']);
+    assert.deepEqual(r.out.filter(f => f.source.startsWith('url(')).map(f => f.source), ['url("/__qp1ng/fonts/space_mono_bold.ttf")'], 'body and mono are not loaded');
+    assert.match(r.out[0].source, /^local\("Roboto Bold"\)/);
+    const ratio = textAdvance(TITLE_FONTS['space_mono_bold.ttf'], TITLE_SAMPLE) * 100 / (TITLE_SAMPLE.length * 55);
+    assert.deepEqual(r.out[1].descriptors, fallbackDescriptors(TITLE_FONTS['space_mono_bold.ttf'], ratio));
+    assert.deepEqual(r.out[2].descriptors, { weight: '100 900', style: 'normal', display: 'swap' });
+    assert.deepEqual(r.fonts, ['+qp1ng-sans-1', '+qp1ng-fallback-1', '+qp1ng-title-1']);
     assert.equal(r.vars['--qg-font-title'], '"qp1ng-title-1", var(--font)');
-    assert.equal(r.vars['--qg-title-size'], '20px', 'no canvas here: the default size');
+    assert.equal(r.vars['--qg-title-size'], '20px');
+    assert.equal(r.vars['--qg-heading-size'], '18px');
     assert.equal(r.vars['--qg-title-axes'], undefined);
     assert.equal(r.dataset.titleFont, 'Space Mono');
+    assert.equal(r.dataset.titlePixel, undefined);
 });
-test('until the title font loads, and when it fails, the headings keep the system font; the latest theme wins', () => {
-    const pending = run('?app=1', `${FONT_FACE} globalThis.slow = () => 500;
-        qglobeApp.setTheme(${JSON.stringify(PAPER)}); await new Promise(r => setTimeout(r, 20));`);
-    assert.equal(pending.vars['--qg-font-title'], undefined, 'no invisible text while loading');
-    assert.equal(pending.dataset.titleFont, undefined);
+test('while the title font loads the fallback holds its box; a failure leaves the system font; the latest theme wins', () => {
+    const pending = run('?app=1', `${FONT_FACE} globalThis.slow = f => f.startsWith('qp1ng-title') ? 500 : 0;
+        qglobeApp.setTheme(${JSON.stringify(PAPER)}); await new Promise(r => setTimeout(r, 40));`);
+    assert.equal(pending.vars['--qg-font-title'], '"qp1ng-fallback-1", var(--font)', 'never invisible text, never a different box');
+    assert.equal(pending.vars['--qg-title-size'], '20px');
+    assert.equal(pending.dataset.titleFont, 'Space Mono');
     const failed = run('?app=1', `${FONT_FACE} globalThis.failFonts = true; qglobeApp.setTheme(${JSON.stringify(PAPER)}); await settle();`);
     assert.equal(failed.vars['--qg-font-title'], undefined);
     assert.equal(failed.dataset.titleFont, undefined);
+    assert.deepEqual(failed.fonts, ['+qp1ng-sans-1', '+qp1ng-fallback-1', '-qp1ng-sans-1', '-qp1ng-fallback-1']);
     assert.equal(failed.vars['--app-bg'], '#f4ecd8', 'colours apply whatever the font does');
     // Gameboy's font is slow, Quantum's arrives first: Gameboy finishing later changes nothing.
     const gameboy = { ...PAPER, mode: 'dark', theme: 'gameboy', palette: paletteOf('gameboy'), fonts: { title: { family: 'Press Start 2P', url: '/__qp1ng/fonts/press_start_2p.ttf' } } };
@@ -197,15 +224,21 @@ test('until the title font loads, and when it fails, the headings keep the syste
         qglobeApp.setTheme(${JSON.stringify(gameboy)}); qglobeApp.setTheme(${JSON.stringify(quantum)}); await settle(); await settle();`);
     assert.equal(race.vars['--qg-font-title'], '"qp1ng-title-2", var(--font)');
     assert.equal(race.vars['--qg-title-axes'], '"ELSH" 50, "CRSV" 0, "wght" 325');
+    assert.equal(race.vars['--qg-title-size'], '20px', 'Bitcount: 2× its 10 px grid');
     assert.equal(race.dataset.titleFont, 'Bitcount Grid Single');
-    assert.deepEqual(race.fonts, ['+qp1ng-title-2']);
+    assert.equal(race.dataset.titlePixel, '');
+    assert.deepEqual(race.fonts, ['+qp1ng-sans-2', '+qp1ng-fallback-2', '+qp1ng-title-2']);
     assert.equal(race.vars['--app-bg'], '#000000');
+    const pixel = run('?app=1', `${FONT_FACE} qglobeApp.setTheme(${JSON.stringify(gameboy)}); await settle();`);
+    assert.equal(pixel.vars['--qg-title-size'], '16px', 'Press Start 2P: 2× its 8 px grid');
+    assert.equal(pixel.vars['--qg-heading-size'], '16px');
     // A theme whose title is the system mono: the page's mono, no file; a later theme without fonts.title: system sans.
     const mono = run('?app=1', `${FONT_FACE}
         qglobeApp.setTheme(${JSON.stringify(PAPER)}); await settle();
         qglobeApp.setTheme({ ...${JSON.stringify(PAPER)}, fonts: { title: { family: 'monospace' } } }); await settle();`);
     assert.equal(mono.vars['--qg-font-title'], 'var(--mono)');
-    assert.deepEqual(mono.fonts, ['+qp1ng-title-1', '-qp1ng-title-1']);
+    assert.equal(mono.vars['--qg-title-size'], undefined);
+    assert.deepEqual(mono.fonts.filter(f => f.startsWith('-')), ['-qp1ng-sans-1', '-qp1ng-fallback-1', '-qp1ng-title-1']);
     const plain = run('?app=1', `${FONT_FACE}
         qglobeApp.setTheme(${JSON.stringify(PAPER)}); await settle();
         qglobeApp.setTheme({ ...${JSON.stringify(PAPER)}, fonts: { body: { family: 'sans-serif' } } }); await settle();`);
@@ -217,15 +250,35 @@ test('a v1 setTheme (an older app) maps the roles as before and leaves the title
         qglobeApp.setTheme(${JSON.stringify(PAPER)}); await settle();
         qglobeApp.setTheme({ v: 1, mode: 'dark', surface: '#05070b', surfaceVariant: '#0b0e14', onSurface: '#eef3f8', onSurfaceVariant: '#93a3bb', accent: '#00e890', onAccent: '#05070b', outline: '#20262e', error: '#ff6b81' });
         await settle(); return made.length;`);
-    assert.equal(r.out, 1);
+    assert.equal(r.out, 3);
     assert.equal(r.vars['--app-surface'], '#05070b');
     assert.equal(r.vars['--app-primary'], '#00e890');
     assert.equal(r.vars['--qg-font-title'], '"qp1ng-title-1", var(--font)');
 });
-test('title sizes: wide fonts 18 px, small ones 22 px, never below 18', () => {
-    assert.equal(titleSize(1.8), 18);
-    assert.equal(titleSize(1.1), 20);
-    assert.equal(titleSize(.7), 22);
-    assert.equal(titleSize(NaN), 20);
-    for (let ratio = .1; ratio < 4; ratio += .05) assert.ok(titleSize(ratio) >= 18);
+test('heading sizes: pixel fonts at integer multiples of their grid, 2× or more; other display fonts 18 to 22 px', () => {
+    const sizes = Object.fromEntries(Object.entries(TITLE_FONTS).filter(([, m]) => m.grid).map(([f, m]) => [f, [titleSize(m), titleSize(m, NaN, 18)]]));
+    assert.deepEqual(sizes, { 'bitcount_grid_single.ttf': [20, 20], 'matrix_mono.ttf': [20, 20], 'matrix_mono_video.ttf': [20, 20], 'matrix_sans_screen.ttf': [20, 20],
+        'pixelify_sans.ttf': [22, 22], 'press_start_2p.ttf': [16, 16], 'silkscreen_bold.ttf': [24, 16], 'vt323_regular.ttf': [25, 25] });
+    for (const [file, m] of Object.entries(TITLE_FONTS)) {
+        if (!m.grid) continue;
+        for (const size of sizes[file]) {
+            assert.equal(size % m.grid, 0, file);
+            assert.ok(size >= 2 * m.grid || m.grid >= 20, `${file} ${size}`);
+        }
+    }
+    assert.equal(titleSize(null, 1.8), 18);
+    assert.equal(titleSize(TITLE_FONTS['xirod.otf'], 1.8), 18);
+    assert.equal(titleSize(null, 1.1), 20);
+    assert.equal(titleSize(null, .7), 22);
+    assert.equal(titleSize(null, NaN), 20);
+    assert.equal(titleSize(TITLE_FONTS['orbitron_variable.ttf'], 1.1, 18), 18);
+    for (let ratio = .1; ratio < 4; ratio += .05) assert.ok(titleSize(null, ratio) >= 18);
+    // Widths from the font files: monospaced fonts by their one advance, the others per character.
+    assert.equal(textAdvance(TITLE_FONTS['press_start_2p.ttf'], 'Radio nella vista'), 17);
+    assert.ok(Math.abs(textAdvance(TITLE_FONTS['xirod.otf'], TITLE_SAMPLE) - 64.655) < .01);
+    assert.ok(Math.abs(textAdvance(TITLE_FONTS['orbitron_variable.ttf'], TITLE_SAMPLE) - 44.703) < .01);
+    assert.ok(textAdvance(TITLE_FONTS['aldrich_regular.ttf'], 'Città') > textAdvance(TITLE_FONTS['aldrich_regular.ttf'], 'Citt'));
+    // The fallback face: the system sans at the font's width, with its ascent, descent and line gap.
+    assert.deepEqual(fallbackDescriptors(TITLE_FONTS['press_start_2p.ttf'], 2), { weight: '100 900', style: 'normal', sizeAdjust: '200.00%',
+        ascentOverride: '50.00%', descentOverride: '0.00%', lineGapOverride: '0.00%' });
 });

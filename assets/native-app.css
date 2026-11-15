@@ -11,17 +11,21 @@
 .app-mode #btnRevokeAudio { display: none !important; }
 
 /* The app theme's title font (setTheme fonts.title, js/app-theme.mjs) on the large headings only: sheet, card, dialog
-   and guide titles, never below 18 px. Body text, list rows, chips, buttons, small labels and numbers stay in the system
-   sans and mono for every theme. Until the font has loaded --qg-font-title is unset: the system font, never no text. */
+   and guide titles. Body text, list rows, chips, buttons, small labels and numbers stay in the system sans and mono
+   for every theme. A fallback face (the system sans size-adjusted to the font) holds the final box until the font has
+   loaded, so the swap moves nothing. Sizes: --qg-title-size (titles) and --qg-heading-size (guide sections): pixel
+   fonts at integer multiples of their grid, other display fonts 18–22 px. No fake bold or italic, no tracking,
+   balanced lines, never broken inside a word unless a single word is wider than the line. */
 .app-mode :is(.sheet-title, .dir-card-title, .sheet-dialog h2, .guide-head h2, .native-tv header b) {
     font-family: var(--qg-font-title, var(--font)); font-synthesis: none; font-variation-settings: var(--qg-title-axes, normal);
+    letter-spacing: 0; text-wrap: balance; hyphens: manual; overflow-wrap: break-word;
 }
-.app-mode[data-title-font] :is(.sheet-title, .dir-card-title, .sheet-dialog h2, .guide-head h2, .native-tv header b) { font-size: max(18px, var(--qg-title-size, 20px)); }
-/* A wide title font (pixel or extended) wraps the sheet title onto a second line instead of cutting its words. */
+.app-mode[data-title-font] :is(.sheet-title, .dir-card-title, .sheet-dialog h2, .guide-head h2, .native-tv header b) { font-size: var(--qg-title-size, 20px); }
+/* The sheet title wraps (balanced) rather than cutting words when the font is wide. */
 .app-mode[data-title-font] .sheet-title { white-space: normal; }
-.app-mode[data-title-font] .sheet-title > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: break-word; min-width: 0; }
-/* The guide's section headings take the title font at 18 px (16 px in the system font). */
-.app-mode[data-title-font] .guide-section h3 { font-family: var(--qg-font-title); font-size: 18px; font-synthesis: none; font-variation-settings: var(--qg-title-axes, normal); }
+.app-mode[data-title-font] .sheet-title > span { min-width: 0; text-wrap: balance; hyphens: manual; overflow-wrap: break-word; }
+.app-mode[data-title-font] .guide-section h3 { font-family: var(--qg-font-title); font-size: var(--qg-heading-size, 18px); font-synthesis: none;
+    font-variation-settings: var(--qg-title-axes, normal); letter-spacing: 0; text-wrap: balance; hyphens: manual; overflow-wrap: break-word; }
 
 /* Live TV: the page lists channels; playback and the four-channel wall open in Q-P1NG. A dialog-like panel. */
 .native-tv { position: fixed; z-index: 100; display: flex; flex-direction: column; gap: 12px; padding: 12px 12px calc(12px + var(--inset-b));

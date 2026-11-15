@@ -22,6 +22,8 @@
     --outline-strong: rgba(255, 255, 255, .24);
     --primary: var(--accent);
     --on-primary: var(--on-accent);
+    /* Primary and error as text (the app theme may give them a text-only tone); the plain roles stay for fills and icons. */
+    --primary-text: var(--primary); --error-text: var(--error);
     --primary-soft: color-mix(in srgb, var(--primary) 16%, transparent);
     --error: #ff6b81; --warning: #ffb703; --success: #3ddc97;
     --scrim: rgba(0, 0, 0, .55);
@@ -91,11 +93,15 @@
     color-scheme: light;
 }
 /* The app's own theme (window.qglobeApp.setTheme), the page's only UI theme in the app. Contract v1.1 sends the
-   whole palette (background, sky, three surface steps: js/app-theme.mjs); v1 only surface, text, accent and error. */
+   whole palette: panels then wear the app's exact surface, opaque (--app-glass), text keeps the app's exact colours
+   (a text-only tone where one would not read: js/app-theme.mjs). v1 sends only surface, text, accent and error. */
 :root[data-theme="app"], [data-preview="app"] {
     --panel-solid: var(--app-surface, #080c13); --bg: var(--app-bg, var(--app-surface, #05070b));
     --surface-2: var(--app-surface-2, color-mix(in srgb, var(--panel-solid) 93%, #fff));
     --surface-3: var(--app-surface-3, color-mix(in srgb, var(--panel-solid) 86%, #fff));
+    --glass: var(--app-glass, color-mix(in srgb, var(--surface-2) 95%, transparent));
+    --primary-text: var(--app-primary-text, var(--primary)); --error-text: var(--app-error-text, var(--error));
+    --outline-strong: var(--app-outline-strong, rgba(255, 255, 255, .24));
     --sky: var(--app-sky, radial-gradient(ellipse at 50% 45%, #0b1622 0%, #05070b 62%));
     --on-surface: var(--app-on-surface, #eef3f8); --text-dim: var(--app-on-surface-variant, #93a3bb);
     --outline: var(--app-outline, rgba(255, 255, 255, .13));
@@ -105,6 +111,7 @@
 :root[data-theme="app"][data-app-scheme="light"], [data-preview="app"][data-app-scheme="light"] {
     --panel-solid: var(--app-surface, #f6f8fb); --bg: var(--app-bg, var(--app-surface, #e9eef5));
     --surface-2: var(--app-surface-2, #ffffff); --surface-3: var(--app-surface-3, #eef2f7);
+    --outline-strong: var(--app-outline-strong, rgba(16, 24, 40, .28));
     --sky: var(--app-sky, radial-gradient(ellipse at 50% 45%, #ffffff 0%, #dfe8f3 55%, #c9d6e6 100%));
     --on-surface: var(--app-on-surface, #1a2230);
     --text-dim: var(--app-on-surface-variant, #445266); --outline: var(--app-outline, rgba(16, 24, 40, .14));
@@ -168,7 +175,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .btn-filled:hover { box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 40%, transparent); }
 .btn-tonal { background: var(--primary-soft); color: var(--on-surface); }
 .btn-tonal:hover { background: color-mix(in srgb, var(--primary) 24%, transparent); }
-.btn-text { color: var(--primary); padding: 0 12px; }
+.btn-text { color: var(--primary-text); padding: 0 12px; }
 .btn-text:hover { background: var(--primary-soft); }
 .btn-block { width: 100%; }
 .icon-btn { display: inline-grid; place-items: center; width: 48px; height: 48px; flex: none; border-radius: 24px; color: var(--on-surface-variant); text-decoration: none;
@@ -464,7 +471,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .status-badge.live { color: var(--on-primary); background: var(--primary); }
 .status-badge.buffering { color: var(--warning); }
-.status-badge.error { color: var(--error); }
+.status-badge.error { color: var(--error-text); }
 .status-badge:is(.idle, .ready) { display: none; } /* the play button says it */
 .player:not(.expanded) .station-tech { display: none; }
 .eq { display: none; align-items: flex-end; gap: 2px; height: 16px; width: 14px; }
@@ -494,7 +501,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .latest-track { display: flex; gap: 24px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .latest-track::-webkit-scrollbar { display: none; }
 .ticker-item { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; white-space: nowrap; font: 400 14px/20px var(--font); }
-.ticker-item:hover .ticker-text { color: var(--primary); }
+.ticker-item:hover .ticker-text { color: var(--primary-text); }
 .ticker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--type-color, var(--primary)); }
 .ticker-src { font: 400 12px/16px var(--font); color: var(--on-surface-variant); }
 @media (max-width: 1050px) { .latest { display: none !important; } }
